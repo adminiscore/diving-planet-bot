@@ -171,6 +171,15 @@ async def idioma_de_apertura(state: ConversationState, message: str) -> None:
     await _otro_idioma_en_ingles(state, message=message)
 
 
+def _es_la_oferta_del_cierre(state: ConversationState) -> bool:
+    """¿El último mensaje del bot lleva nuestra oferta del asesor del cierre en pesos? Esa la sigue el cierre."""
+    from src.agents import supervisor  # lazy
+    from src.agents.nucleo.slotfill_close import _OFERTA_DEL_ASESOR  # lazy
+
+    ultimo = supervisor.ultimo_del_bot(state)
+    return any(oferta in ultimo for oferta in _OFERTA_DEL_ASESOR.values())
+
+
 async def _setup_phase(
     state: ConversationState, message: str, routing_signals: dict,
 ) -> tuple[str, bool] | None:
@@ -190,6 +199,10 @@ async def _setup_phase(
     msg_lower = message.strip().lower()
     if (supervisor.regex_decide(routing_signals) and supervisor._matches_escalation_keyword(msg_lower)) or (
             routing_signals.get("wants_human")):
+        return None
+    if supervisor.acepta_la_oferta_del_asesor(state, message, routing_signals) and not _es_la_oferta_del_cierre(state):
+        # Panel visto-6940 / tanda s05f 6952 (5-nov): acepta la oferta de asesor del escritor; el pase lo hace la cascada
+        # (`supervisor.pase_pedido_o_aceptado`). La del cierre en pesos la sigue `slotfill_close._quiere_reservar_o_pagar`.
         return None
     # (Fase 4, decisión owner 2026-07-28) "menú"/"volver"/"back" = MENSAJE NORMAL:
     # el núcleo los trata como texto conversacional (re-orienta a la reserva) en

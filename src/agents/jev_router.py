@@ -954,6 +954,20 @@ _SE_DESPIDE_Q = {
         "if they say they will come back to it soon ('lo pienso y te digo mañana', 'I'll book tonight')."
     ),
 }
+# 5-nov (Gadea #3570; panel visto-6940, tanda s05f 6952): el escritor ofrece pasar con un asesor («Would you like me to connect you
+# with a team advisor…?») y el cliente acepta añadiendo algo («Yes, please. Thank you for your help.», «Sí, por favor. La casa se
+# llama…»). El «sí» solo se reconocía si el mensaje era SOLO la afirmación, y el núcleo seguía con la reserva y volvía a ofrecerlo.
+ACEPTA_EL_PASE = "acepta_el_pase"
+ACEPTA_EL_PASE_MIN = 0.7
+_ACEPTA_EL_PASE_Q = {
+    "type": "noul",
+    "instructions": (
+        "The assistant's last message offered to connect the customer with an advisor or a person from the team, and the customer's "
+        "message ACCEPTS that offer (yes, please, go ahead, that would be great), also when in the same message they add details, thank "
+        "the assistant or ask something else. It is FALSE if they decline or postpone it ('no thanks', 'not yet', 'first tell me the "
+        "price'), if they answer a different question without accepting, and if the assistant's last message offered no person."
+    ),
+}
 VIAJA_SOLO = "viaja_solo"
 VIAJA_SOLO_MIN = 0.7
 _VIAJA_SOLO_Q = {
@@ -1095,6 +1109,7 @@ _DEL_TURNO = (
     _DelTurno(QUIERE_CURSO, _QUIERE_CURSO_Q, _si(QUIERE_CURSO_MIN)),
     _DelTurno(SIN_HOTEL, _SIN_HOTEL_Q, _si(SIN_HOTEL_MIN)),
     _DelTurno(SALIDAS_SUELTAS, _SALIDAS_SUELTAS_Q, _si(SALIDAS_SUELTAS_MIN)),
+    _DelTurno(ACEPTA_EL_PASE, _ACEPTA_EL_PASE_Q, _si(ACEPTA_EL_PASE_MIN)),
     _DelTurno(VIAJA_SOLO, _VIAJA_SOLO_Q, _si(VIAJA_SOLO_MIN)),
     _DelTurno(HABLA_DE_SI, _HABLA_DE_SI_Q, _si(HABLA_DE_SI_MIN)),
     # Solo se descarta cuando Jev está seguro de que NO (`nucleo/extractor.dias_de_buceo_de`).

@@ -194,12 +194,15 @@ def _quiere_reservar_o_pagar(state: ConversationState, message: str) -> bool:
     tarjeta (sparring CALN3-R06: la familia que solo preguntaba el precio pasaba al asesor en el primer turno). Lo pide
     en el mensaje (Jev: el pago o el enlace para reservar; o una persona) o dice que sí a la oferta del asesor."""
     from src.agents import supervisor  # lazy
+    from src.agents.jev_router import ACEPTA_EL_PASE  # lazy
 
+    senales = getattr(state, "_senales_router", None) or {}
     if set(getattr(state, "_intenciones", None) or []) & {"pago", "enlace"}:
         return True
-    if (getattr(state, "_senales_router", None) or {}).get("wants_human"):
+    if senales.get("wants_human"):
         return True
-    if supervisor._BARE_AFFIRMATION_RE.match(re.sub(r"[,;:]+", " ", message or "").strip()):  # «Sí, por favor»
+    # «Sí, por favor», o un «sí» con algo más que Jev lee como aceptar (panel visto-6940, 5-nov).
+    if supervisor._BARE_AFFIRMATION_RE.match(re.sub(r"[,;:]+", " ", message or "").strip()) or senales.get(ACEPTA_EL_PASE):
         # El «sí» contesta a la ÚLTIMA pregunta del bot, aunque después contestara otra cosa sin preguntar («¿y el
         # almuerzo?» → «no está incluido» → «sí, por favor»: es a la oferta del asesor).
         pregunta = next((h.get("content") or "" for h in reversed(state.history or [])
