@@ -528,9 +528,10 @@ _INTENCIONES_Q = {
     PIDE_ENLACE: {
         "type": "noul",
         "instructions": (
-            "The customer asks for the link or web page to book or to pay, asks you to send it, or asks how to book "
-            "online, even if the same message also asks other things. It is FALSE when they do not ask for a link or "
-            "how to book online."
+            "The customer asks for the link or web page to book or to pay, asks you to send it, or asks how to book or "
+            "reserve (the steps to do it, online or not), even if the same message also asks other things. It is FALSE "
+            "when they only say that they want to book, without asking how, or when they do not ask for a link or how "
+            "to book."
         ),
     },
     # ARQ-1d: el redactor de hechos solo contesta si el mensaje no trae NADA más que estas intenciones; si Jev no

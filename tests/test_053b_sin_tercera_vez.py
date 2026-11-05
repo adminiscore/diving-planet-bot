@@ -112,3 +112,12 @@ async def test_el_escritor_contesta_y_cierra_con_lo_que_sigue():
     with patch.object(slotfill_close, "_rag_answer", AsyncMock(return_value="¡Anotado, el 21 y el 22!")):
         texto = await slotfill_close._sin_dato(estado, "El 21 y 22", core.SLOT_SAFETY, sigue)
     assert texto == f"¡Anotado, el 21 y el 22!\n\n{sigue}"
+
+
+def test_preguntar_como_reservar_cuenta_como_pedir_el_enlace():
+    """La causa de regateo-grupo-6 (0 de 5): «como reservamos» daba pide_enlace 0,41 y pide_disponibilidad 0,62, y el turno se tomaba
+    por un paso de la reserva, sin escritor. El texto de la pregunta es de lo que depende: que no vuelva a pedir «online»."""
+    from src.agents.jev_router import _INTENCIONES_Q, PIDE_ENLACE
+
+    texto = _INTENCIONES_Q[PIDE_ENLACE]["instructions"]
+    assert "how to book or reserve" in texto and "only say that they want to book" in texto
