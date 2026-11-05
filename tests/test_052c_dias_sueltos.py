@@ -53,6 +53,16 @@ def test_s04m_el_de_8_sin_plan_propio_va_a_bubble_makers_con_su_precio_y_al_ases
     assert "Bubble" in bubble["label"] and bubble["url"] is None and bubble["usd"] != minicurso["usd"]
 
 
+def test_s05e_la_tarjeta_de_bubble_makers_no_da_muelle_ni_hora():
+    """Su ficha deja traslado, horario y almuerzo a un asesor (conv 6935); la del minicurso sí los da."""
+    from src.flows import cart_render
+
+    st = _familia_con_hijos([8, 12], [{"type": "beginner", "qty": 2, "plan": None, "label": "x"}])
+    minicurso, bubble = cart_render._format_activity_booking_messages(st)
+    assert "Bodeguita" in minicurso
+    assert "Bodeguita" not in bubble and "lo confirma" not in bubble and "los confirma un asesor" in bubble
+
+
 def test_s04m_con_10_anos_vale_el_minicurso():
     from src.flows import cart_render
 

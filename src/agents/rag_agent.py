@@ -601,7 +601,7 @@ def _completar_con_hechos(answer: str, bloques: list[dict], intenciones: list[st
     return None if hechos_mod.faltan(completada, bloques, intenciones) else completada
 
 
-_LA_ESPERA_YA_DICHA = re.compile(r"\b(?:12|18|doce|dieciocho|twelve|eighteen)\s*(?:horas|hours|hrs?|h)\b", re.IGNORECASE)
+_LA_ESPERA_YA_DICHA = re.compile(r"\b(?:12|18|doce|dieciocho|twelve|eighteen)[\s-]*(?:horas?|hours?|hrs?|h)\b", re.IGNORECASE)
 
 
 def _con_la_espera_antes_de_volar(answer: str, bloques: list[dict], intenciones: list[str]) -> str:

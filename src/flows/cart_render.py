@@ -227,7 +227,13 @@ def _format_activity_booking_messages(state: ConversationState) -> list[str]:
             if b.get("incluye"):
                 cabeza = "✅ Incluye: " if lang == "es" else "✅ Includes: "
                 lines.append(f"{cabeza}{_lista_en_frase(b['incluye'], lang)}.")
-            lines.append(depart)
+            if b.get("detalles_por_asesor"):
+                # Sparring s05e (6935): la tarjeta de Bubble Makers daba el muelle y las 8:00, que su ficha deja a un asesor.
+                from src.flows.hechos import DETALLES_POR_ASESOR  # lazy
+
+                lines.append(f"📍 {DETALLES_POR_ASESOR[lang]}")
+            else:
+                lines.append(depart)
         if b.get("note"):
             lines.append(b["note"])
         lines.append("")
@@ -274,6 +280,7 @@ def _cart_booking_blocks(state: ConversationState) -> list[dict]:
             "label": label, "qty": qty,
             "usd": svc.get("price_usd"), "cop": svc.get("price_cop"), "url": url,
             "note": note, "kind": kind, "incluye": svc.get(f"included_{lang}") or [],
+            "detalles_por_asesor": svc.get("detalles_por_asesor", False),
         })
 
     for item in state.mixed_cart:

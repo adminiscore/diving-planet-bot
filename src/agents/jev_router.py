@@ -766,8 +766,9 @@ def _con_hoteles_de_la_base(pregunta: dict) -> dict:
 
     hoteles = ", ".join(HOTELES_DE_LA_BASE)
     criterios = dict(pregunta["criteria"])
+    criterios["cartagena"] = f"{criterios['cartagena']}{_DESDE_CARTAGENA}"
     criterios["islands"] = (f"{criterios['islands']} Staying at one of these island hotels also counts: {hoteles}."
-                            f"{_SIN_IR_DE_CARTAGENA}")
+                            f"{_SIN_IR_DE_CARTAGENA}{_ESTARA_EN_LAS_ISLAS}")
     return {**pregunta, "criteria": criterios}
 
 
@@ -779,6 +780,15 @@ def _con_hoteles_de_la_base(pregunta: dict) -> dict:
 # lugar) iguales (`scripts/sonda_jev_negacion_lugar.py`, ×4).
 _SIN_IR_DE_CARTAGENA = (" Also when they say they will NOT set out from or go through Cartagena (\"sin ir de Cartagena\", "
                         "\"without going back to Cartagena\"): then they will already be on the islands.")
+
+
+# CALN-37 (5-nov): quien pedía algo «desde Cartagena» o decía «estaré en las islas» quedaba bajo el mínimo y recibía «Entonces, ¿…?», con el extractor
+# leyéndolo bien (6,4 % de los turnos). `scripts/sonda_jev_origen_dicho.py`, 32 mensajes × 3: «desde Cartagena» de 0,3-0,7 a 0,76-0,98; «estaré en las
+# islas» a 0,6-0,97 (2 de 13 siguen cortas); hipótesis y sitio de buceo no se mueven, salvo «punto de encuentro», a Cartagena con 0,3.
+_DESDE_CARTAGENA = (" Wanting or asking for an activity from Cartagena (\"saliendo desde Cartagena\", \"from Cartagena\") also counts: it is where they "
+                    "set out from.")
+_ESTARA_EN_LAS_ISLAS = (" Saying that they will be there (\"estaré en las islas\", \"we'll be on the islands\", \"desde las islas, ya estaremos allí\") "
+                        "also counts. Wanting to go to, visit, dive or snorkel in the islands does not.")
 
 
 # rag-5 (1-oct): ¿el mensaje cuenta algo del cliente que haya que APUNTAR como nota? Puerta del extractor de

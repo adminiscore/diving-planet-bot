@@ -1239,3 +1239,20 @@ Criterio de Álvaro (#2716). 10 clientes nuevos y educados (conv 6923-6932). Los
 **Lectura:** nuestra clasificación se quedaba corta. Con esta vara, la tasa de clientes con grave está en torno al 20-25 %, no al 5 %. La meta de 2 en 60 se cuenta desde ahora con clasificación más juez a ciegas, y un grave se da por tal tras leerlo: 1 de cada 3 fallos de Opus es falso.
 
 **Lectura de Gadea (5-nov, 17:28) de los 8 que Opus marca como graves:** 7 graves (6898, 6899, 6914, 6916, 6926, 6927, 6929) y 1 no es fallo (6915, las profesoras). Opus acierta 7 de 8 en lo que marca como grave. **Tasa: 7 de 31 clientes, 23 %.**
+
+## CALN-S05E-01..10 · 18.ª tanda de sparring contra PRE 0.58.0 (5-nov, `charla_pre`)
+
+Criterio de Álvaro (#2716). 10 clientes nuevos y educados (conv 6933-6942). Los temas los eligió el subagente que escribió y leyó las charlas, sin ver el código. Después, **juez Opus a ciegas, una pasada** (`juez_claude --charlas`, `tanda-s05e__claude-opus-medium.json`): 5 de 10 con grave, y son los 5 que había señalado la lectura (3 firmes y 2 dudas). Falta la lectura de Gadea.
+
+**Graves:**
+1. **Jake** (6938): el refresher por la mañana y las dos inmersiones ese mismo día: «Yes». El refresher va en su propio día.
+2. **Ernesto** (6941): lo mismo en español: «Sí, puedes hacerlo el mismo día», y planifica con esa fecha.
+3. **Priya** (6942): acaba el curso el 18 y vuela el 19 a las 9:00: «not safe», cuando puede volar desde las 7:00. Además niega el ahorro de empezar desde las islas.
+4. **Sofía** (6939): vuelo a las 6:00 del día siguiente: «Sí, llegas bien», y luego se contradice.
+5. **Anna** (6940): «through the online booking link» de un paquete sin enlace, y la oferta del asesor repetida aunque ya había aceptado.
+
+**Causas:** las 5 son del escritor afirmando sin tener el dato (CALN-38). El refresher y qué planes no tienen enlace estaban decididos en `decisiones.json`, que solo lee el juez; el vuelo tiene el dato, pero el escritor contesta sí o no antes de calcular. Ninguno es de la tarjeta (CALN-39).
+
+**Medios repetidos:** bloque de políticas en crudo; «no tengo el dato» cuando la base lo tiene; pregunta doble a medias; listas con planes ya descartados; precio final por persona con descuentos. Sueltos de invención: distancia desde Getsemaní (6933), horario de Bubble Makers en la tarjeta (6935), cómo se pide el 5 % de equipo propio (6936).
+
+**Lectura:** 5 de 10 no es comparable con el 23 % de antes sin más: son 10 clientes y otro autor. Lo que sí dice es que la tasa no ha bajado todavía y que cada autor nuevo encuentra clases que no teníamos. La auditoría de decisiones contra la base (22: 7 cubiertas, 8 a medias, 7 no; muchas las cumple el código) va a por esa causa: 0.59 pone los huecos reales como datos en la base y 6 casos nuevos en `banco-graves.json`.

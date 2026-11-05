@@ -50,6 +50,9 @@ def test_s04k_si_ya_la_dice_no_se_repite_y_sin_tiempo_no_se_pone():
     dicha = "Les alcanza, pero deben esperar 18 horas antes de volar."
     assert espera(dicha, [b], ["tiempo"]) == dicha
     assert espera("La salida es a las 8:00.", [b], ["horario"]) == "La salida es a las 8:00."
+    # 0.59: «meets the 18-hour wait» también la dice; se pegaba debajo.
+    con_guion = "Your flight meets the 18-hour wait."
+    assert espera(con_guion, [b], ["tiempo"]) == con_guion
 
 
 def test_la_senal_viaja_tambien_cuando_jev_duda():
