@@ -1,6 +1,21 @@
 History
 =======
 
+0.59.0 - (2026-11-05, SUBE A PRE: lo decidido, como datos en la base; fuera el código de la respuesta adelantada; panel fijo de graves)
+---------------------
+* **Decisión de Gadea (noche), para salir del bucle:** panel fijo de clientes (CALN-41), que decide si una versión mejora; las subidas que hagan falta, si cumplen las condiciones; alternar errores concretos y mejoras de fondo; escritor: Luna o, como mucho, DeepSeek Flash (CALN-42).
+* **Qué sube** (sobre 0.58.0):
+  * **Datos en la base (CALN-38):** el refresher ocupa su propio día (entra en 28 fichas); los planes sin enlace los reserva un asesor; si no aparece el descuento online, se explica y no se pasa con un asesor; en el vuelo, primero la hora y luego la comparación.
+  * **Fuera el código de la respuesta adelantada (CALN-37):** apagada desde la 0.58. `src` +23/−193 líneas.
+  * **La tarjeta de Bubble Makers** ya no da muelle ni hora, que su ficha deja a un asesor (`cart_render`). **La espera antes de volar** ya no se pega dos veces con «18-hour» (`rag_agent`).
+  * **Juez:** modelo fijado en claude-opus-5-5; el alias `opus` dependía de la versión de Claude Code (lo vio Álvaro: la suya daba 4-7). Modo `--panel`.
+* **Panel fijo (40 clientes: 20 vistos, 20 ciegos de dos autores; clientes con grave, Opus a ciegas):** PRE 0.58: 18 y 24 lanzado como la candidata, 25 sin `--codigo-local`; ciegos 13, 15 y 15 de 20. Candidata: **15 y 19; ciegos 12 y 11 de 20.** Estables en las dos tiradas: 4 clientes mejoran, 1 empeora. Con el guion fijo no se compara con las tandas; sirve entre versiones. Sigue siendo mucho: ciegos en torno al 60 %.
+* **Mini** (43 visibles, Opus, referencia de 94173777): control PRE 0.58 24 y 22 fallos (26 y 27 limpios); candidata 27 (23 limpios). De ahí no se concluye: el ruido entre tiradas es de varios fallos.
+* **Medido y fuera:** `SE_ALOJA` (mini 31 fallos, con la adelantada borrada) y las dos frases nuevas de `customer_place` (32; «dormir en la isla» se leía como salir de la isla). Sigue abierto el hotel por el que solo se pregunta.
+* **Descartado:** `--codigo-local` no era un sesgo. Mismos ficheros, y los tres diálogos sospechosos ×5 se comportan igual en los dos modos (Álvaro).
+* **Bancos:** graves ×1 52/53; `banco-caln35` ×1 21/22; origen 22/22 antes de quitar `customer_place`; suite 3446.
+* **Sigue abierto:** el escritor saca mal la cuenta con los textos nuevos (refresher y vuelo: 3 rotos; candidato a calcularse por código); CALN-39, plan equivocado, 5 de los 12 graves de los ciegos; «¿eres colombiano?» a quien dijo «español»; «tú pagas en pesos» en mixtos; `s04i-belgas`.
+
 0.58.0 - (2026-11-05, SUBE A PRE: fuera de servicio la respuesta adelantada; a quien se despide, sin tarjeta; lectura de Gadea de los graves)
 ---------------------
 * **Lectura de Gadea de los 8 clientes que Opus marca como graves:** 7 graves y 1 no es fallo (las profesoras como responsables de menores). Opus acierta 7 de 8 en lo que marca como grave. **Tasa: 7 de 31 clientes, 23 %.** Decisión: el juez, **una pasada por lado** (dos coinciden en el 98,9 % de los criterios y gastan el doble).

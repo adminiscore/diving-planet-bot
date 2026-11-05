@@ -59,7 +59,12 @@ integrar la rama del otro y suite en verde, porque en PRE gana el último; (3) *
 despliegue reinicia el contenedor y mata la medida del otro (avisar en el registro de Plan Coral con la hora de fin).
 Las doce normas, con su porqué, están en el documento.
 
-### ▶️ RETOMAR AQUÍ — 5-nov, ~18:40 (Gadea con Claude; Álvaro y Gonzalo sin conectar): 0.58.0 SUBE A PRE, sin respuesta adelantada; juez, una pasada por lado
+### ▶️ RETOMAR AQUÍ — 5-nov, ~22:45 (Gadea con Claude; Álvaro conectado): 0.59.0 SUBE A PRE; panel fijo en marcha
+
+**Normas nuevas de Gadea:** el panel fijo decide (`docs/robustness/caln/panel-graves.json`; `reproducir_juez_pre --banco ... --reps 1 --codigo-local`, y `juez_claude --panel F --nombre N`; al menos 2 tiradas por lado). De los ciegos no sale ningún caso para los bancos. Subidas sin tope, si cumplen las condiciones. Alternar errores concretos y mejoras de fondo. Escritor: Luna o DeepSeek Flash. Con solo los días se propone el paquete de 4, aunque lo reserve un asesor (Gadea, 5-nov).
+**Siguiente:** CALN-39: paso 1 sin confirmar en dpb-c84 (`_DAYS_TO_DIVES` y la propuesta en `_recommended_plan_intro`), y `banco-caln39.json`, al que le falta el turno de la nacionalidad. Falla de verdad el plan rechazado («forget the package» y tarjeta del de 5). Integrar `feature/caln8-huecos-alvaro` (a7f944ee). Después CALN-42 y CALN-4.
+
+### Relevo anterior — 5-nov, ~18:40 (Gadea con Claude; Álvaro y Gonzalo sin conectar): 0.58.0 SUBE A PRE, sin respuesta adelantada; juez, una pasada por lado
 
 - **Tasa de graves:** 7 de 31 clientes (23 %), leídos por Gadea: Opus acierta 7 de 8 en lo que marca como grave. Meta, 2 graves en 60, de dos autores, con `juez_claude --charlas`.
 - **Foco de Gadea:** esfuerzos genéricos en las dos causas: el escritor afirma sin dato (CALN-38) y la tarjeta sigue un plan que ya no quiere (CALN-39). Revisor ampliado: medido y descartado.
