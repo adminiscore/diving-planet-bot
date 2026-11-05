@@ -55,7 +55,7 @@ _PALABRAS_DE_UNA_RESPUESTA = 5
 # charlas de sparring salía el enlace o el pago dos veces. Se compara exacto, sin leer el sentido, y solo se toca lo de antes de la
 # 1.ª tarjeta (dos tarjetas pueden llevar el mismo enlace, como el minicurso y los Bubble Makers).
 _ENLACE_DE_RESERVA_RE = re.compile(r"https://book\.divingplanet\.org/book/[\w\-]+/\d+")
-_ENLACE_CON_IDIOMA_RE = re.compile(_ENLACE_DE_RESERVA_RE.pattern + r"(?:\?[\w=&\-]*)?")
+_ENLACE_CON_IDIOMA_RE = re.compile(_ENLACE_DE_RESERVA_RE.pattern + r"(?:\?[\w=&\-]*)?(?:#[\w\-]*)?")  # «…#rvrd-1» es parte del enlace
 _TARJETA_RE = re.compile(r"(?m)^🤿 \*")
 _FIN_DE_FRASE_RE = re.compile(r"(?<=[.!?:])\s+")
 

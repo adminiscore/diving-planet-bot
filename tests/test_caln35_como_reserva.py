@@ -229,3 +229,17 @@ def test_al_quitar_el_enlace_solo_se_va_la_frase_que_lo_anuncia():
     salida = compositor.componer(_estado(language="en", location="island"), respuesta, escribio=True)
     assert "Yes, we operate on Easter Sunday." in salida and "For the course, bring your referral." in salida
     assert "pay there" not in salida and "book.divingplanet.org" not in salida
+
+
+def test_el_fragmento_del_enlace_se_va_con_el_enlace():
+    url = "https://book.divingplanet.org/book/referral-already-on-the-island/26?language=en#rvrd-1"
+    salida = compositor.componer(_estado(language="en", location="island"), f"We open on Sunday. Book here: {url}", escribio=True)
+    assert "rvrd" not in salida and "We open on Sunday." in salida
+
+
+def test_el_catalogo_no_dice_que_el_precio_online_es_por_reservar_en_la_web():
+    from src.flows.catalog import catalog_facts
+
+    for lang, frase in (("es", "por reservar en la web"), ("en", "for booking on the website")):
+        assert frase not in catalog_facts(lang).split("\n")[0]
+    assert "no reservan por la web" in catalog_facts("es")

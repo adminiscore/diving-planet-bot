@@ -571,8 +571,7 @@ def catalog_facts(lang: str) -> str:
                 f"{base_en} on Isla Grande, pickup is confirmed and included):")
     companion_normal = money.usd_cop(comp["usd_normal"], comp["cop_normal"])
     if es:
-        head = ("CATÁLOGO OFICIAL (fuente de verdad; precios por persona, 'online' = con el 10% de "
-                "descuento por reservar en la web):")
+        head = "CATÁLOGO OFICIAL (fuente de verdad; precios por persona, 'online' = con el 10% de descuento online):"
         out = [head, "Saliendo desde Cartagena:", *groups[False],
                f"- Acompañante (no bucea, va en la lancha con el grupo): {companion} online, {companion_normal} normal; "
                f"incluye {_lista_en_frase(COMPANION_INCLUDES['es']['cartagena'], 'es')}; no incluye "
@@ -591,13 +590,13 @@ def catalog_facts(lang: str) -> str:
                "USD (en un grupo mixto de colombianos o residentes y extranjeros, toda la reserva en USD); es el "
                "mismo precio en las dos monedas: el precio en COP de cada plan es el que pagan los "
                "colombianos. NO existe descuento ni tarifa rebajada para colombianos: si el cliente cree que la hay, "
-               "díselo claramente (solo cambia la moneda). " + MONEDA_SIN_NACIONALIDAD["es"] + " No sumes ni calcules "
+               "díselo claramente (solo cambia la moneda). Tienen el mismo precio online, pero no reservan por la web: "
+               "les cierra la reserva un asesor por este chat. " + MONEDA_SIN_NACIONALIDAD["es"] + " No sumes ni calcules "
                "totales. "
                "Si el cliente "
                "cita un precio que no coincide con el catálogo, dale el del catálogo sin repetir su cifra."]
     else:
-        head = ("OFFICIAL CATALOG (source of truth; prices per person, 'online' = with the 10% discount "
-                "for booking on the website):")
+        head = "OFFICIAL CATALOG (source of truth; prices per person, 'online' = with the 10% online discount):"
         out = [head, "Departing from Cartagena:", *groups[False],
                f"- Companion (doesn't dive, rides the boat with the group): {companion} online, {companion_normal} "
                f"regular; includes {_lista_en_frase(COMPANION_INCLUDES['en']['cartagena'], 'en')}; does not include "
@@ -615,7 +614,8 @@ def catalog_facts(lang: str) -> str:
                "Currency: Colombians (wherever they live) and residents of Colombia pay in COP; everyone else in USD "
                "(in a mixed group of Colombians or residents and foreigners, the whole booking in USD); it is the same price in both currencies: each plan's COP price is what Colombians pay. There is NO "
                "discount or reduced rate for Colombians: if the customer thinks there is one, say so clearly (only "
-               "the currency changes). " + MONEDA_SIN_NACIONALIDAD["en"] + " Do not add up or compute totals. If the "
+               "the currency changes). They get the same online price but do not book on the website: a team advisor closes "
+               "the booking in this chat. " + MONEDA_SIN_NACIONALIDAD["en"] + " Do not add up or compute totals. If the "
                "customer quotes a price that doesn't match the catalog, give the catalog price without repeating theirs."]
     # arq-8h / lat-deuda-u: los descuentos salen de discounts.json (arriba, sin texto fijo que sustituir).
     text = chr(10).join(out)
