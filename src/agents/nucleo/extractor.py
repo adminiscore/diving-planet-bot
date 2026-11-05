@@ -1176,7 +1176,7 @@ async def lectura_del_extractor(state: ConversationState, message: str) -> dict 
     if tarea is None:
         return None
     try:
-        return await tarea
+        return _sin_los_cursos_que_ya_tienen(state, await tarea)
     except (asyncio.CancelledError, Exception) as exc:  # noqa: BLE001 — sin lectura, decide lo de siempre
         logger.warning(f"[EXTRACT][EX9B-4] el extractor falló: {exc!r}")
         return None
