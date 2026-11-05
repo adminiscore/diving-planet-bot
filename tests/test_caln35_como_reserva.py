@@ -204,31 +204,28 @@ def test_con_el_importe_de_su_salida_la_pieza_es_la_de_siempre():
     assert salida and "319 USD" in salida
 
 
-@pytest.mark.parametrize(("p", "mensaje", "leido", "hotel"), [
-    (0.17, "Ustedes cotizan los hoteles san pedro y cocoliso", "San Pedro", "por confirmar"),
-    (0.27, "¿El Ubuntu tiene acceso por lancha?", "", "por confirmar"),
-    (0.95, "estaremos en el Ubuntu, ¿tiene lancha?", "Ubuntu", "ubuntu"),
-    (0.46, "en el Ubuntu", "", "ubuntu"),  # el nombre suelto, sin contexto: Jev duda y vale
-    (None, "en el Ubuntu", "", "ubuntu"),  # Jev calla: lo de siempre
+@pytest.mark.asyncio
+@pytest.mark.parametrize(("senales", "mensaje", "hotel"), [
+    ({"asks_question": True}, "Ustedes cotizan los hoteles san pedro y cocoliso", "por confirmar"),
+    ({"pide_hoteles": True}, "cuál me recomiendan, san pedro o cocoliso", "por confirmar"),
+    ({}, "en el Ubuntu", "ubuntu"),
 ])
-def test_preguntar_por_un_hotel_no_es_alojarse_en_el(p, mensaje, leido, hotel):
-    from src.agents.jev_router import SE_ALOJA
+async def test_preguntar_por_un_hotel_no_es_alojarse_en_el(monkeypatch, senales, mensaje, hotel):
     from src.agents.nucleo import routing
 
     st = _estado(language="es", location="island", core_pending_slot=core.SLOT_HOTEL)
-    st._senales_router = {} if p is None else {SE_ALOJA: p}
-    assert routing._hotel_por_la_ia(st, mensaje, {"extractor": {"hotel": leido}}) is True
+    st._senales_router = senales
+    assert routing._hotel_por_la_ia(st, mensaje, {"extractor": {}}) is True
     assert st.hotel == hotel
 
 
-def test_el_extractor_no_guarda_el_hotel_que_se_pregunta():
-    from src.agents.jev_router import SE_ALOJA
+def test_el_hotel_que_dice_el_extractor_vale_aunque_pregunte():
+    from src.agents.nucleo import routing
 
-    st = _estado(language="es", location="island")
-    st._senales_router = {SE_ALOJA: 0.1}
-    intent = DetectedIntent()
-    extractor._poner_hotel(intent, st, {"hotel": "San Pedro de Majagua"})
-    assert not intent.hotel
+    st = _estado(language="es", location="island", core_pending_slot=core.SLOT_HOTEL)
+    st._senales_router = {"asks_question": True}
+    assert routing._hotel_por_la_ia(st, "estamos en el Ubuntu, ¿tiene lancha?", {"extractor": {"hotel": "Ubuntu"}}) is True
+    assert st.hotel == "ubuntu"
 
 
 def test_al_quitar_el_enlace_solo_se_va_la_frase_que_lo_anuncia():
