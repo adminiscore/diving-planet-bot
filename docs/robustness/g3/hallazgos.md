@@ -1191,3 +1191,19 @@ Fallos reales que salieron al leer la mini y el banco de graves, con su banco (`
 - **La misma pregunta 3 o 4 veces** (origen): con el cuerpo corto el freno la dejaba salir; con «pago» también. **La tarjeta entera 4 veces** con fechas de por medio.
 - **«Cómo reservamos» sin contestar:** Jev solo lo daba por «how to book online».
 - **Sin arreglar:** el escritor calcula mal el vuelo (g-vuelo-dia-siguiente: «too soon» con 21 h de margen, 1 de 2); «carta de referido» al Open Water desde cero (curso-alojamiento t2); «edad mínima 10» para snorkel (familia-mixta t1, en los dos lados); «¿desde ese hotel?» y «quedándonos en el hotel» no se leen como islas (precio-desde-islas).
+
+## CALN-S04N-01..10 · Tanda de contraste de Gonzalo contra PRE 0.53.0 (5-nov, `charla_rama` sobre 8b1f1f35)
+
+Criterio de Álvaro (#2716), Haiku por Anthropic. 10 clientes nuevos, educados y que escriben bien (`docs/robustness/g3/charlas-rama/s04n-*`), elegidos antes de ver nada y antes de
+subir la 0.53: **10 sin graves.** Valoración de un solo autor, sin repetir en PRE ×3 porque no hay nada que reproducir. No llevaba `se_despide` ni la pregunta del buzo con quien no bucea (feature/menu-gonzalo, sin subir).
+
+**BIEN:** crucero que zarpa a las 5 (no alcanza: regreso 4:15, y no ofrece nada falso), Medellín con el 50 % de anticipo (al asesor), instructor retirado con 2.000 inmersiones (lo revisa el equipo, sin exigir el refresher de oficio),
+8 universitarias (reparto 3 + 5, descuento de grupo a pedir, al asesor), epilepsia (al asesor, sin consejo médico), seguro DAN y equipo parcial (el seguro no se quita, sin el 5 %), 31 de noviembre («no existe; ¿qué fecha querías decir?»), cambio de inglés a español, cancelación por decisión propia (al asesor, sin prometer devolución), suizos con hijo de 16 (reparto y dos planes).
+
+**Medios:**
+- Pareja que dice «both Open Water» (cambio de idioma): el reparto queda {certified_diving: 1} + 1 sin elegir, y pregunta «¿La otra persona también va a bucear?» tras «los dos Open Water». Se resuelve al insistir. Clase que Gadea ya vio en S04M.
+- Suizos, hotel sin muelle: t1 «hotel pick-up isn't available» frente a «the nearest dock we point you to», en la misma respuesta. t2 pregunta cómo funciona la recogida y no contesta; la tarjeta dice «Pickup at your island hotel».
+- Crucero t2: «I'll skip it» recibe «how many people should I plan for?» y la regla del vuelo. Lo cubre `se_despide`, aún sin subir.
+- Universitarias: pide el total con los dos descuentos y «no puedo calcularlo» (como Londres de S04I; decisión de negocio pendiente). Paquetes de 3 y 4 en la lista.
+
+**Menores:** «I'm leaving the price per person below» debajo de los precios (idioma); la regla de 18 horas a quien no vuela (crucero t1, t2); los requisitos enteros (retirado t1); «Soy Coral, de Diving Planet» a media frase (31 de noviembre).
