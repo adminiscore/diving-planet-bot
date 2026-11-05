@@ -881,6 +881,19 @@ _GRUPO_MIXTO_Q = {
 # Sonda de 18 mensajes × 3 (`scripts/sonda_jev_cedula.py`): 51/54, 0,80-0,92 los que la tienen y como mucho 0,23 el resto; Jev
 # p50 0,29 → 0,29 s. Falla «Soy argentina pero tengo extranjería» (0,45): la nacionalidad delante lo confunde; decirle que
 # cuenta tenerla, aunque sea de otro país, solo lo subía a 0,50, y no se queda.
+# CALN-30 (5-nov): «yo soy residente» dicho sin que se pregunte: Haiku False 2/12 y None 10/12 (#3345), USD a un residente. Es lo único
+# que aún tapa la 2.ª lectura de la nacionalidad (CALN-10b). «Vivo en Colombia» a secas no cuenta (colombian_pricing).
+ES_RESIDENTE = "es_residente_colombia"
+ES_RESIDENTE_MIN = 0.7
+_ES_RESIDENTE_Q = {
+    "type": "noul",
+    "instructions": (
+        "The customer says that they themselves are a legal resident of Colombia ('soy residente', 'soy residente en Colombia', "
+        "'I'm a resident here'). It is FALSE if they only say that they live, work or stay in Colombia without calling themselves "
+        "a resident, if they are a resident of another country, if they say they are not a resident or have no cédula, if they "
+        "ask a general question about residents, and if they say that someone else is one."
+    ),
+}
 TIENE_CEDULA = "tiene_cedula_extranjeria"
 TIENE_CEDULA_MIN = 0.7
 _TIENE_CEDULA_Q = {
@@ -1091,6 +1104,7 @@ _DEL_TURNO = (
     _DelTurno(CITA_PRECIO, _CITA_PRECIO_Q, _si(CITA_PRECIO_MIN)),
     _DelTurno(GRUPO_MIXTO, _GRUPO_MIXTO_Q, _si(GRUPO_MIXTO_MIN)),
     _DelTurno(TIENE_CEDULA, _TIENE_CEDULA_Q, _si(TIENE_CEDULA_MIN)),
+    _DelTurno(ES_RESIDENTE, _ES_RESIDENTE_Q, _si(ES_RESIDENTE_MIN)),
     _DelTurno(SE_DESPIDE, _SE_DESPIDE_Q, _si(SE_DESPIDE_MIN)),
     _DelTurno(QUIERE_CURSO, _QUIERE_CURSO_Q, _si(QUIERE_CURSO_MIN)),
     _DelTurno(SIN_HOTEL, _SIN_HOTEL_Q, _si(SIN_HOTEL_MIN)),

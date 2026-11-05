@@ -10,6 +10,7 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+import os
 import re
 
 from src.agents.conversational_core import (
@@ -912,11 +913,11 @@ def con_la_cedula(state: ConversationState, nacional: bool | None) -> bool | Non
     residente (paga en pesos, colombian_pricing). Mini de la 0.52 (Gadea #3202): «Yo tengo extrangeria» tras una charla que ya
     habla de colombianos y extranjeros salía false 8/10 y el bot cobraba en USD. El grupo mixto manda sobre esto (la mexicana
     con cédula y su novio de México siguen en USD)."""
-    from src.agents.jev_router import GRUPO_MIXTO, TIENE_CEDULA  # lazy
+    from src.agents.jev_router import ES_RESIDENTE, GRUPO_MIXTO, TIENE_CEDULA  # lazy
 
     senales = getattr(state, "_senales_router", None) or {}
-    if nacional is not True and senales.get(TIENE_CEDULA) and not senales.get(GRUPO_MIXTO):
-        logger.info(f"[EXTRACT][CEDULA] Jev: tiene la cédula de extranjería, residente (el extractor decía {nacional!r})")
+    if nacional is not True and (senales.get(TIENE_CEDULA) or senales.get(ES_RESIDENTE)) and not senales.get(GRUPO_MIXTO):
+        logger.info(f"[EXTRACT][CEDULA] Jev: tiene la cédula de extranjería o es residente (el extractor decía {nacional!r})")
         return True
     return nacional
 
@@ -1002,7 +1003,8 @@ def lanzar_extraccion_adelantada(state: ConversationState, message: str) -> None
         # "Hola! My partner and I…", el detector dice "es" y el extractor "en" igualmente).
         lang = _detect_language_from_text(message) or lang
     historia = list(state.history or [])
-    if state.is_colombian is None and not state.mixed_nationality_notice:
+    if state.is_colombian is None and not state.mixed_nationality_notice and os.environ.get("CALN30_SIN_10B") != "1":
+        # CALN-30, solo para medir (no se integra): sin la segunda lectura.
         state._args_nacionalidad = (message, historia, sabido, lang)
         lectura = _nacionalidad_en_dos_lecturas(state)
     else:
