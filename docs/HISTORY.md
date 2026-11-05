@@ -1,6 +1,18 @@
 History
 =======
 
+0.55.0 - (2026-11-05, SUBE A PRE de noche: la hora de volar, grave de seguridad, en la base; los cursos sin plan desde las islas)
+---------------------
+* **Qué sube** (sobre 0.54.0; `feature/s05c-gadea`):
+  * **La hora de volar (grave de s05c, consejo inseguro), solo datos en `flight_after_diving`:** para un buzo, un vuelo el mismo día de la inmersión nunca llega, también por la noche, y que la lancha vuelva antes no lo arregla; quien dice que se va ese día, probablemente vuela; tras el refresher de día se puede volar desde las 7:00 del día siguiente. En PRE 0.54, a «me voy el sábado a las 21:00» decía que sí 3 de 5, y «too soon» a un vuelo con 21 h de margen 2 de 5.
+  * **Rescue, Divemaster y Mindful Diving desde las islas:** no tienen plan desde allí y los hechos quedaban vacíos: el escritor decía que los 796 USD son «para quien ya está en las islas, sin lancha». Ahora dan el de Cartagena y dicen que lo confirma un asesor.
+* **Medida** (una pasada, misma franja, en serie, a solas; A = PRE 0.54.0, B = e701db5c con `kb_v2_gadea`): mini de los 43 visibles: **21 → 21 fallos, 17 → 18 diálogos**, criterios 93,8 y 93,8 %. p50 3,23 → 3,29 s; p90 5,00 → 5,04 s; llamadas 3,63 → 3,67; respaldos 2 y 2. La misma pregunta 3+ veces: 4 → 3 diálogos.
+* **Bancos:** hora de volar (6 casos ×5) **A 22/30 → B 29/30**; s05c-rescue 3/3; suite 3390. El resto del código no cambia desde la 0.54.
+* **Sparring:** s05b (Gonzalo, contra 0.54.0, 10 clientes, 0 graves) y s05c (Gadea, contra 0.54.0, 10, 1 grave, arreglado aquí). **Meta de CALN-22: 0 de ~60.** Esta noche: 2 clientes con grave de 40. Hasta la 0.51: 17 graves en 109 clientes.
+* **CALN-30 (Gonzalo), sin subir, en `feature/caln30-gonzalo`:** con la señal `es_residente_colombia` (sonda 72/72) y sin 10b, 0 de 108 nacionalidades equivocadas en los dos lados y ~0,9 llamadas menos por turno en ese banco; no descarta un 2,5 %. **Decide Gadea:** quitarla con ese margen, medir más o dejarla.
+* **Sigue abierto:** «las fotos tienen un costo adicional» (certificado-fechas-fotos, 3 de 5 minis en la rama nueva, el escritor); menciona el Curso Referido a quien empieza de cero; abre con «Yes» antes de explicar por qué no llega.
+* **PENDIENTE para Andrés:** ¿se pueden hacer Rescue, Divemaster y Mindful Diving desde las islas, y a qué precio?
+
 0.54.0 - (2026-11-05, SUBE A PRE de noche: quien ya tiene la certificación no hace el curso; el menú y la despedida de Gonzalo; el aviso de moneda sin repetir; el grupo ya no se duplica; primer tramo de CALN-8 (5))
 ---------------------
 * **Qué sube** (sobre 0.53.0; `feature/caln-integra054-gadea`):
