@@ -351,12 +351,16 @@ def _con_la_pieza(state: ConversationState, answer: str | None, pieza_pedida: bo
         # Cotiza otro plan que el del estado («quiero reservar el paquete de 5 buceos» con la salida de 2 de base, o el
         # refresher de un buzo, que se cobra como el minicurso): la pieza, de los planes que cotizó (medida caln6-B1:
         # eran los 2 turnos en que aún saltaba la puerta).
-        bloques = cotizar.bloques_de_los_servicios(state, [sid for sid, s in SERVICES.items() if de_servicio(s) & dados])
-        pieza = cotizar.pieza_de_precios(bloques, lang)
-        # Con el origen sabido, los bloques ya son de su salida: si el escritor da el importe de la otra (belgas de CALN-35: 392 USD,
-        # el de Cartagena, a quien sale de las islas, 319), no cuadra porque él se equivoca. Manda la pieza. Sin esto se quedaba el suyo.
-        if not pieza or not (dados <= cifras(pieza) or any(b.get("origen") for b in bloques)):
-            return None
+        suyos = cotizar.bloques_de_los_servicios(state, [sid for sid, s in SERVICES.items() if de_servicio(s) & dados])
+        la_suya = cotizar.pieza_de_precios(suyos, lang)
+        # Con el origen sabido, sus bloques ya son de su salida: si el escritor da el importe de la otra (belgas de CALN-35: 392 USD,
+        # el de Cartagena, a quien sale de las islas, 319), no cuadra porque él se equivoca. Manda la pieza, y sigue siendo la lista del
+        # estado si ese plan ya está en ella. Sin esto se quedaba su importe.
+        con_origen = any(b.get("origen") for b in suyos)
+        if not (pieza and la_suya and con_origen and cifras(la_suya) <= cifras(pieza)):
+            bloques, pieza = suyos, la_suya
+            if not pieza or not (dados <= cifras(pieza) or con_origen):
+                return None
     logger.info("[CORE][CALN3] el RAG general cotiza: sus importes, fuera; debajo, la pieza de precios")
     if any(b.get("origen") for b in bloques):
         return redactor_hechos.con_la_pieza(answer, pieza)
