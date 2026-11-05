@@ -76,3 +76,27 @@ def test_el_oculto_no_se_juzga_sin_pedirlo(monkeypatch, tmp_path, capsys, con_oc
     assert jc.juzgar_ronda(args) == 0
     assert juzgados == esperados
     assert "oculto-1" not in capsys.readouterr().out
+
+
+def test_una_tanda_se_juzga_con_los_generales_y_el_de_graves(monkeypatch, tmp_path, capsys):
+    golden = {"version": 1, "global_criteria": [{"id": "x", "check": "algo"}], "dialogues": []}
+    fichero = tmp_path / "golden.json"
+    fichero.write_text(json.dumps(golden), encoding="utf-8")
+    charlas = tmp_path / "charlas"
+    charlas.mkdir()
+    (charlas / "6908.jsonl").write_text(json.dumps({"turno": 1, "conv": 6908, "msg": "hola", "reply": "hola"}) + "\n", encoding="utf-8")
+    monkeypatch.setattr(jc, "GOLDEN_FILE", fichero)
+    monkeypatch.setattr(jc, "CHARLAS", charlas)
+    monkeypatch.setattr(jc, "RESULTS_DIR", tmp_path)
+    monkeypatch.setattr(jc, "preparar", lambda _args: {})
+    vistos = []
+
+    def falso_juzgar(d, records, criterios, _ctx):
+        vistos.append(([c["id"] for c in criterios], records[0]["turn"]))
+        return [{"id": "sin-graves", "verdict": "no_cumple", "reason": "importe", "by": "claude-opus"}], {}
+
+    monkeypatch.setattr(jc, "juzgar_dialogo", falso_juzgar)
+    args = SimpleNamespace(charlas="6908", nombre="s05d", paralelo=1, modelo="opus", esfuerzo="medium", sufijo="")
+    assert jc.juzgar_charlas(args) == 0
+    assert set(vistos[0][0]) == {"sin-graves", "global:x"} and vistos[0][1] == 1
+    assert "1 de 1" in capsys.readouterr().out

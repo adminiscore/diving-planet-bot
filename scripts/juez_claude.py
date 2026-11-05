@@ -12,6 +12,7 @@ ningún flujo del producto.
 
     python -m scripts.juez_claude --run docs/robustness/synthetic-runs/X.jsonl --modelo opus [--esfuerzo medium] [--ids a,b]
     python -m scripts.juez_claude --calibrar --modelo opus      # contra las etiquetas de calibration/
+    python -m scripts.juez_claude --charlas 6908,6909 --nombre s05d   # tanda de sparring: criterios generales y graves, a ciegas
 
 El examen oculto no se juzga sin `--con-oculto`, y con él no se imprimen sus ids.
 """
@@ -51,6 +52,14 @@ from scripts.judge_golden_set import (
 )
 
 CACHE = RESULTS_DIR / "juez-claude-cache.jsonl"
+CHARLAS = Path("docs/robustness/g3/charlas")
+# El criterio de Álvaro (#2716) para las tandas: quien las escribe también clasifica, así que este juicio es la segunda opinión.
+CRITERIO_GRAVES = {
+    "id": "sin-graves",
+    "check": ("No hay ningún fallo GRAVE: el cliente no reserva mal ni se queda sin poder reservar. Es grave un importe, moneda, enlace o "
+              "plan equivocado; una fecha u horario falso; un consejo inseguro; algo contra una política o decisión de la referencia; un "
+              "callejón sin salida; o la misma pregunta por 3.ª vez. La fricción que no impide reservar y el estilo NO son graves."),
+}
 CALIBRACION = Path("docs/robustness/golden-set/calibration")
 _CLAVES_FUERA = ("ANTHROPIC_API_KEY", "ANTHROPIC_AUTH_TOKEN", "CLAUDECODE")
 _CANDADO = threading.Lock()
@@ -232,6 +241,37 @@ def juzgar_ronda(args) -> int:
     return 0
 
 
+def juzgar_charlas(args) -> int:
+    """Una tanda de sparring (`scripts/charla_pre`): no tiene criterios propios, así que van los generales y el de graves. A ciegas: el
+    juez no sabe qué clasificó quien la escribió."""
+    golden = json.loads(GOLDEN_FILE.read_text(encoding="utf-8"))
+    tareas = []
+    for conv in args.charlas.split(","):
+        filas = [json.loads(ln) for ln in (CHARLAS / f"{conv.strip()}.jsonl").read_text(encoding="utf-8").splitlines() if ln.strip()]
+        records = [{**f, "turn": f["turno"], "tag": conv.strip()} for f in filas]
+        tareas.append(({"id": conv.strip(), "category": "sparring", "criteria": [CRITERIO_GRAVES]}, records))
+    ctx = preparar(args)
+
+    def tarea(par):
+        dialogo, records = par
+        criterios, uso = juzgar_dialogo(dialogo, records, criteria_for(dialogo, golden["global_criteria"]), ctx)
+        return dialogo["id"], {"id": dialogo["id"], "category": "sparring", "conv": int(dialogo["id"]), "criteria": criterios}, uso
+
+    hechos, uso = en_paralelo(tareas, tarea, args.paralelo)
+    results = [hechos[d["id"]] for d, _ in tareas]
+    out = RESULTS_DIR / f"tanda-{args.nombre}__claude-{args.modelo}-{args.esfuerzo}{args.sufijo}.json"
+    out.write_text(json.dumps({"tanda": args.nombre, "model": f"claude-{args.modelo}", "effort": args.esfuerzo, "usage": dict(uso),
+                               "dialogues": results}, ensure_ascii=False, indent=1) + "\n", encoding="utf-8", newline="\n")
+    graves = [d for d in results for c in d["criteria"] if c["id"] == "sin-graves" and c["verdict"] != "cumple"]
+    print(f"Clientes con grave según el juez: {len(graves)} de {len(results)}")
+    for d in results:
+        for c in d["criteria"]:
+            if c["verdict"] not in ("cumple", "no_aplica"):
+                print(f"- {d['id']} / {c['id']}: {(c.get('evidencia_bot') or '')[:180]} | {(c.get('reason') or '')[:260]}")
+    print(f"Resultado: {out}")
+    return 0
+
+
 def calibrar(args) -> int:
     """Contra las etiquetas de calibration/: las mismas conversaciones y la misma tabla que `scripts.calibrate_judge`."""
     from scripts.calibrate_judge import consolidate, score
@@ -275,6 +315,8 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--run", help="JSONL de scripts.ronda_local_pre o run_synthetic_pre --sample golden")
     parser.add_argument("--calibrar", action="store_true", help="medir contra las etiquetas de calibration/")
+    parser.add_argument("--charlas", help="conversaciones de una tanda de sparring, separadas por comas")
+    parser.add_argument("--nombre", default="tanda", help="con --charlas: el nombre de la tanda")
     parser.add_argument("--modelo", default="opus", help="alias de Claude Code: opus, sonnet, haiku")
     parser.add_argument("--esfuerzo", default="medium")
     parser.add_argument("--ids", help="solo estos diálogos, separados por comas")
@@ -285,8 +327,10 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     if args.calibrar:
         return calibrar(args)
+    if args.charlas:
+        return juzgar_charlas(args)
     if not args.run:
-        parser.error("falta --run o --calibrar")
+        parser.error("falta --run, --calibrar o --charlas")
     return juzgar_ronda(args)
 
 
