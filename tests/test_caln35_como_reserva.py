@@ -12,10 +12,18 @@ from src.agents.nucleo import extractor, slotfill_close
 from src.agents.nucleo.origen_precio import (
     ORIGEN_TRAS_LAS_VARIANTES_EN,
     ORIGEN_TRAS_LAS_VARIANTES_ES,
+    _con_la_pieza,
 )
 from src.agents.supervisor import route_message
 from src.flows import hechos
-from src.flows.como_reserva import ASESOR, ENLACE, HOTEL_PRIMERO, como_reserva, hotel_conocido
+from src.flows.como_reserva import (
+    ASESOR,
+    ENLACE,
+    HOTEL_PRIMERO,
+    como_reserva,
+    cuando_tenga_el_hotel,
+    hotel_conocido,
+)
 from src.flows.state import ConversationState
 
 ENLACE_URL = "https://book.divingplanet.org/book/salidas-de-buceo/1?language=es"
@@ -107,7 +115,8 @@ def test_la_regla_una_vez_y_despues_solo_que_vuelva():
     assert "Cartagena" not in primera and "book.divingplanet.org" not in primera and "asesor" not in primera
     assert st.core_pending_slot == core.SLOT_HOTEL
     segunda = slotfill_close._hotel_primero(st)
-    assert segunda == slotfill_close._HOTEL_PRIMERO_YA_DICHO["es_uno"]
+    assert segunda == cuando_tenga_el_hotel(st) and "?" not in segunda
+    assert core.ask_slot(st, core.SLOT_HOTEL) == segunda  # no se le vuelve a preguntar
 
 
 def test_la_regla_en_plural_y_en_ingles():
@@ -171,3 +180,19 @@ async def test_a_ya_estaras_en_las_islas_sin_hotel_es_que_si(monkeypatch, sin_ho
     assert not st.pending_correction
     if sin_hotel:
         assert st.hotel == "por confirmar" and "resérvalo primero" in respuesta and "book.divingplanet.org" not in respuesta
+
+
+def test_el_importe_de_la_otra_salida_no_se_queda():
+    """Belgas: el respaldo escribe 392 USD (5 inmersiones desde Cartagena) a quien sale de las islas, que paga 319."""
+    st = _estado(language="en", location="island", detected_location="island", hotel="cocoliso",
+                 detected_activity="certified_diving", is_certified=True, is_colombian=False)
+    respuesta = "The 5-dive package fits perfectly.\n\n- Price per person: 392 USD online (436 USD regular)\n\nWould you like to book?"
+    salida = _con_la_pieza(st, respuesta)
+    assert salida and "392" not in salida and "436" not in salida and "319 USD" in salida
+
+
+def test_con_el_importe_de_su_salida_la_pieza_es_la_de_siempre():
+    st = _estado(language="en", location="island", detected_location="island", hotel="cocoliso",
+                 detected_activity="certified_diving", is_certified=True, is_colombian=False)
+    salida = _con_la_pieza(st, "The 5-dive package costs 319 USD online.")
+    assert salida and "319 USD" in salida

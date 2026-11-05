@@ -353,7 +353,9 @@ def _con_la_pieza(state: ConversationState, answer: str | None, pieza_pedida: bo
         # eran los 2 turnos en que aún saltaba la puerta).
         bloques = cotizar.bloques_de_los_servicios(state, [sid for sid, s in SERVICES.items() if de_servicio(s) & dados])
         pieza = cotizar.pieza_de_precios(bloques, lang)
-        if not pieza or not dados <= cifras(pieza):
+        # Con el origen sabido, los bloques ya son de su salida: si el escritor da el importe de la otra (belgas de CALN-35: 392 USD,
+        # el de Cartagena, a quien sale de las islas, 319), no cuadra porque él se equivoca. Manda la pieza. Sin esto se quedaba el suyo.
+        if not pieza or not (dados <= cifras(pieza) or any(b.get("origen") for b in bloques)):
             return None
     logger.info("[CORE][CALN3] el RAG general cotiza: sus importes, fuera; debajo, la pieza de precios")
     if any(b.get("origen") for b in bloques):

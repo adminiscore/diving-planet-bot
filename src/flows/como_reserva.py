@@ -19,11 +19,28 @@ HOTEL_PRIMERO = "hotel_primero"
 # Lo que se guarda si la respuesta a «¿en qué hotel?» no trae ninguno: el lead dice «sin definir» y no se pregunta en bucle.
 POR_CONFIRMAR = {"es": "por confirmar", "en": "to be confirmed"}
 
+_CUANDO_TENGA_EL_HOTEL = {
+    "es_uno": "Cuando tengas el hotel, escríbeme con el nombre y seguimos con la reserva. 🌊",
+    "es_grupo": "Cuando tengan el hotel, escríbanme con el nombre y seguimos con la reserva. 🌊",
+    "en": "Once you have the hotel, message me with its name and we'll carry on with the booking. 🌊",
+}
+
 
 def hotel_conocido(state) -> str | None:
     """El hotel que ha dicho el cliente; None si no ha dicho ninguno (o solo tenemos «por confirmar» o el nombre de una isla)."""
     hotel = getattr(state, "hotel", None) or getattr(state, "detected_hotel", None)
     return None if hotel in POR_CONFIRMAR.values() or solo_nombra_una_isla(hotel) else hotel
+
+
+def clave_de_idioma_y_grupo(state) -> str:
+    if getattr(state, "language", "es") != "es":
+        return "en"
+    return "es_grupo" if (getattr(state, "detected_group_size", None) or 1) > 1 else "es_uno"
+
+
+def cuando_tenga_el_hotel(state) -> str:
+    """El recordatorio, en vez de volver a preguntar el hotel a quien ya ha dicho que no lo tiene."""
+    return _CUANDO_TENGA_EL_HOTEL[clave_de_idioma_y_grupo(state)]
 
 
 def _sale_desde_las_islas(state) -> bool:

@@ -40,7 +40,12 @@ from src.domain import activities as dom
 from src.domain.politicas import politica
 from src.flows import cart_render, grupo
 from src.flows.catalog import politica_breve
-from src.flows.como_reserva import HOTEL_PRIMERO, como_reserva
+from src.flows.como_reserva import (
+    HOTEL_PRIMERO,
+    clave_de_idioma_y_grupo,
+    como_reserva,
+    cuando_tenga_el_hotel,
+)
 from src.flows.state import ConversationState, Step
 from src.utils import money
 
@@ -283,11 +288,6 @@ _HOTEL_PRIMERO = {
            "changes or falls through, your plan changes too. If you don't have one yet, book it first and message me with its "
            "name; then we'll carry on with the booking. 🌊"),
 }
-_HOTEL_PRIMERO_YA_DICHO = {
-    "es_uno": "Cuando tengas el hotel, escríbeme con el nombre y seguimos con la reserva. 🌊",
-    "es_grupo": "Cuando tengan el hotel, escríbanme con el nombre y seguimos con la reserva. 🌊",
-    "en": "Once you have the hotel, message me with its name and we'll carry on with the booking. 🌊",
-}
 _PASO_HOTEL_PRIMERO = "hotel_primero"  # en `preguntas_hechas`: cuántas veces se ha dicho
 
 
@@ -300,14 +300,12 @@ def _hotel_primero(state: ConversationState) -> str:
     siguiente mensaje se lee como la respuesta a «¿en qué hotel?»."""
     from src.agents.compositor import _contar_la_pregunta  # lazy
 
-    lang = state.language
-    clave = "en" if lang != "es" else ("es_grupo" if (state.detected_group_size or 1) > 1 else "es_uno")
     state.quick_replies = []
     state.core_pending_slot = SLOT_HOTEL
     if _hotel_primero_ya_dicho(state):
-        return _HOTEL_PRIMERO_YA_DICHO[clave]
+        return cuando_tenga_el_hotel(state)
     _contar_la_pregunta(state, _PASO_HOTEL_PRIMERO)
-    return f"{_HOTEL_PRIMERO[clave]}\n\n{politica('other_island_hotels', lang)}"
+    return f"{_HOTEL_PRIMERO[clave_de_idioma_y_grupo(state)]}\n\n{politica('other_island_hotels', state.language)}"
 
 
 def _finalize(state: ConversationState, *, pasar_al_asesor: bool = True, ofrecer: bool = True) -> str:

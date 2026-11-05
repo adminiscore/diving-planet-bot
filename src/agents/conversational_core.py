@@ -36,7 +36,12 @@ from src.agents.intent_detector import (
 )
 from src.domain import activities as dom
 from src.flows import cart_render, eligibility
-from src.flows.como_reserva import HOTEL_PRIMERO, como_reserva, hotel_conocido
+from src.flows.como_reserva import (
+    HOTEL_PRIMERO,
+    como_reserva,
+    cuando_tenga_el_hotel,
+    hotel_conocido,
+)
 from src.flows.state import ConversationState, Step
 from src.utils.number_words import number_alt
 from src.utils.text import strip_accents
@@ -714,6 +719,8 @@ def _texto_de_la_pregunta(state: ConversationState, slot: str, *, reasking: bool
             return _pregunta_origen(lang)
         return _pregunta_origen(lang, mismo_dia=True)
     if slot == SLOT_HOTEL:
+        if state.hotel and not hotel_conocido(state):
+            return cuando_tenga_el_hotel(state)  # CALN-35: ya ha dicho que no lo tiene
         return (
             "¿En qué hotel te vas a alojar? Lo necesito para reservar y coordinar la recogida."
             if lang == "es" else
