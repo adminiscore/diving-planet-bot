@@ -254,7 +254,7 @@ async def test_si_jev_duda_en_el_router_los_afirma_viajan_igual(monkeypatch):
     got = await escalation.detect_routing_signals("Yo soy open y me gustaría salir un día. No sé qué tienen.")
     # (u3-3 mandaba también las probabilidades crudas, `affirms_p`: se quitaron en la limpieza ex9b con su único lector,
     # la puerta del regex en los turnos sin pregunta.)
-    assert got == {"asks_question": True, "affirms_activity": True, "affirms_nationality": False}
+    assert got == {"asks_question": True, "affirms_activity": True, "elige_seguro": True, "affirms_nationality": False}
 
 
 # ── Arreglo 1 (25-sep): si el RAG no sabe, su respuesta va SOLA ──────────────
