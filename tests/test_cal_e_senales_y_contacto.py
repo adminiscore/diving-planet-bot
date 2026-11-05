@@ -140,6 +140,17 @@ def test_el_contexto_son_los_ultimos_turnos_y_va_cortado(monkeypatch):
     assert len(estado) < 2000, "el turno largo va cortado"
 
 
+def test_del_asistente_se_ve_el_final_donde_esta_su_pregunta():
+    """5-nov (panel visto-6940): la oferta del asesor iba al final de un mensaje largo y Jev solo veía el principio."""
+    oferta = "Would you like me to connect you with a team advisor?"
+    largo = [{"role": "user", "content": "How can I book?"},
+             {"role": "assistant", "content": "Prices per person. " * 40 + oferta}]
+    estado = jr._estado_para_jev("Yes, please. Thank you for your help.", largo)
+    assert oferta in estado and "Assistant: …" in estado
+    cliente = [{"role": "user", "content": "Hola, " + "y " * 300 + "FINAL"}]
+    assert "FINAL" not in jr._estado_para_jev("y?", cliente), "del cliente, el principio, como siempre"
+
+
 def test_sin_historial_el_estado_es_el_de_siempre(monkeypatch):
     assert jr._estado_para_jev("hola", None) == jr._estado_para_jev("hola", [])
     assert jr._estado_para_jev("hola", [{"role": "user", "content": ""}]).endswith("Customer message: hola")

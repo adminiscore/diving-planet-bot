@@ -1268,6 +1268,17 @@ _CONTEXTO_TURNOS = 2
 _CONTEXTO_CARACTERES = 400
 
 
+def _recorte_para_jev(mensaje: dict) -> str:
+    """Lo que Jev lee de un mensaje anterior: del cliente, el principio; del asistente, el FINAL, donde está su pregunta
+    (5-nov, Gadea #3575). Con el principio, la oferta del asesor al final de un mensaje de ~650 caracteres no se veía, y el
+    «Yes, please. Thank you for your help.» que la aceptaba no era aceptarla (panel visto-6940: `acepta_el_pase` 0,47 frente
+    a 0,97 con el final; `scripts/sonda_jev_pase_recorte.py`)."""
+    texto = str(mensaje["content"])
+    if mensaje.get("role") == "user" or len(texto) <= _CONTEXTO_CARACTERES:
+        return texto[:_CONTEXTO_CARACTERES]
+    return "…" + texto[-_CONTEXTO_CARACTERES:]
+
+
 def _estado_para_jev(message: str, history: list[dict] | None = None) -> str:
     """Lo que Jev lee: el contexto fijo, los últimos turnos (solo con el flag) y el mensaje de este turno."""
     sin_contexto = f"{_CONTEXT}\n\nCustomer message: {message}"
@@ -1277,8 +1288,7 @@ def _estado_para_jev(message: str, history: list[dict] | None = None) -> str:
     if not ultimos:
         return sin_contexto
     lineas = "\n".join(
-        f"{'Customer' if h.get('role') == 'user' else 'Assistant'}: {str(h['content'])[:_CONTEXTO_CARACTERES]}"
-        for h in ultimos)
+        f"{'Customer' if h.get('role') == 'user' else 'Assistant'}: {_recorte_para_jev(h)}" for h in ultimos)
     return (f"{_CONTEXT}\n\nHow the conversation ended, only so you can tell what the customer is referring to:\n"
             f"{lineas}\n\nEvery question below is about THIS last message of the customer, not about the lines "
             f"above.\n\nCustomer message: {message}")
