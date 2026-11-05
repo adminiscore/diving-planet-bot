@@ -166,10 +166,10 @@ def _es_la_misma(a: str, b: str) -> bool:
 def _frase_sin_la_pregunta(frase: str, preguntas: list[str]) -> str | None:
     """La frase del escritor que acaba en la pregunta de la reserva, con algo delante: «Para este plan hay que dormir en las islas:
     ¿Desde dónde saldrías?» (tanda s05a, a quien acaba de decir «desde Cartagena»). Queda lo de delante, con punto. None si no es el caso."""
+    entera = frase.rstrip()
     for pregunta in preguntas:
-        corte = frase.rfind(pregunta)
-        if corte > 0 and frase.rstrip().endswith(pregunta):
-            delante = frase[:corte].rstrip().rstrip(":,;—-").rstrip()
+        if len(entera) > len(pregunta) and entera.casefold().endswith(pregunta.casefold()):
+            delante = entera[:-len(pregunta)].rstrip().rstrip(":,;—-").rstrip()
             return f"{delante}." if delante else ""
     return None
 

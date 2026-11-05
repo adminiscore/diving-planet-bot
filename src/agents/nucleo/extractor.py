@@ -405,6 +405,10 @@ def _suma_a_un_grupo_sin_actividad(state: ConversationState, reparto: dict, tota
     if len(reparto) > 1 and cuadra and suma > sabido and any(
             n == sabido for a, n in reparto.items() if a != "undecided"):
         return "todos"
+    if len(reparto) > 1 and suma == sabido and not sin_decidir:
+        # Banco de grupos, g21 (0.54, 2 de 2): la familia de 4, sin actividad guardada, reparte a los 4 entre tres actividades sin decir
+        # el total, Jev cree que se suma alguien y el grupo pasaba a 8. Varias actividades que suman justo los ya contados son ellos.
+        return "todos"
     if isinstance(total, int):
         # Los sin decidir del extractor son (parte de) los de antes: {minicourse: 2, undecided: 1} con total 5 sobre 3
         # (banco-lat11 a4, 3 de 3: el extractor cuenta a quien escribe y no a su grupo). Cuadra el total con los nuevos.

@@ -246,3 +246,19 @@ def test_la_pregunta_con_algo_delante_y_su_explicacion_se_van_si_ya_la_contesto(
     texto = componer(estado, respuesta, escribio=True)
     assert "Desde dónde" not in texto and "coordinamos la recogida" not in texto
     assert "Para este plan de 2 días" in texto and texto.endswith(cuantos)
+
+
+def test_varias_actividades_que_suman_los_ya_contados_son_ellos():
+    estado = ConversationState(conversation_id="g21", language="es", detected_group_size=4)
+    estado._jev_adds_person = 0.95
+    reparto = {"certified_diving": 2, "padi_open_water": 1, "companion": 1}
+    assert extractor._suma_a_un_grupo_sin_actividad(estado, reparto, None) == "todos"
+    assert extractor._suma_a_un_grupo_sin_actividad(estado, {"minicourse": 4}, None) == "nuevos"  # una sola: decide Jev
+
+
+def test_la_pregunta_ya_contestada_tambien_con_otra_mayuscula():
+    from src.agents.compositor import _frase_sin_la_pregunta
+
+    assert _frase_sin_la_pregunta("Para este plan de dos días, ¿desde dónde saldrías?", ["¿Desde dónde saldrías?"]) == "Para este plan de dos días."
+    assert _frase_sin_la_pregunta("¿Desde dónde saldrías?", ["¿Desde dónde saldrías?"]) is None  # entera: la quita el paso de antes
+    assert _frase_sin_la_pregunta("¿Quieres el enlace?", ["¿Desde dónde saldrías?"]) is None
