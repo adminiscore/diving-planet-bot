@@ -1,6 +1,22 @@
 History
 =======
 
+0.54.0 - (2026-11-05, SUBE A PRE de noche: quien ya tiene la certificación no hace el curso; el menú y la despedida de Gonzalo; el aviso de moneda sin repetir; el grupo ya no se duplica; primer tramo de CALN-8 (5))
+---------------------
+* **Qué sube** (sobre 0.53.0; `feature/caln-integra054-gadea`):
+  * **Grave de la tanda s05a:** «Tres ya tenemos el Open Water» salía como 3 plazas del Curso Básico. Señal nueva de Jev `quiere_curso` (sonda 23 × 3: 0,82-0,98 frente a como mucho 0,32); si dice que no, los cursos que el reparto trae de nuevas son buzos. Corregido en `extractor._sin_los_cursos_que_ya_tienen`, por donde pasan los dos que leen el reparto (también el escritor antes de guardar). **El prompt del extractor no cambia.**
+  * **CALN-28, menú (Gonzalo):** señal `se_despide`: a quien se va, el escritor contesta sin la pregunta ni sus botones (banco 15/30 → 30/30). El buzo que va con quien no bucea ya no recibe «¿salida, paquete o curso avanzado?», sino la pregunta de los dos (banco-menu 10/18 → 16/18).
+  * **CALN-27, pago:** el aviso de la moneda no repite lo que el escritor ya dijo con sus palabras (`avisos._lo_dice_con_otras_palabras`).
+  * **CALN-30 (4b, Álvaro):** las señales de Jev en una tabla (`_DEL_TURNO`). **CALN-8 (5), primer tramo (Álvaro):** salen de `conversational_core` a `nucleo/` lectura, origen_precio, notas, reparto y plan, tal cual; `huecos` no está en esta versión.
+  * **El grupo no se duplica:** varias actividades que suman justo los ya contados son ellos; g21 pasaba de 4 a 8 (según lo que leyera el lector en el primer turno). Ya estaba en el código.
+  * **La pregunta ya contestada:** el compositor quita también la frase del escritor con algo delante y su explicación («Para este plan…: ¿desde dónde saldrías?» a quien acaba de decir «desde Cartagena»).
+  * **La espera de volar, solo con buceo:** a quien hacía snorkel y volvía a su crucero se le decía dos veces.
+* **Medida** (una pasada, misma franja, en serie, a solas; A = PRE 0.53.0, B = 2fb6891d con `kb_v2_gadea`): mini de los 43 visibles: **20 → 20 fallos, 17 → 17 diálogos**, criterios 94,1 y 94,1 %. p50 3,31 → 3,26 s; p90 4,84 → 5,08 s; llamadas 3,63 → 3,61; respaldos 1 y 1. La misma pregunta 3+ veces: 2 → 3 diálogos. Después de esta mini entra ca2326fd (el grupo duplicado y la mayúscula), medido con banco y no con mini.
+* **Bancos:** graves (ya con 6 casos de s05a) ×2 72/76; s05a ×5 30/30, tras corregir la lectura del escritor; banco-053b 32/32; moneda 22/22; se-despide 20/20; menú 14/14; nocturno 6/6; dos inmersiones 7/7; grupos ×2 91/102 (mismos fallos que la 0.53; g21 3 de 3 → con el arreglo, 2 de 3). Suite 3389.
+* **Sparring:** s04n (Gonzalo, contra 0.53.0, 10 clientes, 0 graves) y s05a (Gadea, contra 0.53.0, 10 clientes, 1 grave, arreglado aquí). **Meta de CALN-22: 0 de ~60**: el grave de s05a corta los 10 de s04n.
+* **Sigue abierto:** el escritor calcula mal el vuelo a veces (g-vuelo-dia-siguiente, 1 de 2); menciona el Curso Referido a quien empieza de cero y una vez pidió la carta (curso-alojamiento); el refresher a quien lleva 8 meses, una vez en s05a y no se reproduce; la despedida con tarjeta, 1 de 2 cuando Jev no la ve (s05a-crucero).
+* **Siguiente:** tanda de los dos autores contra esta versión; CALN-30 (residente por Jev, Gonzalo); `huecos` de CALN-8 (5), en la sesión de Álvaro, sin subir; DIF y VAL después.
+
 0.53.0 - (2026-11-05, SUBE A PRE de noche: días sueltos, Bubble Makers, el enlace una vez, la misma pregunta a la 3.ª y la tarjeta ya vista; «cómo reservamos» se contesta; el residente no es extranjero)
 ---------------------
 * **Qué sube** (sobre 0.52.0; `feature/053b-gadea`, junta `feature/052c-gadea`):

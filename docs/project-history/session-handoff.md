@@ -59,12 +59,13 @@ integrar la rama del otro y suite en verde, porque en PRE gana el último; (3) *
 despliegue reinicia el contenedor y mata la medida del otro (avisar en el registro de Plan Coral con la hora de fin).
 Las doce normas, con su porqué, están en el documento.
 
-### ▶️ RETOMAR AQUÍ — 5-nov, ~03:00 (Gadea durmiendo; Claude de noche con Gonzalo y Álvaro): 0.53.0 SUBIENDO A PRE; meta, 0 clientes de ~60
+### ▶️ RETOMAR AQUÍ — 5-nov, ~05:15 (Gadea durmiendo; Claude de noche con Gonzalo; Álvaro sin señales desde la 01:44): 0.53.0 Y 0.54.0 SUBIDAS A PRE; meta, 0 clientes de ~60
 
-- **Sube la 0.53.0** (`feature/053b-gadea`, a `feature/pre_gadea` y `feature/caln-gadea`): la 0.53 dio 20 → 24 y no subió; trabajados sus fallos, la 0.53b dio **20 → 19 fallos, 17 → 16 diálogos**, p90 5,31 → 5,37 s. Detalle en HISTORY 0.53.0. Comprobar si PRE sirve el commit con `/c/t/c049/despliegue0511.py <sha>`.
-- **Para Gadea (PENDIENTE, sin decidir):** revisar la meta de ~60 clientes con un par de tandas; quitar solo la respuesta adelantada (39 de 49 rehechas; sin medir).
-- **Siguiente en orden:** tanda de Gonzalo contra la 0.53; juntar `feature/menu-gonzalo` (CALN-28: se_despide, buzo con quien no bucea; toca `ask_slot`); CALN-27 pago (`feature/caln27-pago-gadea`, sin medir, sobre 18dc32c5); CALN-8 (5) y la tabla de Álvaro (`feature/caln8-lectura-alvaro`, `feature/jev-tabla-alvaro`: al juntar, pasar el texto nuevo de `PIDE_ENLACE`).
-- **Abierto:** ver el final de HISTORY 0.53.0 y `docs/robustness/g3/hallazgos.md`.
+- **PRE:** 0.53.0 (8b1f1f35; la 0.53 dio 20 → 24 y no subió; la 0.53b, 20 → 19 fallos) y 0.54.0 (`feature/caln-integra054-gadea`; 20 → 20 fallos, 17 → 17 diálogos, p90 4,84 → 5,08 s). Detalle en HISTORY. Comprobar el commit con `/c/t/c049/despliegue0511.py <sha>`; la base se regenera al final de la CI, no antes de `healthy`.
+- **Contador CALN-22: 0 de ~60.** s04n (Gonzalo, 0.53.0): 10 sin graves; s05a (Gadea, 0.53.0): 1 grave en 10, arreglado en la 0.54.
+- **Para Gadea (PENDIENTE, sin decidir):** revisar la meta de ~60 clientes con los datos de estas tandas; quitar solo la respuesta adelantada (39 de 49 rehechas; sin medir).
+- **Siguiente en orden:** tanda de los dos autores contra la 0.54; CALN-30, residente por Jev y quitar 10b (Gonzalo, porque Álvaro no da señales); `huecos` de CALN-8 (5) está sin subir en la sesión de Álvaro: al volver, rebasar sobre la 0.54 (toca `ask_slot`, que tiene el parche de Gonzalo).
+- **Abierto:** ver el final de HISTORY 0.54.0 y `docs/robustness/g3/hallazgos.md`.
 - **Lección de esta noche:** nada de frases en el prompt del extractor (me colé y la quité); leer las respuestas de un banco aunque pase: el venezolano pasaba y estaba mal desde hacía días.
 
 ### ▶️ RETOMAR AQUÍ — 4-nov, 23:25 (Gadea, Gonzalo y Álvaro, los tres con Claude): 0.52.0 EN PRE; Haiku por Anthropic; meta, 0 clientes de ~60
