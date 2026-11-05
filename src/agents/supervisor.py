@@ -580,6 +580,27 @@ async def _shared_turn_handler(
 # (ver su `__init__`). Se re-exportan aquí para que la cascada (`_shared_turn_handler`), el router, los nodos, el
 # núcleo (que los usa como `supervisor.<nombre>`), los scripts y los tests los sigan encontrando en este módulo. Va
 # al final a propósito: esos módulos importan de aquí lo común, que tiene que estar ya definido.
+def ultimo_del_bot(state: ConversationState) -> str:
+    """El último mensaje del bot en el historial ("" si no hay)."""
+    return next((h.get("content", "") for h in reversed(state.history or []) if h.get("role") == "assistant"), "")
+
+
+def acepta_la_oferta_del_asesor(state: ConversationState, message: str, routing_signals: dict | None) -> bool:
+    """¿El cliente acepta la oferta de asesor del último mensaje del bot? La oferta se mira en nuestro texto (asesor + verbo
+    de oferta); la aceptación es un «sí» pelado o, si el cliente añade algo, Jev (`acepta_el_pase`). Panel visto-6940 y tanda
+    s05f 6952 (5-nov): «Yes, please. Thank you for your help.» y «Sí, por favor. La casa se llama…» no eran un «sí» pelado, el
+    núcleo seguía con la reserva y volvía a ofrecer el pase. Solo en pasos conversacionales, para no pisar los sí/no del
+    árbol."""
+    from src.agents.jev_router import ACEPTA_EL_PASE  # lazy
+
+    if state.step not in (Step.MAIN_MENU, Step.FREE_TEXT):
+        return False
+    ultimo = ultimo_del_bot(state)
+    if not (_ADVISOR_OFFER_RE.search(ultimo) and _OFFER_VERB_RE.search(ultimo)):
+        return False
+    return bool(_BARE_AFFIRMATION_RE.match(message.strip()) or (routing_signals or {}).get(ACEPTA_EL_PASE))
+
+
 def pase_pedido_o_aceptado(state: ConversationState, message: str, routing_signals: dict) -> str | None:
     """El pase a una persona cuando el cliente la pide (Jev `wants_human`, o la palabra de escalado si decide el regex)
     o acepta con un «sí» la oferta de asesor del turno anterior; None si no. Un solo sitio para los dos gates que
@@ -589,11 +610,7 @@ def pase_pedido_o_aceptado(state: ConversationState, message: str, routing_signa
     from src.flows.messages import MESSAGES  # lazy
 
     texto = message.strip()
-    acepta = False
-    if state.step in (Step.MAIN_MENU, Step.FREE_TEXT) and _BARE_AFFIRMATION_RE.match(texto):
-        last_bot = next(
-            (h.get("content", "") for h in reversed(state.history or []) if h.get("role") == "assistant"), "")
-        acepta = bool(_ADVISOR_OFFER_RE.search(last_bot) and _OFFER_VERB_RE.search(last_bot))
+    acepta = acepta_la_oferta_del_asesor(state, message, routing_signals)
     pide = (regex_decide(routing_signals) and _matches_escalation_keyword(texto.lower())) or bool(
         (routing_signals or {}).get("wants_human"))
     if not (acepta or pide):
