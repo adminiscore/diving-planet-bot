@@ -1,6 +1,29 @@
 History
 =======
 
+0.53.0 - (2026-11-05, SUBE A PRE de noche: días sueltos, Bubble Makers, el enlace una vez, la misma pregunta a la 3.ª y la tarjeta ya vista; «cómo reservamos» se contesta; el residente no es extranjero)
+---------------------
+* **Qué sube** (sobre 0.52.0; `feature/053b-gadea`, junta `feature/052c-gadea`):
+  * **De la 0.53 (s04j, s04l, s04m, CALN-27 enlace, CALN-31):** con varios días sin plan elegido, la salida de un día va en la lista; niños del minicurso y Bubble Makers con su servicio y su precio; el enlace que ya sale en
+    la tarjeta no lo repite el escritor (`compositor._sin_enlaces_repetidos`); la lista vacía tras «the options are:» (Gonzalo); contar respaldos en `reproducir_juez_pre` (Gonzalo, CALN-26).
+  * **La misma pregunta a la 3.ª vez, por los caminos que quedaban** (mini de la 0.53, en los dos lados): sin nada más que decir, van las dos salidas con su precio y su enlace en vez de la pregunta (solo con un plan por
+    origen; con varios, como el buceo certificado, se sigue preguntando); con «pago» ya no hace falta (sí con «enlace»); un hotel o isla de la lista cerrada contesta a «¿ya estarás en las islas?».
+  * **La tarjeta ya vista no se repite** con la seguridad sin contestar: contesta el escritor y sigue la pregunta, si aún toca, o el paso siguiente (paquete-5-buceos-islas: la tarjeta entera 4 veces mientras daba fechas).
+  * **«Cómo reservamos» se contesta** (causa en Jev): `PIDE_ENLACE` pedía «how to book online»: 0,41, y el turno iba como paso de la reserva, sin escritor (regateo-grupo-6, 0 de 5). Con la pregunta nueva, 0,92-0,97 en 9 frases;
+    «quiero reservar» y controles, 0,06-0,15; «como pago?», 0,36. Sin saber el origen, los dos enlaces los garantiza el código (`redactor_hechos._con_los_enlaces_que_faltan`).
+  * **Una parte del grupo no es el total:** con GRUPO_MIXTO de Jev, un `group_size` menor que el sabido no se toma (qty 3 → 2 con «dos somos colombianos pero uno es extranjero»). Por código: la frase en el prompt del extractor
+    se quitó sin medir (las frases nuevas en ese prompt mueven otras lecturas). **El prompt del extractor no cambia.**
+  * **Base (solo datos):** quien tiene cédula de extranjería no cuenta como extranjero en la regla del grupo. g-venezolano-cedula decía «al ser un grupo mixto, se paga en dólares» con la lista en pesos, también en la 0.52 (el filtro solo buscaba «grupo mixto»).
+  * **Lista de precios:** la salida de un día no quita sitio a los paquetes (regresión de la 0.53: s04i 0/3), y quien bucea 2 días no recibe el paquete de 3 (s04l t4).
+* **Medida** (una pasada, misma franja, en serie, a solas; A = PRE 0.52.0, B con `kb_v2_gadea`): la 0.53 (18dc32c5) dio **20 → 24 fallos, 13 → 18 diálogos** y no subió. Trabajados sus fallos, la **0.53b (989971b1): 20 → 19 fallos, 17 → 16 diálogos**, criterios 94,0 → 94,4 %;
+  p50 3,26 → 3,39 s; p90 5,31 → 5,37 s; llamadas 3,66 → 3,68; respaldos 4 → 1. La misma pregunta 3+ veces: 5 → 4 diálogos. A dio 20 fallos dos veces con 13 y 17 diálogos: da idea del ruido.
+  Después de esta mini entra a1f6142d (la política y la lista de quien bucea 2 días), medido con banco y no con mini.
+* **Bancos:** banco-053b (nuevo, los fallos reales de la mini): **20/32 → 44/48**; hotel como respuesta 0/4 → 6/6, tarjeta 0/4 → 6/6, origen tras el pago 0/2 → 3/3; regateo 0/5 → 3/3 con el arreglo de Jev. Graves ×2 59/64 con los filtros corregidos (antes del arreglo del venezolano, 0/2; después, 2/3), y un subconjunto ×3 con el código final: venezolano 2/3, belgas 3/3,
+  s04l 3/3, mexicana 3/3, moneda 33/33. Nocturno 12/12, dos inmersiones 21/21. Grupos ×2 92/102 (0.52: 189/204 ×4; mismos fallos más g10, g21 y g49 a 1/2). Suite 3369 + los nuevos.
+* **Filtros corregidos** en banco-graves: los vuelos contaban como fallo «wouldn't be met», «not enough» o «too short», buenas respuestas; el venezolano ahora mira también «mixta» y «en dólares».
+* **Sigue abierto:** el escritor a veces calcula mal el vuelo (g-vuelo-dia-siguiente 1/2: «too soon» con 21 h); «carta de referido» al Open Water desde cero (una vez, escritor); «edad mínima 10» para snorkel en una familia (es 6; en los dos lados); «¿desde ese hotel?» sin leer las islas (precio-desde-islas); venezolano 1/3 en USD si Jev marca mixto (0,59 en la sonda).
+* **Siguiente:** tanda de Gonzalo contra esta versión; `feature/menu-gonzalo` (se_despide y el buzo con quien no bucea); CALN-27 pago (`feature/caln27-pago-gadea`); CALN-8 (5) y tabla de Álvaro.
+
 0.52.0 - (2026-11-04, SUBE A PRE: la misma pregunta no sale una 3.ª vez; el grupo mixto, la cédula, el precio citado, el nocturno y los días los afirma Jev; fuera las 2 regex de «two dives»)
 ---------------------
 * **Qué sube** (sobre 0.51.1; `feature/s04j-gadea`):

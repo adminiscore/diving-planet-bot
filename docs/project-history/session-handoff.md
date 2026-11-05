@@ -59,6 +59,14 @@ integrar la rama del otro y suite en verde, porque en PRE gana el último; (3) *
 despliegue reinicia el contenedor y mata la medida del otro (avisar en el registro de Plan Coral con la hora de fin).
 Las doce normas, con su porqué, están en el documento.
 
+### ▶️ RETOMAR AQUÍ — 5-nov, ~03:00 (Gadea durmiendo; Claude de noche con Gonzalo y Álvaro): 0.53.0 SUBIENDO A PRE; meta, 0 clientes de ~60
+
+- **Sube la 0.53.0** (`feature/053b-gadea`, a `feature/pre_gadea` y `feature/caln-gadea`): la 0.53 dio 20 → 24 y no subió; trabajados sus fallos, la 0.53b dio **20 → 19 fallos, 17 → 16 diálogos**, p90 5,31 → 5,37 s. Detalle en HISTORY 0.53.0. Comprobar si PRE sirve el commit con `/c/t/c049/despliegue0511.py <sha>`.
+- **Para Gadea (PENDIENTE, sin decidir):** revisar la meta de ~60 clientes con un par de tandas; quitar solo la respuesta adelantada (39 de 49 rehechas; sin medir).
+- **Siguiente en orden:** tanda de Gonzalo contra la 0.53; juntar `feature/menu-gonzalo` (CALN-28: se_despide, buzo con quien no bucea; toca `ask_slot`); CALN-27 pago (`feature/caln27-pago-gadea`, sin medir, sobre 18dc32c5); CALN-8 (5) y la tabla de Álvaro (`feature/caln8-lectura-alvaro`, `feature/jev-tabla-alvaro`: al juntar, pasar el texto nuevo de `PIDE_ENLACE`).
+- **Abierto:** ver el final de HISTORY 0.53.0 y `docs/robustness/g3/hallazgos.md`.
+- **Lección de esta noche:** nada de frases en el prompt del extractor (me colé y la quité); leer las respuestas de un banco aunque pase: el venezolano pasaba y estaba mal desde hacía días.
+
 ### ▶️ RETOMAR AQUÍ — 4-nov, 23:25 (Gadea, Gonzalo y Álvaro, los tres con Claude): 0.52.0 EN PRE; Haiku por Anthropic; meta, 0 clientes de ~60
 
 - **PRE sirve `6595abed`** (HISTORY 0.52.0, `feature/pre_gadea`), sano; humo 5/5, 0 respaldos. Medidas en el HISTORY: graves 70 → 84/90, moneda 28 → 39/42, grupos 189/204, mini 23 → 22 fallos, misma

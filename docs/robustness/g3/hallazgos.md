@@ -1147,3 +1147,12 @@ y equipo propio (5 % que se suma, cámara bajo su responsabilidad), Hotel Rosari
 - Crucero: la espera antes de volar, pegada por el código (0.52), a quien vuelve en barco: sin daño, pero no viene a cuento.
 
 **Menores:** el enlace dos veces (Miami t2, Rescue t2; arreglado en la 0.53); el aviso de moneda repetido (Miami t1); «I'm leaving the price below» debajo de la lista (Junior t1); «Para aplicarlo» sin saber a qué (despedida t1).
+
+## Mini y bancos de la 0.53 (5-nov, no es una tanda: no cuenta para CALN-22)
+
+Fallos reales que salieron al leer la mini y el banco de graves, con su banco (`banco-053b.json`, `banco-graves.json`). Arreglados en la 0.53.0 salvo los que se indican.
+
+- **Moneda contradictoria, ya en PRE 0.52:** venezolano con cédula y esposa colombiana, «al ser un grupo mixto, se paga en dólares» con la lista en pesos. El filtro solo buscaba «grupo mixto». Por el criterio de Álvaro, grave. Política aclarada.
+- **La misma pregunta 3 o 4 veces** (origen): con el cuerpo corto el freno la dejaba salir; con «pago» también. **La tarjeta entera 4 veces** con fechas de por medio.
+- **«Cómo reservamos» sin contestar:** Jev solo lo daba por «how to book online».
+- **Sin arreglar:** el escritor calcula mal el vuelo (g-vuelo-dia-siguiente: «too soon» con 21 h de margen, 1 de 2); «carta de referido» al Open Water desde cero (curso-alojamiento t2); «edad mínima 10» para snorkel (familia-mixta t1, en los dos lados); «¿desde ese hotel?» y «quedándonos en el hotel» no se leen como islas (precio-desde-islas).
