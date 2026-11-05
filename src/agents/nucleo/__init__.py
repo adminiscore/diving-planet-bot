@@ -25,6 +25,8 @@ módulo, con su fase y lo que solo usa esa fase:
                         nodos lo importan de aquí.
 - `plan.py`           → el plan: cuántos días dura, si hay que dormir en las islas, el que se recomienda y la
                         pregunta del origen según el plan (CALN-8 (5), 5-nov).
+- `huecos.py`         → la pregunta de cada dato que falta de la reserva (`ask_slot`), determinista y en los dos
+                        idiomas (CALN-8 (5), 5-nov).
 - `slotfill_close.py` → `_slotfill_close_phase`: preguntar el hueco que falta o cerrar la reserva, y el acuse en
                         paralelo.
 
