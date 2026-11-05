@@ -47,7 +47,8 @@ def test_tras_los_dos_enlaces_la_pregunta_sobra_aunque_pida_el_enlace():
     fija = core.ORIGEN_TRAS_LOS_ENLACES_ES
     estado = _estado()
     estado._preguntas_del_turno, estado.core_pending_slot, estado._intenciones = [], None, ["enlace"]
-    texto = componer(estado, f"• Desde Cartagena: https://a\n• Ya en las islas: https://b, una de las dos.\n\n{fija}", escribio=True)
+    enlaces = "• Desde Cartagena: https://book.divingplanet.org/book/a/1\n• Ya en las islas: https://book.divingplanet.org/book/b/2"
+    texto = componer(estado, f"{enlaces}\n\n{fija}", escribio=True)
     assert "Reserva con el de tu punto de salida." in texto and "¿Saldrías" not in texto
 
 
