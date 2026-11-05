@@ -4,7 +4,7 @@
 una y nadie subía mientras otro medía. Este script corre la misma muestra DENTRO del contenedor `dp-pre-bot` (base,
 claves y modelos de PRE) con el código desplegado o con el LOCAL de cada uno (`--codigo-local`, su carpeta
 `/tmp/codigo-local-<usuario>`) y sus flags (`--flag`, `--env`), y escribe el MISMO jsonl que `run_synthetic_pre`, que se
-juzga con `judge_golden_set --run`. Varias personas, y A y B, pueden correr a la vez.
+juzga con `juez_claude --run`. Varias personas, y A y B, pueden correr a la vez.
 
 Fiel al camino del webhook (`channels/chatwoot.handle_message` + `finalize_chatwoot_delivery`):
 - estado nuevo como el webhook (`ConversationState(conversation_id, language=settings.default_language)`) y, entre
@@ -18,7 +18,7 @@ No pasa por Chatwoot (ni el canal ni sus tiempos): `client_latency_s` es lo que 
     # base A y B a la vez, con el mismo código local y distinto flag
     python -m scripts.ronda_local_pre --name x-A --sample core --codigo-local --flag no:mi_flag
     python -m scripts.ronda_local_pre --name x-B --sample core --codigo-local --flag mi_flag
-    python -m scripts.judge_golden_set --run docs/robustness/synthetic-runs/<fecha>-x-B.jsonl
+    python -m scripts.juez_claude --run docs/robustness/synthetic-runs/<fecha>-x-B.jsonl
     # el código desplegado en PRE, para comparar con una ronda por Chatwoot
     python -m scripts.ronda_local_pre --name x-local --sample core
 

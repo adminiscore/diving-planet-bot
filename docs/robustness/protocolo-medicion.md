@@ -38,6 +38,30 @@ que se puede comparar con las fotos antiguas y añadir a la página igual. No da
 
 ## 2. Pruebas A/B más baratas (sin perder robustez)
 
+**El juez, desde el 5-nov-2026: Opus medium con Claude Code (decisión de Gadea).** Sustituye a gpt-5-mini en todo lo que se
+mide. Cada persona lo lanza con SU suscripción; no toca OpenAI ni va en ningún flujo del producto.
+
+```
+ENV_FILE=.env.ci python -m scripts.juez_claude --run docs/robustness/synthetic-runs/<ronda>.jsonl   # opus, medium; ~5 min
+python -m scripts.ab_judge_compare <ronda A> <ronda B>                                             # las dos, con Opus
+ENV_FILE=.env.ci python -m scripts.juez_claude --run <ronda>.jsonl --no-cache --sufijo=-2           # otra pasada, para el ruido del juez
+```
+
+- **Por qué Opus** (mini c055-B; Gadea votó a ciegas los 41 criterios en que los jueces no coincidían): de unos 24 fallos reales, Opus
+  detecta 21, gpt-5-mini 15, Sonnet y Haiku 12. Falsos: Opus 11, gpt-5-mini 8, Sonnet 8, Haiku 11. Es una persona y una mini:
+  en errores totales no hay diferencia clara con gpt-5-mini (p 0,69); en reales que detecta solo uno, 8 frente a 2 (p 0,11).
+- **Un fallo de Opus no es una sentencia:** 1 de cada 3 fue falso. Leer el texto del bot antes de arreglar nada, como siempre.
+- **Las cifras no se comparan con las de gpt-5-mini:** con Opus salen más fallos (32 frente a 23 en la misma mini) sin que el bot
+  empeore. A y B, con el mismo juez y la misma base. Una ronda vieja se rejuzga gratis.
+- **Si cambia el modelo por defecto de `opus`** en Claude Code, rejuzgar la base antes de comparar: el nombre es un alias.
+- **Cómo es distinto:** una llamada por diálogo con todos sus criterios (43 por lado, no 268). Cada una va aislada (sin herramientas, sin
+  memoria ni CLAUDE.md, fuera del repo y sin saber si es A o B). Sin `ANTHROPIC_API_KEY` en el entorno: con ella facturaría a la API;
+  el script la quita. No usar `--bare`: anula la suscripción.
+- **Uso:** ~5 puntos de la ventana de 5 h por lado de mini. Al agotarse, para y lo dice; lo juzgado queda en su caché
+  (`results/juez-claude-cache.jsonl`). El oculto no se juzga sin `--con-oculto` (una vez, en VAL).
+
+Lo que sigue en esta sección y `judge_golden_set` quedan para releer rondas antiguas; sus costes son de gpt-5-mini.
+
 Un A/B completo (2 rondas del core por lado + juez en las 4) cuesta ~2,3 $ y ~2,5 h de máquina.
 Casi todo el gasto es el **juez** (~0,47 $ por ronda del core). Desde ahora se mide **por
 escalones**, y solo se sube al siguiente si hace falta:

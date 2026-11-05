@@ -1,6 +1,13 @@
 History
 =======
 
+0.55.1 - (2026-11-05, NO cambia el bot: el juez pasa a Opus medium con Claude Code, sin gastar OpenAI)
+---------------------
+* **Decisión de Gadea:** el juez era el 73,5 % del gasto de OpenAI del día (6,71 $ de 9,13 $). Ahora cada persona lo lanza con su suscripción de Claude (`scripts/juez_claude.py`); en PRO no hay juez. Cómo usarlo, en `protocolo-medicion.md`.
+* **Cómo se eligió** (mini c055-B, sin gastar OpenAI; Gadea votó a ciegas los 41 criterios en que los jueces no coincidían): de unos 24 fallos reales detectan **Opus 21**, gpt-5-mini 15, Sonnet 12 y Haiku 12; falsos 11, 8, 8 y 11. Una persona y una mini: en errores totales no hay diferencia clara con gpt-5-mini (p 0,69); en reales que detecta solo uno, 8 frente a 2 (p 0,11).
+* **Cambia la vara:** con Opus salen más fallos sin que el bot empeore (B 32 frente a 23), y 1 de cada 3 es falso: se lee el texto antes de arreglar. Nueva base: c055-A con Opus, 28 fallos y 21 diálogos limpios de 43. A y B de la 0.55 con Opus: 12 criterios peor y 8 mejor, ruido (p 0,5).
+* **Tocado:** `ab_judge_compare` lee los resultados de Opus por defecto (`--juez gpt-5-mini-medium` para rondas viejas). `tests/test_juez_claude.py`: sin claves de API, aislado, para al agotar el uso, sin el oculto salvo que se pida.
+
 0.55.0 - (2026-11-05, SUBE A PRE de noche: la hora de volar, grave de seguridad, en la base; los cursos sin plan desde las islas)
 ---------------------
 * **Qué sube** (sobre 0.54.0; `feature/s05c-gadea`):

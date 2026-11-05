@@ -1,7 +1,8 @@
-"""A/B del juez: compara criterio a criterio dos resultados de `judge_golden_set`.
+"""A/B del juez: compara criterio a criterio dos resultados de `juez_claude` (o, con `--juez`, de `judge_golden_set`).
 
-    python -m scripts.ab_judge_compare 2026-09-24-u34-A 2026-09-24-u34-B
-    ENV_FILE=.env.dev python -m scripts.ab_judge_compare A B --rejuzgar 2 [--tambien-mejoras]
+    python -m scripts.ab_judge_compare 2026-11-05-c055-A 2026-11-05-c055-B
+    python -m scripts.ab_judge_compare 2026-09-24-u34-A 2026-09-24-u34-B --juez gpt-5-mini-medium
+    ENV_FILE=.env.dev python -m scripts.ab_judge_compare A B --juez gpt-5-mini-medium --rejuzgar 2 [--tambien-mejoras]
 
 Imprime el resumen de cada ronda, las MEJORAS y las REGRESIONES con el motivo del juez.
 Regla del protocolo: leer el TEXTO del bot de cada regresión antes de concluir (el juez
@@ -24,7 +25,7 @@ from pathlib import Path
 
 from scripts import judge_golden_set as juez
 
-R = "docs/robustness/golden-set/results/{}__gpt-5-mini-medium.json"
+R = "docs/robustness/golden-set/results/{}__{}.json"
 
 
 def _veredicto_mayoritario(veredictos: list[str]) -> str:
@@ -95,8 +96,11 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--rejuzgar", type=int, default=0, help="juicios nuevos por criterio que cambia (0 = sin API)")
     p.add_argument("--tambien-mejoras", action="store_true", help="re-juzgar también las mejoras, no solo regresiones")
     p.add_argument("--golden", help="otro fichero de diálogos (los exámenes de control G9/G10), como en judge_golden_set")
+    p.add_argument("--juez", default="claude-opus-medium", help="sufijo del resultado (desde el 5-nov, Opus medium)")
     args = p.parse_args(argv)
-    res_a, res_b = (json.load(open(R.format(n), encoding="utf-8")) for n in (args.a, args.b))
+    if args.rejuzgar and args.juez.startswith("claude-"):
+        p.error("--rejuzgar llama a OpenAI: con Claude, otra pasada con `juez_claude --no-cache --sufijo=-2`")
+    res_a, res_b = (json.load(open(R.format(n, args.juez), encoding="utf-8")) for n in (args.a, args.b))
     # 6-oct: el juez tiene dos referencias del negocio (judge_golden_set.REFERENCIAS); los resultados de antes no la
     # apuntan y son de la antigua. Con referencias distintas la comparacion mide el juez, no el bot.
     ref_a, ref_b = res_a.get("referencia", "antigua"), res_b.get("referencia", "antigua")
@@ -107,7 +111,7 @@ def main(argv: list[str] | None = None) -> int:
         s = d["summary"]
         print(f"{n}: dialogos {s['dialogues_passed']}/{s['dialogues']} ({s['dialogues_pass_pct']}%) | criterios "
               f"{s['criteria_judged'] - s['criteria_failed']}/{s['criteria_judged']} ({s['criteria_pass_pct']}%) | "
-              f"revisar {s['to_review']} | coste {d['cost_usd']} | cache {d['cache']}")
+              f"revisar {s['to_review']} | coste {d['cost_usd']} | cache {d.get('cache')}")
     cambios = comparar(res_a, res_b)
     conv_a, conv_b = _conversaciones(res_a), _conversaciones(res_b)
     client, golden = None, None
