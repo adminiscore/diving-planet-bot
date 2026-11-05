@@ -29,6 +29,7 @@ from src.agents.conversational_core import (
     _known_field_values,
     _rag_answer,
     _same_for_customer,
+    _sin_importes,
     _sin_la_pregunta_final,
     _take_parallel_answer,
     ask_slot,
@@ -400,6 +401,16 @@ async def _con_la_pregunta(state: ConversationState, message: str, answer: str, 
     return sin if cierre_igual else f"{sin.rstrip()}\n\n{response}"
 
 
+def _rehecha_o_sin_importes(rehecha: str | None, answer: str) -> str:
+    """G3-07a: la respuesta rehecha sin precio. Si sale vacía o «no lo tengo a la mano», la primera sin sus importes: el cierre la
+    tiraba por fallback (s4-7) y «¿cuánto dura? ¿puedo bucear al día siguiente?» recibía solo «¡Perfecto!» y la tarjeta (s05b
+    especialidad t2, s04n suizos t2), con la pregunta ya contestada en la primera."""
+    if rehecha and not _is_rag_fallback(rehecha):
+        return rehecha
+    logger.info("[CORE][G3-07a] lo rehecho no sirve: va la primera sin sus importes")
+    return _sin_importes(answer) or answer
+
+
 async def _sin_dato(state: ConversationState, message: str, prev_pending: str, pregunta: str) -> str | None:
     """lat-9 paso 2 (decisión de Gadea del 26-oct: «el escritor»): el cliente no contestó la pregunta pendiente (da las
     gracias, se despide, corrige o da otro dato): en vez de la misma pregunta otra vez, el escritor contesta a lo que dijo
@@ -612,9 +623,11 @@ async def _slotfill_close_phase(
         logger.info("[CORE][G3-07a] la respuesta trae un importe y el turno lleva la tarjeta: se rehace sin precio")
         state._pregunta_del_escritor = None  # lat-9 paso 2: la tarjeta cierra el turno; no hay pregunta que escribir
         try:
-            answer = await _rag_answer(state, message, history=list(state.history), sin_precio=True) or answer
+            rehecha = await _rag_answer(state, message, history=list(state.history), sin_precio=True)
         except Exception as exc:  # noqa: BLE001 — si falla, va la de antes
             logger.warning(f"[CORE][G3-07a] no se pudo rehacer sin precio: {exc!r}")
+        else:
+            answer = _rehecha_o_sin_importes(rehecha, answer)
     if answer and finalized and _is_rag_fallback(answer):
         # s4-7 (paso 6): con el cierre de la reserva (resumen + link) en este turno, un "eso no lo
         # tengo a la mano" no aporta nada y, por la regla de arriba, TAPABA el cierre: "great, how do
