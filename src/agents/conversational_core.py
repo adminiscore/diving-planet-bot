@@ -79,11 +79,12 @@ SLOT_CONFIRM_CORRECTION = "confirm_correction"
 # dedicado en maybe_handle_turn (gate `not resolved_short`).
 
 
-# Desde el catalogo (`dom.dive_packages`, 2026-09-15). Con solo los dias se elige el
-# paquete mas grande de esa duracion (2 dias -> 5 inmersiones), como antes.
+# Desde el catalogo (`dom.dive_packages`, 2026-09-15). Con solo los dias, el paquete mas pequeño de esa duracion: CALN-39 (5-nov), el mas
+# grande era suponer lo que el cliente no pidio (2 dias -> 5 inmersiones con nocturna, a quien pide dos mañanas). `_recommended_plan_intro`
+# le dice que hay mas.
 _DIVES_TO_BASE_PLAN = {dives: service for dives, (_, service) in dom.dive_packages().items()}
 _DAYS_TO_DIVES = {
-    days: max(dives for dives, (pkg_days, _) in dom.dive_packages().items() if pkg_days == days)
+    days: min(dives for dives, (pkg_days, _) in dom.dive_packages().items() if pkg_days == days)
     for days, _ in dom.dive_packages().values() if days > 1
 }
 

@@ -1,0 +1,136 @@
+{
+ "about": "CALN-39 (5-nov): la tarjeta sigue un plan que el cliente no pidió o ya no quiere. Escrito por Claude, sin mirar los clientes ciegos del panel. Último turno.",
+ "dialogos": [
+  {
+   "id": "c39-dos-dias-es",
+   "tarea": "Solo dice dos días: no se supone el de 5 con nocturna",
+   "turnos": [
+    "Hola, soy buzo Advanced, español, y salgo desde Cartagena. Quiero bucear dos días.",
+    "Solo yo.",
+    "Mi última inmersión fue este año.",
+    "No soy colombiano ni tengo cédula."
+   ],
+   "ninguno": [
+    "🤿 *paquete de 5"
+   ],
+   "debe": [
+    "paquete de 4|4 inmersiones"
+   ]
+  },
+  {
+   "id": "c39-dos-dias-en",
+   "tarea": "Lo mismo en inglés",
+   "turnos": [
+    "Hi, I'm a certified diver from Canada leaving from Cartagena. I'd like to dive for two days.",
+    "Just me.",
+    "I dived last month."
+   ],
+   "ninguno": [
+    "🤿 *5-dive",
+    "🤿 *5 dive",
+    "🤿 *package of 5"
+   ]
+  },
+  {
+   "id": "c39-dos-mananas",
+   "tarea": "Dos mañanas: nada de nocturna",
+   "turnos": [
+    "Hola, soy buzo Advanced, español, y salgo desde Cartagena. Quiero bucear dos mañanas y estar de vuelta a comer, sin inmersión nocturna.",
+    "Solo yo.",
+    "Buceé este año.",
+    "No soy colombiano ni tengo cédula."
+   ],
+   "ninguno": [
+    "🤿 *paquete de 5"
+   ],
+   "debe": [
+    "2 inmersiones"
+   ]
+  },
+  {
+   "id": "c39-rechaza-paquete-es",
+   "tarea": "Rechaza el paquete: la tarjeta es la salida de un día",
+   "turnos": [
+    "Hola, soy buzo Advanced, español, y salgo desde Cartagena. ¿Cuánto cuesta el paquete de 4 inmersiones?",
+    "Es mucho. Mejor no quiero el paquete, solo un día con 2 inmersiones.",
+    "Solo yo.",
+    "Buceé este año.",
+    "No soy colombiano ni tengo cédula."
+   ],
+   "ninguno": [
+    "🤿 *paquete de 4"
+   ],
+   "debe": [
+    "2 inmersiones"
+   ]
+  },
+  {
+   "id": "c39-rechaza-paquete-en",
+   "tarea": "Rechaza el paquete en inglés",
+   "turnos": [
+    "Hi, certified diver from the UK leaving from Cartagena. How much is the 5-dive package?",
+    "Forget the package, we'd rather do just the two dives in one day. There are two of us.",
+    "We both dived this year."
+   ],
+   "ninguno": [
+    "🤿 *5"
+   ],
+   "debe": [
+    "2 dives"
+   ]
+  },
+  {
+   "id": "c39-acompanante-y-snorkel",
+   "tarea": "Tres actividades: va la salida del buzo también",
+   "turnos": [
+    "Hola, somos 3 españoles y salimos desde Cartagena. Yo soy buzo certificado y quiero la salida de 2 inmersiones, mi esposa hace snorkel y mi madre viene de acompañante sin meterse al agua.",
+    "Buceé este año.",
+    "Somos españoles, no tenemos cédula."
+   ],
+   "debe": [
+    "2 inmersiones",
+    "snorkel",
+    "acompa"
+   ]
+  },
+  {
+   "id": "c39-control-pide-5",
+   "tarea": "Control: pide el de 5 con nocturna",
+   "turnos": [
+    "Hola, soy buzo Advanced, español, y salgo desde Cartagena. Quiero el paquete de 5 inmersiones con la nocturna.",
+    "Solo yo.",
+    "Buceé este año.",
+    "No soy colombiano ni tengo cédula."
+   ],
+   "debe": [
+    "paquete de 5"
+   ]
+  },
+  {
+   "id": "c39-control-nocturna-2-dias",
+   "tarea": "Control: dos días con nocturna",
+   "turnos": [
+    "Hola, soy buzo Advanced, español, y salgo desde Cartagena. Quiero bucear dos días e incluir una inmersión nocturna.",
+    "Solo yo.",
+    "Buceé este año.",
+    "No soy colombiano ni tengo cédula."
+   ],
+   "debe": [
+    "paquete de 5"
+   ]
+  },
+  {
+   "id": "c39-control-tres-dias",
+   "tarea": "Control: tres días, hay un solo paquete",
+   "turnos": [
+    "Hola, soy buzo Advanced, español, y salgo desde Cartagena. Quiero bucear tres días.",
+    "Solo yo.",
+    "Buceé este año.",
+    "No soy colombiano ni tengo cédula."
+   ],
+   "debe": [
+    "paquete de 7|7 inmersiones"
+   ]
+  }
+ ]
+}

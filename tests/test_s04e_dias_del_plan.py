@@ -32,3 +32,66 @@ def test_con_tres_dias_el_plan_es_el_de_tres_dias():
     st.detected_activity, st.location, st.detected_cert_days = "certified_diving", "cartagena", 3
     assert core._recommended_plan_intro(st) == ""
     assert core._resolve_cert_plan(st) == "7_dives_3_days"
+
+
+def test_con_dos_dias_no_se_supone_el_paquete_con_nocturna():
+    """CALN-39: «dos mañanas» recibía el paquete de 5 con nocturna. Se propone el de 4 y se le dice qué más hay."""
+    st = ConversationState(conversation_id="c39", language="es")
+    st.detected_activity, st.location, st.detected_cert_days = "certified_diving", "cartagena", 2
+    assert core._resolve_cert_plan(st) == "4_dives_2_days"
+    intro = core._recommended_plan_intro(st)
+    assert "*4 inmersiones*" in intro and "*5*" in intro and "sueltas" in intro
+
+
+def test_si_dice_cuantas_inmersiones_no_se_le_propone_otro_paquete():
+    st = ConversationState(conversation_id="c39", language="es")
+    st.detected_activity, st.location, st.detected_cert_days, st.detected_cert_dives = "certified_diving", "cartagena", 2, 5
+    assert core._resolve_cert_plan(st) == "5_dives_2_days"
+    assert core._recommended_plan_intro(st) == ""
+
+
+def _plan_dicho(st, senales=None, **campos):
+    from src.agents.rutas.booking import _poner_el_plan_dicho
+
+    st._senales_router = senales or {}
+    intent = DetectedIntent()
+    for campo, valor in campos.items():
+        setattr(intent, campo, valor)
+    _poner_el_plan_dicho(st, intent)
+
+
+def test_lo_ultimo_que_afirma_manda_y_el_carrito_se_rehace():
+    """CALN-39: el paquete de 5 se quedaba pegado a quien luego pide las dos inmersiones de un día."""
+    from src.agents.jev_router import AFFIRMS_ACTIVITY
+
+    st = ConversationState(conversation_id="c39", language="en", detected_cert_dives=5, detected_cert_days=2, mixed_cart=[{"type": "cert"}])
+    _plan_dicho(st, {AFFIRMS_ACTIVITY: True}, cert_dives=2)
+    assert st.detected_cert_dives == 2 and st.detected_cert_days is None and st.mixed_cart == []
+    assert core._resolve_cert_plan(st) == "2_dives_1_day"
+
+
+def test_si_cambia_a_un_dia_el_paquete_de_dos_dias_se_olvida():
+    from src.agents.jev_router import AFFIRMS_ACTIVITY
+
+    st = ConversationState(conversation_id="c39", language="es", detected_cert_dives=5, detected_cert_days=2)
+    _plan_dicho(st, {AFFIRMS_ACTIVITY: True}, cert_days=1)
+    assert st.detected_cert_days == 1 and st.detected_cert_dives is None
+
+
+def test_una_pregunta_no_cambia_lo_elegido_pero_la_primera_cifra_vale():
+    from src.agents.jev_router import AFFIRMS_ACTIVITY, ASKS_QUESTION
+
+    st = ConversationState(conversation_id="c39", language="es", detected_cert_dives=2, mixed_cart=[{"type": "cert"}])
+    _plan_dicho(st, {AFFIRMS_ACTIVITY: True, ASKS_QUESTION: True}, cert_dives=4)
+    assert st.detected_cert_dives == 2 and st.mixed_cart
+    _plan_dicho(st, {}, cert_dives=5)  # «llevo 5 inmersiones»: Jev no dice que elija
+    assert st.detected_cert_dives == 2 and st.mixed_cart
+    st = ConversationState(conversation_id="c39", language="es")
+    _plan_dicho(st, {ASKS_QUESTION: True}, cert_dives=4)
+    assert st.detected_cert_dives == 4
+
+
+def test_dias_e_inmersiones_que_casan_se_quedan_los_dos():
+    st = ConversationState(conversation_id="c39", language="es")
+    _plan_dicho(st, cert_dives=5, cert_days=2)
+    assert st.detected_cert_dives == 5 and st.detected_cert_days == 2

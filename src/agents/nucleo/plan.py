@@ -93,6 +93,12 @@ def _plan_is_single_day(state: ConversationState) -> bool:
     return bool(services) and not any(sid in not_single for sid in services)
 
 
+def _otro_paquete_de_esos_dias(dias: int | None) -> int | None:
+    """Las inmersiones del paquete mayor de esa duración, si hay más de uno (2 días: 4 y 5). Del catálogo."""
+    tamanos = [n for n, (d, _) in dom.dive_packages().items() if d == dias]
+    return max(tamanos) if len(tamanos) > 1 else None
+
+
 def _recommended_plan_intro(state: ConversationState) -> str:
     """Recomendación del plan (determinista, del catálogo) antepuesta a la
     pregunta de seguridad — mismo criterio que v0.20.27: al certificado que ya
@@ -101,6 +107,13 @@ def _recommended_plan_intro(state: ConversationState) -> str:
     inmersiones o días, el plan es suyo y no hay nada que recomendar, tampoco si son las 2 de siempre («I'd do the 2
     dives» recibía «I recommend the 2 dives in 1 day plan» debajo de sus enlaces)."""
     lang = state.language
+    if state.detected_cert_dives is None and (mayor := _otro_paquete_de_esos_dias(state.detected_cert_days)):
+        # CALN-39: solo dijo los días, y hay más de un paquete: se propone el pequeño y se le dice qué más hay.
+        menor = _DAYS_TO_DIVES[state.detected_cert_days]
+        return (f"Para esos días te propongo el paquete de *{menor} inmersiones*. Si prefieres más, hay de *{mayor}* con una nocturna, o "
+                "salidas sueltas de un día; dímelo.\n\n" if lang == "es" else
+                f"For those days I suggest the *{menor}-dive* package. If you'd like more, there is a *{mayor}-dive* one with a night dive, or "
+                "separate one-day trips; just tell me.\n\n")
     if state.detected_cert_dives is not None or state.detected_cert_days in _DAYS_TO_DIVES:
         return ""
     if lang == "es":

@@ -13,7 +13,7 @@ History
 * **Mini** (43 visibles, Opus, referencia de 94173777): control PRE 0.58 24 y 22 fallos (26 y 27 limpios); candidata 27 (23 limpios). De ahí no se concluye: el ruido entre tiradas es de varios fallos.
 * **Medido y fuera:** `SE_ALOJA` (mini 31 fallos, con la adelantada borrada) y las dos frases nuevas de `customer_place` (32; «dormir en la isla» se leía como salir de la isla). Sigue abierto el hotel por el que solo se pregunta.
 * **Descartado:** `--codigo-local` no era un sesgo. Mismos ficheros, y los tres diálogos sospechosos ×5 se comportan igual en los dos modos (Álvaro).
-* **Bancos:** graves ×1 52/53; `banco-caln35` ×1 21/22; origen 22/22 antes de quitar `customer_place`; suite 3446.
+* **Bancos:** graves ×1 52/53; `banco-caln35` ×1 21/22; suite 3446.
 * **Sigue abierto:** el escritor saca mal la cuenta con los textos nuevos (refresher y vuelo: 3 rotos; candidato a calcularse por código); CALN-39, plan equivocado, 5 de los 12 graves de los ciegos; «¿eres colombiano?» a quien dijo «español»; «tú pagas en pesos» en mixtos; `s04i-belgas`.
 
 0.58.0 - (2026-11-05, SUBE A PRE: fuera de servicio la respuesta adelantada; a quien se despide, sin tarjeta; lectura de Gadea de los graves)
