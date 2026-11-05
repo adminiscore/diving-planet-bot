@@ -408,12 +408,17 @@ async def _sin_dato(state: ConversationState, message: str, prev_pending: str, p
     sabe qué decir: entonces la pregunta del flujo, como antes. Una pregunta que cambia porque la de antes se APLAZÓ
     (EX-FLUJO-1: no la contestó dos veces) sigue siendo un turno sin dato: «bueno, aceptamos el precio normal, ¿cómo
     reservamos?» recibía solo la de seguridad, sin los enlaces (regateo-grupo-6, ronda caln2-B)."""
+    from src.agents.jev_router import SE_DESPIDE  # lazy
     from src.observability import note_turn  # lazy
 
+    # #3300 (2b): a quien se despide, el escritor le contesta sin la pregunta de la reserva y sin sus botones. Si falla, la de siempre.
+    # Antes de mirar si la pregunta cambió: «Gracias, pero al final no vamos a reservar» con el origen pendiente recibía «¡Perfecto!»
+    # y la de la actividad.
+    se_despide = bool((getattr(state, "_senales_router", None) or {}).get(SE_DESPIDE))
     sin_contestar = state.core_pending_slot == prev_pending or prev_pending in (state.preguntas_aplazadas or [])
-    if not getattr(state, "_pregunta_del_escritor", None) or not sin_contestar:
+    if not se_despide and (not getattr(state, "_pregunta_del_escritor", None) or not sin_contestar):
         return None
-    state._pregunta_del_escritor = pregunta
+    state._pregunta_del_escritor = None if se_despide else pregunta
     try:
         escrita = await _rag_answer(state, message, history=list(state.history), sin_busqueda=True)
     except Exception as exc:  # noqa: BLE001 — sin escritor, la pregunta del flujo
@@ -421,6 +426,11 @@ async def _sin_dato(state: ConversationState, message: str, prev_pending: str, p
         return None
     if not escrita or _is_rag_fallback(escrita) or _es_pregunta_de_origen(escrita):
         return None
+    if se_despide:
+        note_turn(pregunta_escritor="se_despide")
+        logger.info("[CORE][LAT9] se despide: contesta el escritor, sin la pregunta de la reserva")
+        state.quick_replies = []
+        return escrita
     note_turn(pregunta_escritor="sin_dato")
     logger.info("[CORE][LAT9] no contestó la pregunta: contesta el escritor con la pregunta pendiente")
     return escrita if _answer_already_asks(escrita) else f"{escrita.rstrip()}\n\n{pregunta}"

@@ -1,0 +1,98 @@
+{
+ "about": "#3300 (2b): el buzo con alguien que no bucea: la pregunta por los dos, sin paquetes ni curso avanzado; y que contestar como el botón lleve a los dos planes. Se puntúa con scripts/puntua_banco_edades.py.",
+ "dialogos": [
+  {
+   "id": "m-guadalajara-t2",
+   "tarea": "Buzo y amiga que no bucea: pregunta por las dos",
+   "turnos": [
+    "Hola, somos dos amigas de Guadalajara. Yo tengo el Open Water y buceé hace un año; mi amiga nunca ha buceado. ¿Podemos ir el mismo día saliendo desde Cartagena?",
+    "Sí, desde Cartagena, el sábado 14. Somos mexicanas. ¿Cómo reservamos?"
+   ],
+   "ninguno": [
+    "curso avanzado",
+    "advanced course",
+    "paquete de varios"
+   ],
+   "debe": [
+    "minicurso"
+   ]
+  },
+  {
+   "id": "m-jubilados-t2",
+   "tarea": "Buzo y esposa: pregunta por los dos",
+   "turnos": [
+    "Buenas tardes. Somos un matrimonio de Buenos Aires, de 70 y 72 años. Yo tengo licencia de buceo pero no buceo desde hace 10 años; mi esposa no bucea. ¿Qué nos recomienda?",
+    "Desde Cartagena. Somos argentinos. ¿Y mi esposa qué puede hacer?"
+   ],
+   "ninguno": [
+    "curso avanzado",
+    "advanced course",
+    "paquete de varios"
+   ],
+   "debe": [
+    "minicurso"
+   ]
+  },
+  {
+   "id": "m-pareja-en",
+   "tarea": "En inglés, buzo y pareja que no bucea",
+   "turnos": [
+    "Hi, I'm Open Water certified, my wife has never dived. We leave from Cartagena. What can we do?",
+    "We're from the US, it's just the two of us. How do we book?"
+   ],
+   "ninguno": [
+    "advanced course",
+    "multi-day package"
+   ]
+  },
+  {
+   "id": "m-elige-boton-es",
+   "tarea": "Contesta como el botón: los dos enlaces",
+   "turnos": [
+    "Hola, somos dos amigas de Guadalajara. Yo tengo el Open Water y buceé hace un año; mi amiga nunca ha buceado. ¿Podemos ir el mismo día saliendo desde Cartagena?",
+    "Sí, desde Cartagena, el sábado 14. Somos mexicanas. ¿Cómo reservamos?",
+    "2 inmersiones para mí y minicurso para quien no bucea"
+   ],
+   "debe": [
+    "salidas-de-buceo",
+    "minicurso-de-buceo"
+   ]
+  },
+  {
+   "id": "m-elige-boton-en",
+   "tarea": "Contesta como el botón, en inglés",
+   "turnos": [
+    "Hi, I'm Open Water certified, my wife has never dived. We leave from Cartagena. What can we do?",
+    "We're from the US, it's just the two of us. How do we book?",
+    "2 dives for me and snorkeling for my companion",
+    "No, we both... I dived last year, my wife has never dived."
+   ],
+   "debe": [
+    "salidas-de-buceo",
+    "superficio"
+   ]
+  },
+  {
+   "id": "c-buzo-solo",
+   "tarea": "Control: buzo solo, su pregunta de siempre",
+   "turnos": [
+    "Hola, soy buzo certificado, voy solo. ¿Qué planes tienen?",
+    "Saldría desde Cartagena. ¿Qué me recomiendas?"
+   ],
+   "ninguno": [
+    "para quien no bucea"
+   ]
+  },
+  {
+   "id": "c-pareja-buzos",
+   "tarea": "Control: dos buzos, sin la pregunta nueva",
+   "turnos": [
+    "Hola, somos dos buzos Advanced. ¿Qué planes tienen?",
+    "Saldríamos desde Cartagena. ¿Qué nos recomiendas?"
+   ],
+   "ninguno": [
+    "para quien no bucea"
+   ]
+  }
+ ]
+}

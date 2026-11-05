@@ -1,0 +1,145 @@
+{
+ "about": "#3300 (2b): quien se despide no recibe la pregunta de la reserva. Los controles la conservan. Se puntúa con scripts/puntua_banco_edades.py.",
+ "dialogos": [
+  {
+   "id": "d-la-tarde",
+   "tarea": "Se va: sin menú",
+   "turnos": [
+    "Hola, ¿tienen salidas por la tarde? Solo tengo libre de 2 a 6 de la tarde el jueves.",
+    "Entiendo, gracias. Entonces lo dejo para otra ocasión."
+   ],
+   "ninguno": [
+    "¿Te animas",
+    "Con cuál te animas",
+    "Which one",
+    "leaning toward",
+    "Shall we go",
+    "¿Cuál te interesa"
+   ]
+  },
+  {
+   "id": "d-caro-en",
+   "tarea": "Too expensive: sin menú",
+   "turnos": [
+    "Hi, how much does a dive trip cost?",
+    "That's too expensive for us, thanks anyway."
+   ],
+   "ninguno": [
+    "¿Te animas",
+    "Con cuál te animas",
+    "Which one",
+    "leaning toward",
+    "Shall we go",
+    "¿Cuál te interesa"
+   ]
+  },
+  {
+   "id": "d-no-reservar",
+   "tarea": "No van a reservar: sin menú",
+   "turnos": [
+    "Hola, soy buzo certificado. ¿Qué planes tienen?",
+    "Gracias, pero al final no vamos a reservar."
+   ],
+   "ninguno": [
+    "¿Te animas",
+    "Con cuál te animas",
+    "Which one",
+    "leaning toward",
+    "Shall we go",
+    "¿Cuál te interesa"
+   ]
+  },
+  {
+   "id": "d-no-interesa",
+   "tarea": "No le interesa: sin menú",
+   "turnos": [
+    "Hola, ¿qué actividades tienen?",
+    "No me interesa, gracias."
+   ],
+   "ninguno": [
+    "¿Te animas",
+    "Con cuál te animas",
+    "Which one",
+    "leaning toward",
+    "Shall we go",
+    "¿Cuál te interesa"
+   ]
+  },
+  {
+   "id": "d-next-time",
+   "tarea": "Next time: sin menú",
+   "turnos": [
+    "Hello, what can I do with you in Cartagena?",
+    "Ok, no thanks. Maybe next time."
+   ],
+   "ninguno": [
+    "¿Te animas",
+    "Con cuál te animas",
+    "Which one",
+    "leaning toward",
+    "Shall we go",
+    "¿Cuál te interesa"
+   ]
+  },
+  {
+   "id": "d-adios",
+   "tarea": "Adiós: sin menú",
+   "turnos": [
+    "Hola, ¿qué planes hay para quien nunca ha buceado?",
+    "Muchas gracias, hasta luego."
+   ],
+   "ninguno": [
+    "¿Te animas",
+    "Con cuál te animas",
+    "Which one",
+    "leaning toward",
+    "Shall we go",
+    "¿Cuál te interesa"
+   ]
+  },
+  {
+   "id": "c-cuanto",
+   "tarea": "Control: sigue preguntando; se contesta",
+   "turnos": [
+    "Hola, ¿qué actividades tienen?",
+    "gracias, ¿y cuánto cuesta?"
+   ],
+   "debe": [
+    "?"
+   ]
+  },
+  {
+   "id": "c-lo-pienso",
+   "tarea": "Control: lo piensa; la pregunta se queda",
+   "turnos": [
+    "Hola, ¿qué actividades tienen?",
+    "lo pienso y te digo mañana"
+   ],
+   "debe": [
+    "?"
+   ]
+  },
+  {
+   "id": "c-gracias",
+   "tarea": "Control: da las gracias; la pregunta se queda",
+   "turnos": [
+    "Hola, soy buzo certificado. ¿Qué planes tienen?",
+    "perfecto, gracias"
+   ],
+   "debe": [
+    "?"
+   ]
+  },
+  {
+   "id": "c-prefiere",
+   "tarea": "Control: rechaza una y elige otra",
+   "turnos": [
+    "Hola, ¿qué actividades tienen?",
+    "No gracias, prefiero el snorkel."
+   ],
+   "debe": [
+    "?"
+   ]
+  }
+ ]
+}
