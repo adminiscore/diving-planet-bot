@@ -1443,31 +1443,26 @@ async def _answer_question(
     return answer
 
 
-async def _con_la_nacionalidad_del_mensaje(state: ConversationState, message: str) -> ConversationState:
-    """gen-14 (21-oct, flag `rag_espera_la_nacionalidad`): el RAG de un turno con pregunta se escribe
-    ANTES de que la extracción apunte lo que dice ESE mensaje, así que «Somos de Cali… ¿cuánto vale la salida?» se
-    cotizaba en USD con la regla de «sin nacionalidad, USD» (banco dialogos-gen14-moneda: is_colombian True y la
-    respuesta en USD 2/2). Con el
-    flag, el RAG recibe una COPIA del estado con la nacionalidad que la extracción del turno ya leyó (no se gasta ni
-    se lanza otra: es la tarea adelantada del extractor); el estado de verdad lo sigue escribiendo la extracción."""
-    if state.is_colombian is not None:
-        return state
-    from src.agents.nucleo.extractor import (  # lazy
-        con_la_cedula,
-        lectura_del_extractor,
-        mezclado_del_mensaje,
-    )
+async def _con_lo_del_mensaje(state: ConversationState, message: str, history: list | None = None
+                              ) -> ConversationState:
+    """El RAG de un turno con pregunta se escribe ANTES de que la extracción apunte lo que dice ESE mensaje. gen-14 (21-oct)
+    le daba una copia del estado solo con la nacionalidad del mensaje («Somos de Cali… ¿cuánto vale la salida?» se cotizaba
+    en USD; banco dialogos-gen14-moneda). CALN-8 (5) (3b, 5-nov): la copia es la lectura entera del turno
+    (`nucleo/lectura.foto_del_turno`), la misma que usa el escritor con los hechos: origen, nacionalidad y grupo mezclado,
+    duración, plan nombrado, tamaño del grupo y reparto. Antes el escritor del RAG no veía el «somos 5» ni el «estaremos en
+    las islas» de ESE mensaje, y el de los hechos sí. No se gasta otra llamada: es la tarea adelantada del extractor. El
+    estado de verdad lo sigue escribiendo la extracción."""
+    from src.agents.nucleo.extractor import lectura_del_extractor  # lazy
+    from src.agents.nucleo.lectura import foto_del_turno, origen_del_mensaje  # lazy
 
     datos = await lectura_del_extractor(state, message)
-    valor = con_la_cedula(state, (datos or {}).get("is_colombian"))  # «Yo tengo extrangeria»: residente, en pesos
-    if valor is None or mezclado_del_mensaje(state, datos or {}):
+    if datos is None:
         return state
-    import copy
-
-    copia = copy.copy(state)
-    copia.is_colombian = valor
-    logger.info(f"[CORE][GEN14] el RAG ya sabe la nacionalidad de este mensaje: is_colombian={valor}")
-    return copia
+    foto = foto_del_turno(state, datos, origen_del_mensaje(state, datos, True), message,
+                          state.history if history is None else history)
+    if foto.is_colombian != state.is_colombian:
+        logger.info(f"[CORE][GEN14] el RAG ya sabe la nacionalidad de este mensaje: is_colombian={foto.is_colombian}")
+    return foto
 
 
 async def _con_hechos(state: ConversationState, message: str, history: list) -> str | None:
@@ -1515,7 +1510,7 @@ async def _rag_answer(
     if not sin_precio and (con_hechos := await _con_hechos(state, message,
                                                             state.history if history is None else history)):
         return con_hechos
-    entradas = _entradas_rag(await _con_la_nacionalidad_del_mensaje(state, message),
+    entradas = _entradas_rag(await _con_lo_del_mensaje(state, message, history),
                              state.history if history is None else history, message)
     if hechos := await _hechos_para_el_rag(state, message, state.history if history is None else history):
         entradas["hechos"] = hechos  # arq-1g

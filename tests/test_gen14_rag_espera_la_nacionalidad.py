@@ -4,6 +4,8 @@ ESE mensaje, que la extracción del turno ya leyó.
 Banco docs/robustness/gen/dialogos-gen14-moneda.json en PRE: «Somos de Cali… ¿cuánto vale la salida?» salía con
 is_colombian=True y la respuesta en USD 2/2 (la respuesta adelantada se aprovechaba antes de apuntar la nacionalidad);
 con el flag, COP 2/2 y la misma latencia mediana.
+
+CALN-8 (5) (3b, 5-nov): la copia es la lectura entera del turno (`nucleo/lectura.foto_del_turno`), no solo la nacionalidad.
 """
 
 import pytest
@@ -32,22 +34,45 @@ def lectura(monkeypatch):
 async def test_el_rag_recibe_la_nacionalidad_del_mensaje(monkeypatch, lectura):
     lectura({"is_colombian": True})
     st = _estado()
-    copia = await core._con_la_nacionalidad_del_mensaje(st, "Somos de Cali, ¿cuánto vale?")
+    copia = await core._con_lo_del_mensaje(st, "Somos de Cali, ¿cuánto vale?")
     assert copia.is_colombian is True
     assert st.is_colombian is None  # el estado de verdad lo escribe la extracción, no esto
 
 
-@pytest.mark.parametrize("datos", [None, {}, {"is_colombian": None}, {"is_colombian": True, "mixed_nationality": True}])
-async def test_sin_nacionalidad_clara_no_cambia_nada(monkeypatch, lectura, datos):
+async def test_sin_lectura_vale_el_estado(monkeypatch, lectura):
+    lectura(None)
+    st = _estado()
+    assert await core._con_lo_del_mensaje(st, "hola") is st
+
+
+@pytest.mark.parametrize("datos", [{}, {"is_colombian": None}])
+async def test_sin_nacionalidad_en_el_mensaje_no_se_inventa(monkeypatch, lectura, datos):
     lectura(datos)
     st = _estado()
-    assert await core._con_la_nacionalidad_del_mensaje(st, "hola") is st
+    copia = await core._con_lo_del_mensaje(st, "hola")
+    assert copia.is_colombian is None and not copia.mixed_nationality_notice
 
 
-async def test_si_ya_se_sabe_no_se_lee_otra_vez(monkeypatch):
+async def test_el_grupo_mezclado_del_mensaje_va_en_dolares(monkeypatch, lectura):
+    # Sin señal de Jev ni nacionalidad guardada vale el extractor (`mezclado_del_mensaje`); el estado no se toca.
+    lectura({"is_colombian": True, "mixed_nationality": True})
+    st = _estado()
+    copia = await core._con_lo_del_mensaje(st, "dos somos colombianos y uno es alemán")
+    assert copia.mixed_nationality_notice is True and not st.mixed_nationality_notice
 
-    async def no_llamar(state, message):
-        raise AssertionError("no hace falta leer")
-    monkeypatch.setattr(core_extractor, "lectura_del_extractor", no_llamar)
+
+async def test_la_nacionalidad_guardada_no_la_cambia_el_mensaje(monkeypatch, lectura):
+    lectura({"is_colombian": True})
     st = _estado(is_colombian=False)
-    assert await core._con_la_nacionalidad_del_mensaje(st, "no soy colombiano") is st
+    copia = await core._con_lo_del_mensaje(st, "mi novia es colombiana")
+    assert copia.is_colombian is False  # un cambio se confirma en la extracción, no aquí
+
+
+async def test_el_rag_ve_el_grupo_y_el_origen_del_mensaje(monkeypatch, lectura):
+    # (3b): antes solo la nacionalidad; «somos 5 y saldremos desde Cartagena» no llegaba al escritor del RAG en ese turno.
+    lectura({"group_size": 5, "location": "cartagena"})
+    st = _estado()
+    st._jev_lugar = {"choice": "cartagena", "confidence": 0.95}
+    copia = await core._con_lo_del_mensaje(st, "Somos 5 y saldremos desde Cartagena, ¿qué incluye?")
+    assert copia.detected_group_size == 5 and copia.location == "cartagena"
+    assert st.detected_group_size is None and st.location is None

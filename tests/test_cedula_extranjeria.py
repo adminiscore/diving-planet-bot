@@ -64,7 +64,7 @@ def test_el_escritor_del_turno_ya_recibe_la_nacionalidad_de_la_cedula(monkeypatc
 
     monkeypatch.setattr(nx, "lectura_del_extractor", lectura)
     estado = _estado({TIENE_CEDULA: True, GRUPO_MIXTO: False})
-    copia = asyncio.run(core._con_la_nacionalidad_del_mensaje(estado, "Yo tengo extrangeria"))
+    copia = asyncio.run(core._con_lo_del_mensaje(estado, "Yo tengo extrangeria"))
     assert copia.is_colombian is True and estado.is_colombian is None
 
 
