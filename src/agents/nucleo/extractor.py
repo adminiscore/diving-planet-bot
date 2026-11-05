@@ -696,13 +696,13 @@ def _dice_que_no_tiene_hotel(state: ConversationState) -> bool:
     return bool((getattr(state, "_senales_router", None) or {}).get(SIN_HOTEL))
 
 
-def pregunta_por_hoteles(state: ConversationState) -> bool:
-    """«¿Ustedes cotizan San Pedro y Cocoliso?» nombra hoteles sin alojarse en ellos (semana-santa, votado como fallo real): en un
-    mensaje que pregunta, el hotel solo lo dice el extractor, no la lista cerrada del mensaje."""
-    from src.agents.jev_router import ASKS_QUESTION, PIDE_HOTELES  # lazy
+def no_dice_que_se_aloje(state: ConversationState) -> bool:
+    """«¿Ustedes cotizan San Pedro y Cocoliso?» nombra hoteles sin alojarse en ellos (semana-santa, votado como fallo real). Jev lo sabe; si
+    calla, vale lo de siempre."""
+    from src.agents.jev_router import SE_ALOJA, SE_ALOJA_NO_MAX  # lazy
 
-    senales = getattr(state, "_senales_router", None) or {}
-    return bool(senales.get(PIDE_HOTELES) or senales.get(ASKS_QUESTION))
+    p = (getattr(state, "_senales_router", None) or {}).get(SE_ALOJA)
+    return p is not None and p < SE_ALOJA_NO_MAX
 
 
 def _poner_ubicacion(intent, state: ConversationState, message: str, datos: dict, pista: dict) -> None:
@@ -726,7 +726,7 @@ def _poner_ubicacion(intent, state: ConversationState, message: str, datos: dict
         if guardado == "island":
             # Ya se sabe que está en las islas y no lo repite: el hotel o la isla que nombra (lista cerrada) sirven para
             # la recogida (ronda ex5-B2: "una noche en Coral Sand y la otra en Majagua" se perdía y se repreguntaba).
-            if not pregunta_por_hoteles(state):
+            if not no_dice_que_se_aloje(state):
                 _conservar_hotel(intent, pista)
         elif (por_confirmar := origen_por_confirmar(state, datos)) and not (state.pending_correction or {}).get("location"):
             state.pending_correction = {**(state.pending_correction or {}), "location": por_confirmar}
@@ -794,7 +794,7 @@ def _poner_hotel(intent, state: ConversationState, datos: dict) -> None:
         # CALN-35: no se le pregunta lo que ya ha dicho que no tiene; si sale desde las islas, se le dice que vuelva con él.
         state.hotel = state.detected_hotel = POR_CONFIRMAR["es" if state.language == "es" else "en"]
         logger.info("[EXTRACT][CALN35] dice que aún no tiene hotel: por confirmar")
-    if not hotel or intent.hotel or hotel_conocido(state):
+    if not hotel or intent.hotel or hotel_conocido(state) or no_dice_que_se_aloje(state):
         return
     intent.hotel = hotel
     if "hotel" not in intent.detected_fields:
@@ -1288,7 +1288,7 @@ async def _guardar_lo_dicho(state: ConversationState, motivo: str) -> None:
             state.location = valor
         guardados[campo] = valor
     hotel = (datos or {}).get("hotel")
-    if hotel and not hotel_conocido(state):
+    if hotel and not hotel_conocido(state) and not no_dice_que_se_aloje(state):
         # CAL-C3e (17-oct): "I just booked… We are staying at the Ubuntu Hotel" acababa en el pase y el hotel se perdía;
         # en el turno siguiente el RAG preguntaba "Are you departing from Cartagena or staying on the islands?" (cal-46).
         del_catalogo = _hotel_del_catalogo(hotel)

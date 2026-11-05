@@ -237,10 +237,12 @@ def _hotel_por_la_ia(state: ConversationState, message: str, ia: dict) -> bool:
     isla. Si el extractor no trae hotel, el del catálogo que nombre el mensaje ("en el Ubuntu"; "en isla grande" da la
     isla). Sin hotel, "por confirmar" (no se pregunta en bucle y no se reserva hasta que lo diga: CALN-35). Nunca se guarda el
     mensaje entero como hotel."""
-    from src.agents.nucleo.extractor import pregunta_por_hoteles  # lazy
+    from src.agents.nucleo.extractor import no_dice_que_se_aloje  # lazy
 
     hotel = ((ia.get("extractor") or {}).get("hotel") or "").strip()
-    del_catalogo, isla = _lugar_del_catalogo(hotel or ("" if pregunta_por_hoteles(state) else message))
+    if no_dice_que_se_aloje(state):
+        hotel, message = "", ""
+    del_catalogo, isla = _lugar_del_catalogo(hotel or message)
     nombre = del_catalogo or hotel
     if isla and not state.detected_island:
         state.island = state.detected_island = isla

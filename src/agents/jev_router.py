@@ -942,6 +942,19 @@ _SALIDAS_SUELTAS_Q = {
         "say how many days they want to dive without saying that they want separate one-day trips."
     ),
 }
+# CALN-39 (semana-santa: «¿ustedes cotizan los hoteles San Pedro y Cocoliso?», y luego el enlace «para San Pedro de Majagua»): Haiku lee a
+# veces como su hotel el que se pregunta. Sonda `scripts/sonda_jev_se_aloja.py` (21 × 2): 0,89-0,96 quien dice dónde se aloja, 0,46-0,71
+# con el nombre suelto y sin contexto; como mucho 0,32 quien pregunta. Solo se descarta cuando Jev está seguro de que no.
+SE_ALOJA = "se_aloja"
+SE_ALOJA_NO_MAX = 0.35
+_SE_ALOJA_Q = {
+    "type": "noul",
+    "instructions": (
+        "The customer says that they are staying or will stay at a specific named hotel or place, or answers which one it is. It is FALSE if "
+        "they only ask about a hotel (its price, contact, access, or a recommendation), compare hotels, are still looking at one, say they "
+        "have none yet, or only say that they will stay on the islands without naming where."
+    ),
+}
 SE_DESPIDE = "se_despide"
 SE_DESPIDE_MIN = 0.7
 _SE_DESPIDE_Q = {
@@ -1095,6 +1108,7 @@ _DEL_TURNO = (
     _DelTurno(QUIERE_CURSO, _QUIERE_CURSO_Q, _si(QUIERE_CURSO_MIN)),
     _DelTurno(SIN_HOTEL, _SIN_HOTEL_Q, _si(SIN_HOTEL_MIN)),
     _DelTurno(SALIDAS_SUELTAS, _SALIDAS_SUELTAS_Q, _si(SALIDAS_SUELTAS_MIN)),
+    _DelTurno(SE_ALOJA, _SE_ALOJA_Q, _probabilidad),
     _DelTurno(VIAJA_SOLO, _VIAJA_SOLO_Q, _si(VIAJA_SOLO_MIN)),
     _DelTurno(HABLA_DE_SI, _HABLA_DE_SI_Q, _si(HABLA_DE_SI_MIN)),
     # Solo se descarta cuando Jev está seguro de que NO (`nucleo/extractor.dias_de_buceo_de`).
