@@ -1,5 +1,5 @@
 {
- "about": "El pase aceptado que no se hacía (5-nov, Gadea #3570; panel visto-6940, tanda s05f 6952): el escritor ofrece pasar con un asesor y el cliente acepta añadiendo algo. Frases nuestras. Se puntúa con scripts/puntua_banco_edades.py: estado del último turno.",
+ "about": "El pase aceptado que no se hacía (5-nov, Gadea #3570; panel visto-6940, tanda s05f 6952): el escritor ofrece pasar con un asesor y el cliente acepta añadiendo algo. Frases nuestras. Se puntúa con scripts/puntua_banco_edades.py: estado del último turno. Lo que guarda reproducir_juez_pre no trae `step`: se mira el texto del pase en la respuesta.",
  "dialogos": [
   {
    "id": "pa1-airbnb-acepta-con-datos",
@@ -8,7 +8,12 @@
     "Hola, tengo el Advanced y voy a estar en una casa de Airbnb en Isla Grande. Llego el 14 de diciembre y quisiera hacer 2 inmersiones el 15. ¿Me pueden recoger en la casa?",
     "Sí, por favor. La casa se llama Villa Mangle, tiene un muelle pequeño frente al mar. Soy de Chile y mi última inmersión fue en agosto."
    ],
-   "estado": {"step": "escalate"}
+   "debe": [
+    "te paso con un asesor|i'll connect you with an advisor|les paso con un asesor"
+   ],
+   "ninguno": [
+    "quieres que te pase con un asesor|quieren que les pase|would you like me to connect you"
+   ]
   },
   {
    "id": "pa2-airbnb-acepta-en",
@@ -17,7 +22,12 @@
     "Hi! I'm an Open Water diver staying at an Airbnb house on Isla Grande from January 8. Can you pick me up there for two dives on the 9th?",
     "Yes, please, that would be great. The house is called Casa Azul and it has its own small dock. Thank you!"
    ],
-   "estado": {"step": "escalate"}
+   "debe": [
+    "te paso con un asesor|i'll connect you with an advisor|les paso con un asesor"
+   ],
+   "ninguno": [
+    "quieres que te pase con un asesor|quieren que les pase|would you like me to connect you"
+   ]
   },
   {
    "id": "pa3-airbnb-no-acepta-aun",
@@ -26,7 +36,9 @@
     "Hola, tengo el Advanced y voy a estar en una casa de Airbnb en Isla Grande. Llego el 14 de diciembre y quisiera hacer 2 inmersiones el 15. ¿Me pueden recoger en la casa?",
     "Todavía no, primero dime cuánto cuestan las 2 inmersiones desde allá."
    ],
-   "estado_no": {"step": "escalate"}
+   "ninguno": [
+    "te paso con un asesor|i'll connect you with an advisor|les paso con un asesor"
+   ]
   },
   {
    "id": "pa4-colombianos-acepta-el-asesor",
@@ -35,7 +47,12 @@
     "Hola, somos dos buzos certificados colombianos, de Medellín. Queremos la salida de 2 inmersiones desde Cartagena el 20 de diciembre. ¿Cuánto es?",
     "Sí, por favor. ¿El anticipo es del 50 %?"
    ],
-   "estado": {"step": "escalate"}
+   "debe": [
+    "te paso con un asesor|i'll connect you with an advisor|les paso con un asesor"
+   ],
+   "ninguno": [
+    "quieres que te pase con un asesor|quieren que les pase|would you like me to connect you"
+   ]
   }
  ]
 }
