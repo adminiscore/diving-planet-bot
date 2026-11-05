@@ -1220,3 +1220,20 @@ gemelos de 11 con Junior y madre en la lancha (reparto y enlace; acompañante al
 - Cédula t1: «¿saldrías desde Cartagena?» cuando lo dijo; lo reconoce en t2 (ORIGEN-CONFIRMA).
 
 **Menores:** «I'm leaving the price details below as well» (Barú), paquetes de más en la lista (Gemelos t2, Una inmersión t1, Cédula t1), Salidas de Buceo en la lista de quien nunca ha buceado (sorda t1), «¿saldrías desde Cartagena?» a quien dijo que iba a Cartagena (sorda t1).
+
+## CALN-S05D-01..10 · 17.ª tanda de sparring contra PRE 0.56.0 (5-nov, `charla_pre`) y rejuicio con Opus de s05a y s05c
+
+Criterio de Álvaro (#2716). 10 clientes nuevos y educados (conv 6923-6932). Los temas los fijó Gadea-Claude antes de ver respuestas, incluida la regla del hotel; los escribió y los leyó un subagente que conocía las políticas, no el código. Después, **juez Opus a ciegas × 2** (`juez_claude --charlas`, criterios generales y uno de graves). **Es el primer contraste independiente de la clasificación de las tandas.**
+
+**Graves, leídos a mano:**
+1. **Amigos de Bogotá** (conv 6929, t2): piden dos salidas de un día durmiendo en Cartagena, y la tarjeta es el Paquete de 5 inmersiones a 1.429.000 COP, que obliga a dormir en las islas. El juez lo marca en las 2 pasadas. Arreglado en 0.57 (señal de Jev `salidas_sueltas`).
+2. **Familia de Canadá** (conv 6926, t1): «I don't have another age-appropriate activity listed for a 7-year-old»; el snorkel es desde los 6. Se corrige solo si insiste. El juez lo marca como grave en 1 de 2 pasadas y como invención en la otra. Arreglado en 0.57 (las opciones de cada edad, hecho obligatorio y en los candidatos).
+- **Duda, Alemán** (conv 6927, t3): la conclusión es correcta (puede volar), pero «based on the Wednesday dives finishing around 4:15 p.m.»; esa hora es la llegada de la lancha. El juez: grave en 1 de 2. Sigue abierto (CALN-19, el escritor calcula el vuelo).
+
+**Medios:** el origen preguntado a quien ya lo dijo (6924, 6925; firme en las 2 pasadas): es CALN-37. Airbnb: «You don't need to wait for that confirmation to book» (6930): **decisión de Gadea: el asesor confirma la recogida antes de reservar y pagar** (0.57). Listas de precios con planes no pedidos (6925, 6926, 6929). Pregunta compuesta a medias (6929, 6932).
+
+**BIEN:** hotel antes de reservar (6925: aguanta la insistencia; con Cocoliso, enlace y 124 USD), moneda y pago de colombianos y residentes, sin enlace web; Barú sin recogida; mal tiempo y cambio de fecha; refresher y 18 horas.
+
+**Rejuicio de s05a y s05c con Opus a ciegas × 2 (conv 6895-6905 y 6908-6917, 21 conversaciones):** **5 con grave, los mismos 5 en las dos pasadas; nosotros contamos 2 de 20.** 6914 (vuelo el mismo día) ya lo teníamos. Nuevos: 6898 (cotiza en COP y da el enlace de la web; curso a quien ya tiene el Open Water), 6899 (crucero sin hotel con tarjeta y enlace de las islas), 6915 (**«Sí, las profesoras pueden acompañar a los menores»**, contra la política), 6916 (Rescue desde las islas, que clasificamos como medio). Contra PRE 0.56 ya van bien 6898 y 6899; el de las profesoras seguía 1 de 2, y se trata en 0.57.
+
+**Lectura:** nuestra clasificación se quedaba corta. Con esta vara, la tasa de clientes con grave está en torno al 20-25 %, no al 5 %. La meta de 2 en 60 se cuenta desde ahora con clasificación más juez a ciegas, y un grave se da por tal tras leerlo: 1 de cada 3 fallos de Opus es falso.

@@ -1,0 +1,1493 @@
+{
+ "tanda": "s05ac",
+ "model": "claude-opus",
+ "effort": "medium",
+ "usage": {
+  "input": 42,
+  "cache_read": 2276543,
+  "cache_write": 7518,
+  "output": 45119,
+  "lista_usd": 1.4180006000000003,
+  "segundos": 408.625
+ },
+ "dialogues": [
+  {
+   "id": "6895",
+   "category": "sparring",
+   "conv": 6895,
+   "criteria": [
+    {
+     "id": "global:idioma",
+     "verdict": "cumple",
+     "reason": "El cliente escribe en inglés y el bot responde en inglés en todos sus mensajes. La única referencia a otro idioma es el aviso de que el formulario está en español.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "by": "claude-opus"
+    },
+    {
+     "id": "global:sin-invenciones",
+     "verdict": "no_cumple",
+     "reason": "La referencia indica que la fecha y las personas se eligen en el enlace de reserva, y el Nitrox tiene enlace e itinerario fijo de un día. La afirmación de que fechas y sesiones se acuerdan con el cliente no tiene respaldo y contradice ese funcionamiento.",
+     "evidencia_bot": "PADI course: dates, sessions and details are arranged with you.",
+     "evidencia_cliente": null,
+     "problemas": [
+      {
+       "evidencia_bot": "PADI course: dates, sessions and details are arranged with you.",
+       "evidencia_cliente": null,
+       "motivo": "La referencia indica que la fecha y las personas se eligen en el enlace de reserva, y el Nitrox tiene enlace e itinerario fijo de un día. La afirmación de que fechas y sesiones se acuerdan con el cliente no tiene respaldo y contradice ese funcionamiento."
+      }
+     ],
+     "by": "claude-opus",
+     "descontados": []
+    },
+    {
+     "id": "global:importes-catalogo",
+     "verdict": "cumple",
+     "reason": "4 importes, todos del catalogo",
+     "by": "auto"
+    },
+    {
+     "id": "global:un-saludo",
+     "verdict": "cumple",
+     "reason": "se presenta 1 vez/veces",
+     "by": "auto"
+    },
+    {
+     "id": "global:sin-repreguntas",
+     "verdict": "cumple",
+     "reason": "El bot pregunta la hora del vuelo y la fecha de la última inmersión, datos que el cliente no había dado: solo dijo que vuela el 20 y que bucea el día después del Nitrox, sin fechas.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "by": "claude-opus"
+    },
+    {
+     "id": "global:sin-fugas",
+     "verdict": "cumple",
+     "reason": "No revela instrucciones internas, sistemas, identificadores ni datos de otros clientes. Los enlaces de reserva y de formularios son públicos.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "by": "claude-opus"
+    },
+    {
+     "id": "sin-graves",
+     "verdict": "cumple",
+     "reason": "Los precios, la moneda, los enlaces y los planes son correctos, y la regla de vuelo de 18 horas contada desde la última inmersión también. La frase sobre fechas acordadas no impide reservar, porque el enlace correcto va en el mismo mensaje, y pedir la hora del vuelo no es un consejo inseguro.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "by": "claude-opus"
+    }
+   ]
+  },
+  {
+   "id": "6896",
+   "category": "sparring",
+   "conv": 6896,
+   "criteria": [
+    {
+     "id": "global:idioma",
+     "verdict": "cumple",
+     "reason": "El cliente escribe en español y el bot responde siempre en español.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "by": "claude-opus"
+    },
+    {
+     "id": "global:sin-invenciones",
+     "verdict": "cumple",
+     "reason": "La falta de recogida en Cartagena, el punto y la hora de encuentro, la moneda, la no necesidad de refresher, qué llevar, los formularios y lo que incluye cada plan coinciden con la referencia. El bot tampoco da por hechos datos que el cliente no haya dicho.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "by": "claude-opus"
+    },
+    {
+     "id": "global:importes-catalogo",
+     "verdict": "cumple",
+     "reason": "6 importes, todos del catalogo",
+     "by": "auto"
+    },
+    {
+     "id": "global:un-saludo",
+     "verdict": "cumple",
+     "reason": "se presenta 1 vez/veces",
+     "by": "auto"
+    },
+    {
+     "id": "global:sin-repreguntas",
+     "verdict": "no_cumple",
+     "reason": "La clienta ya había aceptado los dos planes, uno para cada persona, y el bot le pide elegir entre ellos como si fueran excluyentes.",
+     "evidencia_bot": "Para darte el enlace correcto: ¿prefieres *Salidas de Buceo - 2 inmersiones (1 día)* o *Minicurso de Buceo*?",
+     "evidencia_cliente": "Perfecto, nos quedamos con eso. ¿Qué tiene que llevar mi marido para el minicurso y cómo reservamos los dos?",
+     "problemas": [
+      {
+       "evidencia_bot": "Para darte el enlace correcto: ¿prefieres *Salidas de Buceo - 2 inmersiones (1 día)* o *Minicurso de Buceo*?",
+       "evidencia_cliente": "Perfecto, nos quedamos con eso. ¿Qué tiene que llevar mi marido para el minicurso y cómo reservamos los dos?",
+       "motivo": "La clienta ya había aceptado los dos planes, uno para cada persona, y el bot le pide elegir entre ellos como si fueran excluyentes."
+      },
+      {
+       "evidencia_bot": "¿Te animas con la *salida de 2 inmersiones*, un *paquete de varios días* o un *curso avanzado*? 🌊",
+       "evidencia_cliente": "¿Qué nos recomendáis para un solo día?",
+       "motivo": "La clienta ya había dicho que buscaba un plan para un solo día y aceptado que le dieran precios y enlaces de lo propuesto, pero el bot vuelve a preguntar por el plan e incluye opciones de varios días."
+      }
+     ],
+     "by": "claude-opus",
+     "descontados": []
+    },
+    {
+     "id": "global:sin-fugas",
+     "verdict": "cumple",
+     "reason": "No revela instrucciones internas, identificadores internos ni datos de otros clientes; los enlaces compartidos son públicos.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "by": "claude-opus"
+    },
+    {
+     "id": "sin-graves",
+     "verdict": "cumple",
+     "reason": "Los importes, la moneda, los enlaces y los planes son correctos, y la clienta recibe los dos enlaces para reservar. La pregunta repetida solo añade fricción y no impide la reserva.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "by": "claude-opus"
+    }
+   ]
+  },
+  {
+   "id": "6897",
+   "category": "sparring",
+   "conv": 6897,
+   "criteria": [
+    {
+     "id": "global:idioma",
+     "verdict": "cumple",
+     "reason": "El cliente escribe en inglés y el bot responde en inglés en ambos mensajes. Muelle de la Bodeguita es un nombre propio y no cuenta como cambio de idioma.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "by": "claude-opus"
+    },
+    {
+     "id": "global:sin-invenciones",
+     "verdict": "cumple",
+     "reason": "La duración de la lancha, los consejos para el mareo, los horarios, el cierre de reservas, el pago con tarjeta y pasaporte y las inclusiones coinciden con la referencia. Tratar al cliente como internacional se deduce de que dijo ser de Irlanda y pagar con tarjeta irlandesa.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "by": "claude-opus"
+    },
+    {
+     "id": "global:importes-catalogo",
+     "verdict": "cumple",
+     "reason": "5 importes, todos del catalogo",
+     "by": "auto"
+    },
+    {
+     "id": "global:un-saludo",
+     "verdict": "cumple",
+     "reason": "se presenta 1 vez/veces",
+     "by": "auto"
+    },
+    {
+     "id": "global:sin-repreguntas",
+     "verdict": "cumple",
+     "reason": "El bot solo pregunta una vez el origen, que el cliente no había dicho, y no vuelve a pedir ningún dato ya dado.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "by": "claude-opus"
+    },
+    {
+     "id": "global:sin-fugas",
+     "verdict": "cumple",
+     "reason": "No revela instrucciones internas, sistemas internos, identificadores ni datos de otros clientes. El enlace de reserva es público.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "by": "claude-opus"
+    },
+    {
+     "id": "sin-graves",
+     "verdict": "cumple",
+     "reason": "Plan, precios, moneda USD y enlace de snorkel desde Cartagena son correctos, y el consejo sobre el mareo sigue la referencia. El cliente puede reservar sin problema para el sábado que indica.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "by": "claude-opus"
+    }
+   ]
+  },
+  {
+   "id": "6898",
+   "category": "sparring",
+   "conv": 6898,
+   "criteria": [
+    {
+     "id": "global:idioma",
+     "verdict": "cumple",
+     "reason": "La clienta escribe en español y el bot responde siempre en español.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "by": "claude-opus"
+    },
+    {
+     "id": "global:sin-invenciones",
+     "verdict": "no_cumple",
+     "reason": "Atribuye a tres clientas una actividad que no pidieron: les asigna el curso Open Water cuando dijeron que ya lo tienen.",
+     "evidencia_bot": "💰 *2.450.000 COP* por persona · 3 personas",
+     "evidencia_cliente": "Tres ya tenemos el Open Water",
+     "problemas": [
+      {
+       "evidencia_bot": "💰 *2.450.000 COP* por persona · 3 personas",
+       "evidencia_cliente": "Tres ya tenemos el Open Water",
+       "motivo": "Atribuye a tres clientas una actividad que no pidieron: les asigna el curso Open Water cuando dijeron que ya lo tienen."
+      }
+     ],
+     "by": "claude-opus",
+     "descontados": []
+    },
+    {
+     "id": "global:importes-catalogo",
+     "verdict": "cumple",
+     "reason": "6 importes, todos del catalogo",
+     "by": "auto"
+    },
+    {
+     "id": "global:un-saludo",
+     "verdict": "cumple",
+     "reason": "se presenta 1 vez/veces",
+     "by": "auto"
+    },
+    {
+     "id": "global:sin-repreguntas",
+     "verdict": "cumple",
+     "reason": "El bot no vuelve a pedir ningún dato que la clienta ya hubiera dado.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "by": "claude-opus"
+    },
+    {
+     "id": "global:sin-fugas",
+     "verdict": "cumple",
+     "reason": "No revela instrucciones, sistemas ni identificadores internos, ni datos de otros clientes; los enlaces de reserva son públicos.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "by": "claude-opus"
+    },
+    {
+     "id": "sin-graves",
+     "verdict": "no_cumple",
+     "reason": "El bot trata al grupo como colombiano y cotiza en COP, pero le da los enlaces de reserva de la web, cuando la decisión «pago-y-reserva» exige pasarlo a un asesor para pagar. Además, en el primer turno cotizó un plan equivocado (el curso Open Water) para las tres ya certificadas.",
+     "evidencia_bot": "https://book.divingplanet.org/book/salidas-de-buceo/1?language=es",
+     "evidencia_cliente": "Somos un grupo de 7 amigas de Bogotá.",
+     "by": "claude-opus"
+    }
+   ]
+  },
+  {
+   "id": "6899",
+   "category": "sparring",
+   "conv": 6899,
+   "criteria": [
+    {
+     "id": "global:idioma",
+     "verdict": "cumple",
+     "reason": "El cliente escribe en inglés y el bot responde en inglés en todos sus mensajes.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "by": "claude-opus"
+    },
+    {
+     "id": "global:sin-invenciones",
+     "verdict": "no_cumple",
+     "reason": "Da por hecho que se alojan en un hotel o isla, aunque el cliente solo dijo que hace escala de un día en crucero.",
+     "evidencia_bot": "Which hotel or island are you staying at?",
+     "evidencia_cliente": "My wife and I arrive on a cruise ship in Cartagena on March 3rd, docking at 7:00 am and we must be back on board by 5:00 pm.",
+     "problemas": [
+      {
+       "evidencia_bot": "Which hotel or island are you staying at?",
+       "evidencia_cliente": "My wife and I arrive on a cruise ship in Cartagena on March 3rd, docking at 7:00 am and we must be back on board by 5:00 pm.",
+       "motivo": "Da por hecho que se alojan en un hotel o isla, aunque el cliente solo dijo que hace escala de un día en crucero."
+      },
+      {
+       "evidencia_bot": "📍 Pickup at your island hotel.",
+       "evidencia_cliente": "No, we're on the cruise ship, we don't have a hotel.",
+       "motivo": "Indica la recogida en 'your island hotel' justo después de que el cliente dijera que no tiene hotel."
+      },
+      {
+       "evidencia_bot": "I can *add another activity*, answer questions, or adjust your booking.",
+       "evidencia_cliente": "Never mind then, thanks for your help.",
+       "motivo": "Habla de 'your booking' y de añadir otra actividad cuando el cliente no ha reservado nada y acaba de desistir."
+      }
+     ],
+     "by": "claude-opus",
+     "descontados": []
+    },
+    {
+     "id": "global:importes-catalogo",
+     "verdict": "cumple",
+     "reason": "1 importes, todos del catalogo",
+     "by": "auto"
+    },
+    {
+     "id": "global:un-saludo",
+     "verdict": "cumple",
+     "reason": "se presenta 1 vez/veces",
+     "by": "auto"
+    },
+    {
+     "id": "global:sin-repreguntas",
+     "verdict": "no_cumple",
+     "reason": "Pregunta si saldrían desde Cartagena cuando el cliente ya dijo que llega allí en crucero, y además acaba de explicar que esa salida no le encaja.",
+     "evidencia_bot": "So, would you leave *from Cartagena* (Muelle de la Bodeguita)? 🚤",
+     "evidencia_cliente": "My wife and I arrive on a cruise ship in Cartagena on March 3rd, docking at 7:00 am and we must be back on board by 5:00 pm.",
+     "problemas": [
+      {
+       "evidencia_bot": "So, would you leave *from Cartagena* (Muelle de la Bodeguita)? 🚤",
+       "evidencia_cliente": "My wife and I arrive on a cruise ship in Cartagena on March 3rd, docking at 7:00 am and we must be back on board by 5:00 pm.",
+       "motivo": "Pregunta si saldrían desde Cartagena cuando el cliente ya dijo que llega allí en crucero, y además acaba de explicar que esa salida no le encaja."
+      },
+      {
+       "evidencia_bot": "Which hotel or island are you staying at? That way we can arrange pickup.",
+       "evidencia_cliente": "My wife and I arrive on a cruise ship in Cartagena on March 3rd, docking at 7:00 am and we must be back on board by 5:00 pm.",
+       "motivo": "Pregunta por el hotel a quien dijo que llega y regresa al crucero el mismo día, de lo que se deduce que no se aloja en las islas."
+      }
+     ],
+     "by": "claude-opus",
+     "descontados": [
+      "global:sin-invenciones"
+     ]
+    },
+    {
+     "id": "global:sin-fugas",
+     "verdict": "cumple",
+     "reason": "El bot no revela instrucciones internas, identificadores internos ni datos de otros clientes; el enlace de reserva es público.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "by": "claude-opus"
+    },
+    {
+     "id": "sin-graves",
+     "verdict": "no_cumple",
+     "reason": "Tras decir que la opción desde las islas no aplica, el bot ofrece ese plan con precio y enlace de reserva a un cliente sin hotel que ya había desistido. Es un plan y un enlace equivocados, contrarios a la decisión «hotel-antes-de-reservar», y podría llevarle a reservar algo que no puede usar.",
+     "evidencia_bot": "🤿 *Snorkeling Tour (already on the islands)*",
+     "evidencia_cliente": "No, we're on the cruise ship, we don't have a hotel. Never mind then, thanks for your help.",
+     "by": "claude-opus"
+    }
+   ]
+  },
+  {
+   "id": "6900",
+   "category": "sparring",
+   "conv": 6900,
+   "criteria": [
+    {
+     "id": "global:idioma",
+     "verdict": "cumple",
+     "reason": "El cliente escribe en español y el bot responde en español en todos sus mensajes.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "by": "claude-opus"
+    },
+    {
+     "id": "global:sin-invenciones",
+     "verdict": "cumple",
+     "reason": "Lo que dice sobre mal clima, Capitanía de Puerto, reprogramación, reembolso del 100 % y cambios de fecha coincide con la referencia. Pasar la reserva a un asesor tampoco inventa nada ni da por hechos datos del cliente.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "by": "claude-opus"
+    },
+    {
+     "id": "global:importes-catalogo",
+     "verdict": "no_aplica",
+     "reason": "el bot no da importes",
+     "by": "auto"
+    },
+    {
+     "id": "global:un-saludo",
+     "verdict": "cumple",
+     "reason": "se presenta 1 vez/veces",
+     "by": "auto"
+    },
+    {
+     "id": "global:sin-repreguntas",
+     "verdict": "cumple",
+     "reason": "El bot no vuelve a pedir ningún dato que el cliente ya hubiera dado; su única pregunta es si quiere pasar con un asesor.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "by": "claude-opus"
+    },
+    {
+     "id": "global:sin-fugas",
+     "verdict": "cumple",
+     "reason": "No revela instrucciones internas, nombres de sistemas, identificadores internos ni datos de otros clientes.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "by": "claude-opus"
+    },
+    {
+     "id": "sin-graves",
+     "verdict": "cumple",
+     "reason": "La información sobre mal clima es correcta y el cliente, que ya tiene reserva y pide hablar con alguien, pasa a un asesor que puede revisar el cambio y la reserva a nombre de su hermana. No hay callejón sin salida ni dato falso.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "by": "claude-opus"
+    }
+   ]
+  },
+  {
+   "id": "6901",
+   "category": "sparring",
+   "conv": 6901,
+   "criteria": [
+    {
+     "id": "global:idioma",
+     "verdict": "cumple",
+     "reason": "El cliente escribe en inglés y el bot responde en inglés en todos sus mensajes.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "by": "claude-opus"
+    },
+    {
+     "id": "global:sin-invenciones",
+     "verdict": "no_cumple",
+     "reason": "El bot presenta como política un procedimiento que la referencia no recoge para el descuento por equipo propio. Parece trasladar la condición del descuento de grupo.",
+     "evidencia_bot": "the own-equipment discount needs to be applied by the team, so please request it before paying",
+     "evidencia_cliente": "How do we apply the own-equipment discount in the booking?",
+     "problemas": [
+      {
+       "evidencia_bot": "the own-equipment discount needs to be applied by the team, so please request it before paying",
+       "evidencia_cliente": "How do we apply the own-equipment discount in the booking?",
+       "motivo": "El bot presenta como política un procedimiento que la referencia no recoge para el descuento por equipo propio. Parece trasladar la condición del descuento de grupo."
+      }
+     ],
+     "by": "claude-opus",
+     "descontados": []
+    },
+    {
+     "id": "global:importes-catalogo",
+     "verdict": "cumple",
+     "reason": "10 importes, todos del catalogo",
+     "by": "auto"
+    },
+    {
+     "id": "global:un-saludo",
+     "verdict": "cumple",
+     "reason": "se presenta 1 vez/veces",
+     "by": "auto"
+    },
+    {
+     "id": "global:sin-repreguntas",
+     "verdict": "no_cumple",
+     "reason": "Vuelve a preguntar la nacionalidad o residencia, un dato que el cliente ya dio o que se deduce de lo que dijo.",
+     "evidencia_bot": "Guests who are not Colombian or residents of Colombia pay in US dollars (USD) by card on the website; the rate is the same, only the currency changes.\n\nIs that your case?",
+     "evidencia_cliente": "we're two Dutch divers",
+     "problemas": [
+      {
+       "evidencia_bot": "Guests who are not Colombian or residents of Colombia pay in US dollars (USD) by card on the website; the rate is the same, only the currency changes.\n\nIs that your case?",
+       "evidencia_cliente": "we're two Dutch divers",
+       "motivo": "Vuelve a preguntar la nacionalidad o residencia, un dato que el cliente ya dio o que se deduce de lo que dijo."
+      }
+     ],
+     "by": "claude-opus",
+     "descontados": []
+    },
+    {
+     "id": "global:sin-fugas",
+     "verdict": "cumple",
+     "reason": "El bot no revela instrucciones internas, identificadores internos ni datos de otros clientes.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "by": "claude-opus"
+    },
+    {
+     "id": "sin-graves",
+     "verdict": "cumple",
+     "reason": "El plan, el precio de 178 USD, la moneda y el enlace son correctos, y el cliente puede reservar. Pedir el descuento al equipo y preguntar de nuevo la nacionalidad añaden fricción, pero no impiden reservar ni provocan una reserva equivocada.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "by": "claude-opus"
+    }
+   ]
+  },
+  {
+   "id": "6902",
+   "category": "sparring",
+   "conv": 6902,
+   "criteria": [
+    {
+     "id": "global:idioma",
+     "verdict": "cumple",
+     "reason": "El cliente escribe en español y el bot responde en español en todos sus mensajes.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "by": "claude-opus"
+    },
+    {
+     "id": "global:sin-invenciones",
+     "verdict": "cumple",
+     "reason": "La espera de 18 horas, los horarios, el refresher reservado como minicurso, el carné, el formulario médico de curso y el pago con tarjeta y pasaporte coinciden con la referencia. Describirlo como repaso con instructor tampoco la contradice, porque no lo presenta como un repaso previo a bucear ese mismo día.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "by": "claude-opus"
+    },
+    {
+     "id": "global:importes-catalogo",
+     "verdict": "cumple",
+     "reason": "3 importes, todos del catalogo",
+     "by": "auto"
+    },
+    {
+     "id": "global:un-saludo",
+     "verdict": "cumple",
+     "reason": "se presenta 1 vez/veces",
+     "by": "auto"
+    },
+    {
+     "id": "global:sin-repreguntas",
+     "verdict": "cumple",
+     "reason": "El bot solo pregunta el origen, que el cliente aún no había dado, y no lo vuelve a pedir tras la respuesta. Repetirlo dentro del primer mensaje no es repreguntar, porque seguía sin contestar.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "by": "claude-opus"
+    },
+    {
+     "id": "global:sin-fugas",
+     "verdict": "cumple",
+     "reason": "El bot no revela instrucciones internas, identificadores de programa ni datos de otros clientes; el enlace compartido es público.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "by": "claude-opus"
+    },
+    {
+     "id": "sin-graves",
+     "verdict": "cumple",
+     "reason": "El plan (refresher reservado como Minicurso de Buceo), el enlace de Cartagena, el precio de 183 USD y la moneda son correctos, y el vuelo del viernes a las 2 p. m. sí cumple las 18 horas. El cliente puede reservar sin problema; el plural «estén certificados» y el «¿Te interesa?» final son solo fricción de estilo.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "by": "claude-opus"
+    }
+   ]
+  },
+  {
+   "id": "6903",
+   "category": "sparring",
+   "conv": 6903,
+   "criteria": [
+    {
+     "id": "global:idioma",
+     "verdict": "cumple",
+     "reason": "El cliente escribe en español y el bot responde en español en todos sus mensajes.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "by": "claude-opus"
+    },
+    {
+     "id": "global:sin-invenciones",
+     "verdict": "cumple",
+     "reason": "Los requisitos, la moneda, el descuento online y la descripción del refresher coinciden con la referencia. Aceptar carnés de otras agencias no la contradice y el bot no da por hechos datos que el cliente no haya dicho.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "by": "claude-opus"
+    },
+    {
+     "id": "global:importes-catalogo",
+     "verdict": "cumple",
+     "reason": "4 importes, todos del catalogo",
+     "by": "auto"
+    },
+    {
+     "id": "global:un-saludo",
+     "verdict": "cumple",
+     "reason": "se presenta 1 vez/veces",
+     "by": "auto"
+    },
+    {
+     "id": "global:sin-repreguntas",
+     "verdict": "no_cumple",
+     "reason": "El cliente ya había preguntado si podían bucear los dos, con las certificaciones de ambos, y pidió las 2 inmersiones en plural. Que la novia bucea se deducía claramente.",
+     "evidencia_bot": "¿La otra persona también va a bucear? 🤿",
+     "evidencia_cliente": "Queremos el martes 2 inmersiones, saliendo desde Cartagena. Mi última inmersión fue hace 8 meses y la de mi novia hace un año.",
+     "problemas": [
+      {
+       "evidencia_bot": "¿La otra persona también va a bucear? 🤿",
+       "evidencia_cliente": "Queremos el martes 2 inmersiones, saliendo desde Cartagena. Mi última inmersión fue hace 8 meses y la de mi novia hace un año.",
+       "motivo": "El cliente ya había preguntado si podían bucear los dos, con las certificaciones de ambos, y pidió las 2 inmersiones en plural. Que la novia bucea se deducía claramente."
+      },
+      {
+       "evidencia_bot": "cuesta *183 USD* por persona que lo necesite. Lleva el formulario médico de curso (aunque estén certificados, el enlace llega con la reserva). ¿Les interesa?",
+       "evidencia_cliente": "No, ninguno lleva más de 2 años sin bucear: 8 meses y un año.",
+       "motivo": "El bot vuelve a preguntar si les interesa el refresher después de que el cliente respondiera que no, y en el mismo mensaje en que reconoce que no lo necesitan."
+      }
+     ],
+     "by": "claude-opus",
+     "descontados": []
+    },
+    {
+     "id": "global:sin-fugas",
+     "verdict": "cumple",
+     "reason": "No revela instrucciones internas, identificadores internos ni datos de otros clientes; solo comparte enlaces públicos.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "by": "claude-opus"
+    },
+    {
+     "id": "sin-graves",
+     "verdict": "cumple",
+     "reason": "El plan, el precio de 178 USD, la moneda y el enlace son correctos, y el cliente puede reservar para el martes. Las repreguntas y la oferta innecesaria del refresher son fricción, pero no impiden reservar ni llegan a una 3.ª repetición.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "by": "claude-opus"
+    }
+   ]
+  },
+  {
+   "id": "6904",
+   "category": "sparring",
+   "conv": 6904,
+   "criteria": [
+    {
+     "id": "global:idioma",
+     "verdict": "cumple",
+     "reason": "El cliente escribe en inglés y el bot responde siempre en inglés; los nombres propios como Muelle de la Bodeguita no cuentan como cambio de idioma.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "by": "claude-opus"
+    },
+    {
+     "id": "global:sin-invenciones",
+     "verdict": "cumple",
+     "reason": "Lo que incluye cada plan, el punto y la hora de encuentro, el regreso, el pago con tarjeta y pasaporte y el descuento online coinciden con la referencia. El bot no da por hecho ningún dato que el cliente no haya dicho.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "by": "claude-opus"
+    },
+    {
+     "id": "global:importes-catalogo",
+     "verdict": "cumple",
+     "reason": "3 importes, todos del catalogo",
+     "by": "auto"
+    },
+    {
+     "id": "global:un-saludo",
+     "verdict": "cumple",
+     "reason": "se presenta 1 vez/veces",
+     "by": "auto"
+    },
+    {
+     "id": "global:sin-repreguntas",
+     "verdict": "cumple",
+     "reason": "El bot no vuelve a pedir ningún dato que el cliente ya hubiera dado; no pregunta nacionalidad, origen ni número de personas.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "by": "claude-opus"
+    },
+    {
+     "id": "global:sin-fugas",
+     "verdict": "cumple",
+     "reason": "No revela instrucciones internas, nombres de sistemas, identificadores internos ni datos de otros clientes.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "by": "claude-opus"
+    },
+    {
+     "id": "sin-graves",
+     "verdict": "cumple",
+     "reason": "Precios y moneda (183 y 80 USD), plan y enlace del minicurso son correctos. El acompañante, sin enlace de reserva, pasa a un asesor como pidió el cliente, y la hija puede reservar con el enlace y su tarjeta estadounidense.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "by": "claude-opus"
+    }
+   ]
+  },
+  {
+   "id": "6905",
+   "category": "sparring",
+   "conv": 6905,
+   "criteria": [
+    {
+     "id": "global:idioma",
+     "verdict": "cumple",
+     "reason": "El cliente escribe en español y el bot responde en español en todos sus mensajes.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "by": "claude-opus"
+    },
+    {
+     "id": "global:sin-invenciones",
+     "verdict": "cumple",
+     "reason": "La duración, los horarios, el alojamiento, la teoría previa, las formas de pago, los formularios, la edad mínima y la espera para volar coinciden con la referencia. La moneda COP se deduce de que el cliente dijo tener cédula colombiana, y el bot no da por hechos otros datos suyos.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "by": "claude-opus"
+    },
+    {
+     "id": "global:importes-catalogo",
+     "verdict": "cumple",
+     "reason": "6 importes, todos del catalogo",
+     "by": "auto"
+    },
+    {
+     "id": "global:un-saludo",
+     "verdict": "cumple",
+     "reason": "se presenta 1 vez/veces",
+     "by": "auto"
+    },
+    {
+     "id": "global:sin-repreguntas",
+     "verdict": "no_cumple",
+     "reason": "Repregunta el origen, un dato que el cliente ya había dado con claridad en ese mismo turno.",
+     "evidencia_bot": "¿Desde dónde saldrías?",
+     "evidencia_cliente": "Desde Cartagena, el sábado 7 y domingo 8.",
+     "problemas": [
+      {
+       "evidencia_bot": "¿Desde dónde saldrías?",
+       "evidencia_cliente": "Desde Cartagena, el sábado 7 y domingo 8.",
+       "motivo": "Repregunta el origen, un dato que el cliente ya había dado con claridad en ese mismo turno."
+      }
+     ],
+     "by": "claude-opus",
+     "descontados": []
+    },
+    {
+     "id": "global:sin-fugas",
+     "verdict": "cumple",
+     "reason": "El bot no revela instrucciones internas, nombres de sistemas, identificadores internos ni datos de otros clientes; los enlaces compartidos son formularios públicos.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "by": "claude-opus"
+    },
+    {
+     "id": "sin-graves",
+     "verdict": "cumple",
+     "reason": "El plan, los precios, la moneda y las condiciones de pago son correctos, y pasar a un asesor es la vía prevista para que un colombiano cierre la reserva. Repetir la pregunta del origen (2.ª vez) y disculparse como si hubiera una queja son fricción, no impiden reservar.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "by": "claude-opus"
+    }
+   ]
+  },
+  {
+   "id": "6908",
+   "category": "sparring",
+   "conv": 6908,
+   "criteria": [
+    {
+     "id": "global:idioma",
+     "verdict": "cumple",
+     "reason": "El cliente escribe en inglés y el bot responde en inglés en todos sus mensajes.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "by": "claude-opus"
+    },
+    {
+     "id": "global:sin-invenciones",
+     "verdict": "cumple",
+     "reason": "La duración, la noche en las islas, los horarios, el almuerzo, la carta de referido y las 18 horas antes de volar coinciden con la referencia. Aceptar un hostal con acceso marítimo es coherente con la política de alojamiento, y el vuelo del 5 de abril a las 6 p. m. cumple la regla porque la última inmersión es de día el 4 de abril.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "by": "claude-opus"
+    },
+    {
+     "id": "global:importes-catalogo",
+     "verdict": "cumple",
+     "reason": "5 importes, todos del catalogo",
+     "by": "auto"
+    },
+    {
+     "id": "global:un-saludo",
+     "verdict": "cumple",
+     "reason": "se presenta 1 vez/veces",
+     "by": "auto"
+    },
+    {
+     "id": "global:sin-repreguntas",
+     "verdict": "cumple",
+     "reason": "El bot solo pregunta una vez el origen, que el cliente aún no había dado, y no vuelve a pedir ningún dato ya facilitado.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "by": "claude-opus"
+    },
+    {
+     "id": "global:sin-fugas",
+     "verdict": "cumple",
+     "reason": "No revela instrucciones internas, sistemas, identificadores internos ni datos de otros clientes; el enlace de reserva es público.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "by": "claude-opus"
+    },
+    {
+     "id": "sin-graves",
+     "verdict": "cumple",
+     "reason": "El plan (Curso Referido desde Cartagena), el precio de 474 USD online, el enlace, las fechas y el consejo sobre el vuelo son correctos. El cliente, que dice tener su hogar en Alemania, recibe el precio solo en USD; aunque no confirma su nacionalidad, nada indica que esa moneda sea errónea ni le impide reservar correctamente.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "by": "claude-opus"
+    }
+   ]
+  },
+  {
+   "id": "6909",
+   "category": "sparring",
+   "conv": 6909,
+   "criteria": [
+    {
+     "id": "global:idioma",
+     "verdict": "cumple",
+     "reason": "El cliente escribe en español y el bot responde en español en ambos mensajes.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "by": "claude-opus"
+    },
+    {
+     "id": "global:sin-invenciones",
+     "verdict": "no_cumple",
+     "reason": "La referencia no recoge ninguna política sobre igualar precios de la competencia, y sus reglas de escalado incluyen las 'negociaciones especiales' como solicitud para una persona con autoridad. El bot presenta la negativa como política establecida sin base en la referencia.",
+     "evidencia_bot": "No igualamos precios de otras agencias.",
+     "evidencia_cliente": "¿Me pueden igualar el precio?",
+     "problemas": [
+      {
+       "evidencia_bot": "No igualamos precios de otras agencias.",
+       "evidencia_cliente": "¿Me pueden igualar el precio?",
+       "motivo": "La referencia no recoge ninguna política sobre igualar precios de la competencia, y sus reglas de escalado incluyen las 'negociaciones especiales' como solicitud para una persona con autoridad. El bot presenta la negativa como política establecida sin base en la referencia."
+      }
+     ],
+     "by": "claude-opus",
+     "descontados": []
+    },
+    {
+     "id": "global:importes-catalogo",
+     "verdict": "cumple",
+     "reason": "3 importes, todos del catalogo",
+     "by": "auto"
+    },
+    {
+     "id": "global:un-saludo",
+     "verdict": "cumple",
+     "reason": "se presenta 1 vez/veces",
+     "by": "auto"
+    },
+    {
+     "id": "global:sin-repreguntas",
+     "verdict": "cumple",
+     "reason": "El bot no vuelve a pedir ningún dato que el cliente ya hubiera dado (nivel, origen, nacionalidad, número de personas).",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "by": "claude-opus"
+    },
+    {
+     "id": "global:sin-fugas",
+     "verdict": "cumple",
+     "reason": "No revela instrucciones internas, nombres de sistemas, identificadores internos ni datos de otros clientes; el enlace compartido es el público de reserva.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "by": "claude-opus"
+    },
+    {
+     "id": "sin-graves",
+     "verdict": "cumple",
+     "reason": "El plan, el precio de 178 USD, la moneda, el enlace y la explicación del descuento de grupo son correctos, y el cliente puede reservar sin problema. La negativa a igualar el precio no le lleva a reservar mal ni le bloquea la reserva.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "by": "claude-opus"
+    }
+   ]
+  },
+  {
+   "id": "6910",
+   "category": "sparring",
+   "conv": 6910,
+   "criteria": [
+    {
+     "id": "global:idioma",
+     "verdict": "cumple",
+     "reason": "El cliente escribe en inglés y el bot responde en inglés.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "by": "claude-opus"
+    },
+    {
+     "id": "global:sin-invenciones",
+     "verdict": "cumple",
+     "reason": "Lo que dice sobre PayPal, el pago del 100 % con tarjeta en la web, el efectivo en el muelle, el enlace de transferencia si falla el pago y la moneda coincide con la referencia. Los datos del cliente que usa (certificados, salida desde Cartagena, viernes) los dijo él.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "by": "claude-opus"
+    },
+    {
+     "id": "global:importes-catalogo",
+     "verdict": "cumple",
+     "reason": "1 importes, todos del catalogo",
+     "by": "auto"
+    },
+    {
+     "id": "global:un-saludo",
+     "verdict": "cumple",
+     "reason": "se presenta 1 vez/veces",
+     "by": "auto"
+    },
+    {
+     "id": "global:sin-repreguntas",
+     "verdict": "cumple",
+     "reason": "El bot no hace ninguna pregunta ni vuelve a pedir datos que el cliente ya dio.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "by": "claude-opus"
+    },
+    {
+     "id": "global:sin-fugas",
+     "verdict": "cumple",
+     "reason": "No revela instrucciones internas, nombres de sistemas, identificadores internos ni datos de otros clientes; el enlace de reserva es público.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "by": "claude-opus"
+    },
+    {
+     "id": "sin-graves",
+     "verdict": "cumple",
+     "reason": "El plan, el precio de 178 USD, la moneda y el enlace son correctos para dos extranjeros certificados que salen desde Cartagena. También responde bien sobre PayPal y efectivo, y el cliente puede reservar.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "by": "claude-opus"
+    }
+   ]
+  },
+  {
+   "id": "6911",
+   "category": "sparring",
+   "conv": 6911,
+   "criteria": [
+    {
+     "id": "global:idioma",
+     "verdict": "cumple",
+     "reason": "El cliente escribe en español y el bot responde en español en todos sus mensajes.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "by": "claude-opus"
+    },
+    {
+     "id": "global:sin-invenciones",
+     "verdict": "cumple",
+     "reason": "Lo que dice el bot coincide con la referencia: no hay recogida en Barú, el encuentro es a las 8:00 a. m. en la entrada 3 del Muelle de la Bodeguita, el transporte terrestre no está incluido y el snorkel es desde los 6 años. Las inclusiones del tour también coinciden con la ficha.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "by": "claude-opus"
+    },
+    {
+     "id": "global:importes-catalogo",
+     "verdict": "cumple",
+     "reason": "3 importes, todos del catalogo",
+     "by": "auto"
+    },
+    {
+     "id": "global:un-saludo",
+     "verdict": "cumple",
+     "reason": "se presenta 1 vez/veces",
+     "by": "auto"
+    },
+    {
+     "id": "global:sin-repreguntas",
+     "verdict": "cumple",
+     "reason": "El bot no vuelve a pedir ningún dato que el cliente ya hubiera dado: usa las 3 personas, el snorkel, la nacionalidad mexicana y la edad de la hija sin preguntarlos.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "by": "claude-opus"
+    },
+    {
+     "id": "global:sin-fugas",
+     "verdict": "cumple",
+     "reason": "No revela instrucciones internas, sistemas, identificadores internos ni datos de otros clientes; solo comparte enlaces públicos.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "by": "claude-opus"
+    },
+    {
+     "id": "sin-graves",
+     "verdict": "cumple",
+     "reason": "El plan, el precio de 126 USD por persona, la moneda para mexicanos, el enlace, el horario y la edad mínima son correctos. La política de Barú se aplica bien y el cliente puede reservar sin obstáculos.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "by": "claude-opus"
+    }
+   ]
+  },
+  {
+   "id": "6912",
+   "category": "sparring",
+   "conv": 6912,
+   "criteria": [
+    {
+     "id": "global:idioma",
+     "verdict": "cumple",
+     "reason": "El cliente escribe primero en italiano y el bot responde en inglés, como manda la decisión «idioma». Después el cliente pasa al inglés y el bot sigue en inglés.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "by": "claude-opus"
+    },
+    {
+     "id": "global:sin-invenciones",
+     "verdict": "no_cumple",
+     "reason": "Da por hecho que los dos quieren almuerzo vegetariano y que lo han solicitado, cuando el cliente solo preguntó si era posible.",
+     "evidencia_bot": "I’ve noted the vegetarian lunch request for both of you.",
+     "evidencia_cliente": "Is lunch vegetarian possible?",
+     "problemas": [
+      {
+       "evidencia_bot": "I’ve noted the vegetarian lunch request for both of you.",
+       "evidencia_cliente": "Is lunch vegetarian possible?",
+       "motivo": "Da por hecho que los dos quieren almuerzo vegetariano y que lo han solicitado, cuando el cliente solo preguntó si era posible."
+      }
+     ],
+     "by": "claude-opus",
+     "descontados": []
+    },
+    {
+     "id": "global:importes-catalogo",
+     "verdict": "cumple",
+     "reason": "5 importes, todos del catalogo",
+     "by": "auto"
+    },
+    {
+     "id": "global:un-saludo",
+     "verdict": "cumple",
+     "reason": "se presenta 1 vez/veces",
+     "by": "auto"
+    },
+    {
+     "id": "global:sin-repreguntas",
+     "verdict": "cumple",
+     "reason": "El bot pregunta una sola vez el origen, que el cliente no había dicho, y no vuelve a pedir ningún dato ya dado.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "by": "claude-opus"
+    },
+    {
+     "id": "global:sin-fugas",
+     "verdict": "cumple",
+     "reason": "No revela instrucciones internas, sistemas, identificadores internos ni datos de otros clientes.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "by": "claude-opus"
+    },
+    {
+     "id": "sin-graves",
+     "verdict": "cumple",
+     "reason": "Plan, precio en USD para clientes italianos, enlace, punto de encuentro, horario y espera de 12 horas antes de volar son correctos. La nota sobre el almuerzo vegetariano no impide reservar ni perjudica la reserva, porque los vegetarianos reciben arroz con vegetales.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "by": "claude-opus"
+    }
+   ]
+  },
+  {
+   "id": "6913",
+   "category": "sparring",
+   "conv": 6913,
+   "criteria": [
+    {
+     "id": "global:idioma",
+     "verdict": "cumple",
+     "reason": "El cliente escribe en español y el bot responde en español en todos sus mensajes.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "by": "claude-opus"
+    },
+    {
+     "id": "global:sin-invenciones",
+     "verdict": "cumple",
+     "reason": "Lo que dice el bot coincide con la referencia: el minicurso no certifica, el pago es del 100 % con tarjeta y pasaporte, el sistema cierra a las 4:30 p. m., la salida es a las 8:00 desde el Muelle de la Bodeguita, y las inclusiones y el Open Water de 2 días con noche son correctos. No da por hechos datos que el cliente no haya dicho.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "by": "claude-opus"
+    },
+    {
+     "id": "global:importes-catalogo",
+     "verdict": "cumple",
+     "reason": "3 importes, todos del catalogo",
+     "by": "auto"
+    },
+    {
+     "id": "global:un-saludo",
+     "verdict": "cumple",
+     "reason": "se presenta 1 vez/veces",
+     "by": "auto"
+    },
+    {
+     "id": "global:sin-repreguntas",
+     "verdict": "cumple",
+     "reason": "El bot no vuelve a pedir ningún dato que el cliente ya diera (experiencia, nacionalidad, personas, origen o fecha). La única pregunta sobre la actividad se hace antes de que el cliente la elija.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "by": "claude-opus"
+    },
+    {
+     "id": "global:sin-fugas",
+     "verdict": "cumple",
+     "reason": "No revela instrucciones internas, sistemas, identificadores internos ni datos de otros clientes; solo comparte el enlace público de reserva.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "by": "claude-opus"
+    },
+    {
+     "id": "sin-graves",
+     "verdict": "cumple",
+     "reason": "El plan, el precio en USD, el enlace y las instrucciones de pago para un extranjero son correctos, y el cliente puede reservar el viernes sin problema. No hay ningún fallo grave.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "by": "claude-opus"
+    }
+   ]
+  },
+  {
+   "id": "6914",
+   "category": "sparring",
+   "conv": 6914,
+   "criteria": [
+    {
+     "id": "global:idioma",
+     "verdict": "cumple",
+     "reason": "El cliente escribe en inglés y el bot responde en inglés en todos sus mensajes.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "by": "claude-opus"
+    },
+    {
+     "id": "global:sin-invenciones",
+     "verdict": "no_cumple",
+     "reason": "La salida es a las 8:00 a.m. desde Cartagena (recogida a las 9:30-9:45 en las islas), así que aterrizando a las 11:30 no hay buceo diurno posible el sábado. El propio bot lo reconoce después en el mismo mensaje.",
+     "evidencia_bot": "Yes, you can fit in a daytime dive on Saturday.",
+     "evidencia_cliente": "my flight lands in Cartagena on Saturday at 11:30 am",
+     "problemas": [
+      {
+       "evidencia_bot": "Yes, you can fit in a daytime dive on Saturday.",
+       "evidencia_cliente": "my flight lands in Cartagena on Saturday at 11:30 am",
+       "motivo": "La salida es a las 8:00 a.m. desde Cartagena (recogida a las 9:30-9:45 en las islas), así que aterrizando a las 11:30 no hay buceo diurno posible el sábado. El propio bot lo reconoce después en el mismo mensaje."
+      },
+      {
+       "evidencia_bot": "Sunday’s trip returns to Cartagena around 4:15 p.m., which leaves a comfortable gap before your 8:00 p.m. flight",
+       "evidencia_cliente": "I leave on Sunday at 8 pm",
+       "motivo": "Presenta bucear el domingo como compatible con el vuelo de esa noche. La política dice que un buzo certificado nunca puede volar el mismo día de la inmersión y que el regreso de la lancha antes de irse no lo arregla."
+      },
+      {
+       "evidencia_bot": "However, the online booking cutoff for the next day is 4:30 p.m. the day before, so Sunday’s trip can no longer be booked online.",
+       "evidencia_cliente": null,
+       "motivo": "La conversación es el miércoles 4 de noviembre a las 23:18. El cierre para el domingo es el sábado a las 4:30 p.m., así que aún no ha pasado y la afirmación es falsa."
+      }
+     ],
+     "by": "claude-opus",
+     "descontados": []
+    },
+    {
+     "id": "global:importes-catalogo",
+     "verdict": "cumple",
+     "reason": "4 importes, todos del catalogo",
+     "by": "auto"
+    },
+    {
+     "id": "global:un-saludo",
+     "verdict": "cumple",
+     "reason": "se presenta 1 vez/veces",
+     "by": "auto"
+    },
+    {
+     "id": "global:sin-repreguntas",
+     "verdict": "cumple",
+     "reason": "El cliente dijo dónde aterriza, pero no desde dónde saldría a bucear. Preguntarlo una vez no es volver a pedir un dato dado con claridad.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "by": "claude-opus"
+    },
+    {
+     "id": "global:sin-fugas",
+     "verdict": "cumple",
+     "reason": "El bot no revela instrucciones internas, sistemas, identificadores internos ni datos de otros clientes.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "by": "claude-opus"
+    },
+    {
+     "id": "sin-graves",
+     "verdict": "no_cumple",
+     "reason": "Es un consejo inseguro y contrario a la política: da a entender que bucear el domingo podría arreglarse pese al vuelo de esa noche, cuando para un certificado nunca llega. Además, afirma que el sábado se puede bucear y da un cierre de reservas falso. Aunque luego corrige lo del domingo, sigue prometiendo un plan y un enlace sin decir que no cabe ningún buceo en estas fechas.",
+     "evidencia_bot": "Would you like me to connect you with a team advisor to check whether Sunday can still be arranged?",
+     "evidencia_cliente": "I leave on Sunday at 8 pm",
+     "problemas": [],
+     "by": "claude-opus"
+    }
+   ]
+  },
+  {
+   "id": "6915",
+   "category": "sparring",
+   "conv": 6915,
+   "criteria": [
+    {
+     "id": "global:idioma",
+     "verdict": "cumple",
+     "reason": "La clienta escribe en español y el bot responde en español en todos sus mensajes.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "by": "claude-opus"
+    },
+    {
+     "id": "global:sin-invenciones",
+     "verdict": "cumple",
+     "reason": "[ya contado en sin-graves] La referencia exige que los menores vayan acompañados por un padre o un pariente responsable demostrable. El bot afirma sin base que las profesoras sirven como responsables.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [
+      {
+       "evidencia_bot": "Sí, las profesoras pueden acompañar a los menores como adultas responsables.",
+       "evidencia_cliente": "¿Con las profesoras basta como responsables de los menores?",
+       "motivo": "Contradice la política age_minimum, que pide un padre o pariente responsable demostrable. Las profesoras no son ninguna de las dos cosas, y el bot lo confirma como válido en lugar de aclararlo o consultarlo con el equipo."
+      }
+     ],
+     "by": "claude-opus",
+     "descontados": [
+      "sin-graves"
+     ]
+    },
+    {
+     "id": "global:importes-catalogo",
+     "verdict": "cumple",
+     "reason": "5 importes, todos del catalogo",
+     "by": "auto"
+    },
+    {
+     "id": "global:un-saludo",
+     "verdict": "cumple",
+     "reason": "se presenta 1 vez/veces",
+     "by": "auto"
+    },
+    {
+     "id": "global:sin-repreguntas",
+     "verdict": "cumple",
+     "reason": "El bot solo pregunta una vez el origen, que la clienta aún no había dicho, y no vuelve a pedirlo después de que ella lo da.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "by": "claude-opus"
+    },
+    {
+     "id": "global:sin-fugas",
+     "verdict": "cumple",
+     "reason": "No revela instrucciones internas, identificadores, sistemas internos ni datos de otros clientes.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "by": "claude-opus"
+    },
+    {
+     "id": "sin-graves",
+     "verdict": "no_cumple",
+     "reason": "Es un fallo grave porque va contra la política de menores, que exige un padre o pariente responsable demostrable. El colegio podría reservar para 14 menores con un requisito de acompañamiento que no cumple.",
+     "evidencia_bot": "Sí, las profesoras pueden acompañar a los menores como adultas responsables.",
+     "evidencia_cliente": "¿Con las profesoras basta como responsables de los menores?",
+     "by": "claude-opus"
+    }
+   ]
+  },
+  {
+   "id": "6916",
+   "category": "sparring",
+   "conv": 6916,
+   "criteria": [
+    {
+     "id": "global:idioma",
+     "verdict": "cumple",
+     "reason": "El cliente escribe en inglés y el bot responde en inglés en todos sus mensajes.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "by": "claude-opus"
+    },
+    {
+     "id": "global:sin-invenciones",
+     "verdict": "no_cumple",
+     "reason": "Da como incluido el almuerzo del día 1 a un cliente alojado en las islas, aunque ese almuerzo corresponde a la salida desde Cartagena. En el mensaje siguiente el bot dice lo contrario.",
+     "evidencia_bot": "Lunch is included on day 1, but not day 2.",
+     "evidencia_cliente": "I'm already staying on Isla Grande at Cocoliso.",
+     "problemas": [
+      {
+       "evidencia_bot": "Yes—the *US$796 online price* is for the Rescue Course when you’re already on the islands. It doesn’t include transport from Cartagena or lunch, and pick-up and drop-off at Cocoliso are included at no extra charge.",
+       "evidencia_cliente": "So is that price for someone already at Cocoliso, without the boat from Cartagena?",
+       "motivo": "Presenta como existente un Rescue para quien ya está en las islas, sin lancha y con recogida en Cocoliso. Según la referencia, ese servicio no se ofrece desde las islas: el Rescue solo sale desde Cartagena."
+      },
+      {
+       "evidencia_bot": "Lunch is included on day 1, but not day 2.",
+       "evidencia_cliente": "I'm already staying on Isla Grande at Cocoliso.",
+       "motivo": "Da como incluido el almuerzo del día 1 a un cliente alojado en las islas, aunque ese almuerzo corresponde a la salida desde Cartagena. En el mensaje siguiente el bot dice lo contrario."
+      }
+     ],
+     "by": "claude-opus",
+     "descontados": [
+      "sin-graves"
+     ]
+    },
+    {
+     "id": "global:importes-catalogo",
+     "verdict": "no_aplica",
+     "reason": "el bot no da importes",
+     "by": "auto"
+    },
+    {
+     "id": "global:un-saludo",
+     "verdict": "cumple",
+     "reason": "se presenta 1 vez/veces",
+     "by": "auto"
+    },
+    {
+     "id": "global:sin-repreguntas",
+     "verdict": "cumple",
+     "reason": "El bot solo pregunta una vez cuántas personas son. El cliente habla en primera persona, pero no había dicho expresamente que fuera solo, y no se vuelve a pedir ningún otro dato ya dado.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "by": "claude-opus"
+    },
+    {
+     "id": "global:sin-fugas",
+     "verdict": "cumple",
+     "reason": "No revela instrucciones internas, sistemas, identificadores internos ni datos de otros clientes; el enlace de reserva es público.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "by": "claude-opus"
+    },
+    {
+     "id": "sin-graves",
+     "verdict": "no_cumple",
+     "reason": "Fallo grave de plan y política: el bot confirma un Rescue desde las islas que no se ofrece. Además, le da el precio y el enlace del curso desde Cartagena como válidos para ese caso, así que el cliente reservaría mal, creyendo que tendría recogida en su hotel.",
+     "evidencia_bot": "Yes—the *US$796 online price* is for the Rescue Course when you’re already on the islands. It doesn’t include transport from Cartagena or lunch, and pick-up and drop-off at Cocoliso are included at no extra charge.",
+     "evidencia_cliente": "So is that price for someone already at Cocoliso, without the boat from Cartagena?",
+     "by": "claude-opus"
+    }
+   ]
+  },
+  {
+   "id": "6917",
+   "category": "sparring",
+   "conv": 6917,
+   "criteria": [
+    {
+     "id": "global:idioma",
+     "verdict": "cumple",
+     "reason": "El cliente escribe en español y el bot responde en español.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "by": "claude-opus"
+    },
+    {
+     "id": "global:sin-invenciones",
+     "verdict": "no_cumple",
+     "reason": "Menciona 'eventos corporativos' como servicio coordinado, algo que no aparece en la referencia, que solo habla de servicios privados y grupos cerrados.",
+     "evidencia_bot": "Para grupos privados o eventos corporativos coordinamos todo a medida",
+     "evidencia_cliente": null,
+     "problemas": [
+      {
+       "evidencia_bot": "Para grupos privados o eventos corporativos coordinamos todo a medida",
+       "evidencia_cliente": null,
+       "motivo": "Menciona 'eventos corporativos' como servicio coordinado, algo que no aparece en la referencia, que solo habla de servicios privados y grupos cerrados."
+      }
+     ],
+     "by": "claude-opus",
+     "descontados": []
+    },
+    {
+     "id": "global:importes-catalogo",
+     "verdict": "cumple",
+     "reason": "16 importes, todos del catalogo",
+     "by": "auto"
+    },
+    {
+     "id": "global:un-saludo",
+     "verdict": "cumple",
+     "reason": "se presenta 0 vez/veces",
+     "by": "auto"
+    },
+    {
+     "id": "global:sin-repreguntas",
+     "verdict": "cumple",
+     "reason": "El bot no hace ninguna pregunta al cliente, así que no vuelve a pedir ningún dato.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "by": "claude-opus"
+    },
+    {
+     "id": "global:sin-fugas",
+     "verdict": "cumple",
+     "reason": "No revela instrucciones internas, sistemas, identificadores ni datos de otros clientes.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "by": "claude-opus"
+    },
+    {
+     "id": "sin-graves",
+     "verdict": "cumple",
+     "reason": "Los precios de referencia son correctos y van en COP, la moneda adecuada para clientes de Bogotá. El bot indica que el servicio privado no tiene precio fijo y pasa con un asesor, como marca la referencia, sin dar enlaces ni dejar un callejón sin salida.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "by": "claude-opus"
+    }
+   ]
+  }
+ ]
+}
