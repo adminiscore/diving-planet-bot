@@ -274,3 +274,12 @@ def test_el_curso_sin_plan_desde_las_islas_da_el_de_cartagena_y_lo_dice():
     assert "advisor" in b["sin_plan_desde_las_islas"] and b["origen"] == "cartagena"
     [c] = hechos.hechos(st, ["precio"], ["padi_advanced"])  # el Advanced sí tiene plan desde las islas
     assert "island" in c["precio"] and "sin_plan_desde_las_islas" not in c
+
+
+def test_el_anuncio_de_los_precios_no_queda_debajo_de_la_lista():
+    from src.agents.redactor_hechos import con_la_pieza
+
+    pieza = "*Prices per person*:\n• Fun Dives: 178 USD"
+    texto = con_la_pieza("Bringing your gear gives you 5%.\n\nI'm leaving the prices below. Would you like the link?", pieza)
+    assert texto == f"Bringing your gear gives you 5%.\n\nI'm leaving the prices below.\n\n{pieza}\n\nWould you like the link?"
+    assert con_la_pieza("Lovely.\n\nWould you like the link?", pieza) == f"Lovely.\n\n{pieza}\n\nWould you like the link?"

@@ -244,6 +244,11 @@ def con_la_pieza(answer: str, pieza: str) -> str:
     fuera = [_IMPORTE_RE, *([_DESCUENTO_DE_GRUPO_RE] if _DESCUENTO_DE_GRUPO_RE.match(pieza) else [])]
     parrafos = [p for p in answer.rstrip().split("\n\n") if p.strip()]
     cierre = [parrafos.pop()] if len(parrafos) > 1 and _CIERRA_PREGUNTANDO_RE.search(parrafos[-1]) else []
+    if cierre and len(frases := re.split(r"(?<=[.!?])\s+", cierre[0].rstrip())) > 1:
+        # Tandas s04l a s05c: «I'm leaving the prices below. Would you like the link?» quedaba debajo de la lista. Detrás de la pieza
+        # va solo la pregunta; lo de delante de ese párrafo, encima.
+        parrafos.append(" ".join(frases[:-1]))
+        cierre = [frases[-1]]
     # Su párrafo final también (sparring t3b: «Sí, por ser un grupo de 6 aplica el descuento de grupo… ¿Te paso con un
     # asesor?» quedaba detrás de la nota): se queda su pregunta.
     limpios: list[str] = []
