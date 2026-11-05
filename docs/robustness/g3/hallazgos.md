@@ -1256,3 +1256,21 @@ Criterio de Álvaro (#2716). 10 clientes nuevos y educados (conv 6933-6942). Los
 **Medios repetidos:** bloque de políticas en crudo; «no tengo el dato» cuando la base lo tiene; pregunta doble a medias; listas con planes ya descartados; precio final por persona con descuentos. Sueltos de invención: distancia desde Getsemaní (6933), horario de Bubble Makers en la tarjeta (6935), cómo se pide el 5 % de equipo propio (6936).
 
 **Lectura:** 5 de 10 no es comparable con el 23 % de antes sin más: son 10 clientes y otro autor. Lo que sí dice es que la tasa no ha bajado todavía y que cada autor nuevo encuentra clases que no teníamos. La auditoría de decisiones contra la base (22: 7 cubiertas, 8 a medias, 7 no; muchas las cumple el código) va a por esa causa: 0.59 pone los huecos reales como datos en la base y 6 casos nuevos en `banco-graves.json`.
+
+## CALN-S05F-01..10 · Tanda del segundo autor (Álvaro) contra PRE 0.59.0 (5-nov, `charla_pre`)
+
+Criterio de Álvaro (#2716). 10 clientes nuevos y educados (conv 6943-6952). Los temas los eligió el Claude de Álvaro antes de ver ninguna respuesta, evitando los ya usados: asma, coreanos y el traslado del aeropuerto, padre con su hija de 15 que hace el Open Water, 5 argentinos (3 certificados y 2 sin experiencia), refresher en San Pedro de Majagua, japonesa con tortugas, Cali el 1 de enero, noruego con el Advanced, uruguayos con un niño de 9 y Airbnb en Isla Grande. Los escribió y los leyó un subagente que solo conocía `policies.json`, `services.json` y `discounts.json`. Después, **juez Opus 5.5 a ciegas, una pasada** (`juez_claude --charlas`, `tanda-s05f__claude-opus-medium.json`): **2 de 10 con grave**, los dos confirmados leyendo el texto.
+
+**Graves:**
+1. **Majagua** (6947): pide el refresher el 8 y bucear el 9 (se va el 10 por la tarde). La respuesta dice «el paquete de 5 inmersiones dura 2 días, así que no alcanzaría a completarlo» y debajo va la tarjeta de ese paquete con su enlace; la salida de 2 inmersiones del 9 no sale. Es la tarjeta que sigue un plan que ya no quiere (CALN-39): en t1 había dicho «bucear los dos días».
+2. **Airbnb** (6952): en t1, «un asesor debe confirmar la logística antes de que reserves» y ofrece el pase; el cliente contesta «Sí, por favor» con el nombre de la casa; el bot no lo pasa, pregunta cuántos son y si hace más de 2 años de su última inmersión, y en t4 da la tarjeta con el enlace para reservar y pagar. Va contra `hotel-antes-de-reservar`.
+
+**Medios** (los señalaron el subagente o el juez; sin leer uno a uno):
+- «La disponibilidad de esa fecha la confirma el equipo» (6950 t2, 6951 t2), contra `availability_always`: la clase del francés del golden.
+- Repreguntas: la última inmersión ya dicha (6945 t3, 6952 t3); «¿Los demás también van a bucear?» a cinco que bucean (6946 t2). El pase pedido en t2 no se hace hasta t5 (6946).
+- El 1 de enero cerrado, sin proponer otro día ni preguntar nada (6949 t1).
+- Padre e hija (6945): en t2 recomienda la salida de un día a quien pasa dos en las islas, y no dice que la hija hace la teoría online antes.
+- Argentinos (6946): formulario médico de curso a certificados sin refresher (t5) y bloque de políticas en crudo con paquetes que no pidieron.
+- Snorkel (6948 t1): lo que incluye, dos veces en el mismo mensaje.
+
+**Lectura:** 2 de 10, frente a 5 de 10 en s05e contra la 0.58. Los graves de s05e, refresher el mismo día, vuelo y planes sin enlace, no salen aquí. Los dos que quedan son la tarjeta con un plan viejo (CALN-39) y la regla del alojamiento cuando el cliente acepta el pase. Son 10 clientes y otro autor: dice poco de la tasa, pero es del segundo autor, como pide la meta.
