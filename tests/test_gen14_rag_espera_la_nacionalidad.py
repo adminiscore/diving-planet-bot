@@ -68,11 +68,12 @@ async def test_la_nacionalidad_guardada_no_la_cambia_el_mensaje(monkeypatch, lec
     assert copia.is_colombian is False  # un cambio se confirma en la extracción, no aquí
 
 
-async def test_el_rag_ve_el_grupo_y_el_origen_del_mensaje(monkeypatch, lectura):
-    # (3b): antes solo la nacionalidad; «somos 5 y saldremos desde Cartagena» no llegaba al escritor del RAG en ese turno.
-    lectura({"group_size": 5, "location": "cartagena"})
+async def test_el_rag_ve_el_grupo_del_mensaje_pero_no_su_origen(monkeypatch, lectura):
+    # (3b): antes solo la nacionalidad; «somos 5» no llegaba al escritor del RAG en ese turno. El origen va el guardado: el del
+    # mensaje, en la mini, leía «staying overnight» en las islas como salir de las islas.
+    lectura({"group_size": 5, "location": "island"})
     st = _estado()
-    st._jev_lugar = {"choice": "cartagena", "confidence": 0.95}
-    copia = await core._con_lo_del_mensaje(st, "Somos 5 y saldremos desde Cartagena, ¿qué incluye?")
-    assert copia.detected_group_size == 5 and copia.location == "cartagena"
+    st._jev_lugar = {"choice": "islands", "confidence": 0.95}
+    copia = await core._con_lo_del_mensaje(st, "Somos 5 y dormiremos una noche en la isla, ¿qué incluye?")
+    assert copia.detected_group_size == 5 and copia.location is None
     assert st.detected_group_size is None and st.location is None

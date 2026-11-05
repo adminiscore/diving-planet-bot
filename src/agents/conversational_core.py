@@ -1448,18 +1448,21 @@ async def _con_lo_del_mensaje(state: ConversationState, message: str, history: l
     """El RAG de un turno con pregunta se escribe ANTES de que la extracción apunte lo que dice ESE mensaje. gen-14 (21-oct)
     le daba una copia del estado solo con la nacionalidad del mensaje («Somos de Cali… ¿cuánto vale la salida?» se cotizaba
     en USD; banco dialogos-gen14-moneda). CALN-8 (5) (3b, 5-nov): la copia es la lectura entera del turno
-    (`nucleo/lectura.foto_del_turno`), la misma que usa el escritor con los hechos: origen, nacionalidad y grupo mezclado,
-    duración, plan nombrado, tamaño del grupo y reparto. Antes el escritor del RAG no veía el «somos 5» ni el «estaremos en
-    las islas» de ESE mensaje, y el de los hechos sí. No se gasta otra llamada: es la tarea adelantada del extractor. El
-    estado de verdad lo sigue escribiendo la extracción."""
+    (`nucleo/lectura.foto_del_turno`), la misma que usa el escritor con los hechos: nacionalidad y grupo mezclado, duración,
+    plan nombrado, tamaño del grupo y reparto. Antes el escritor del RAG no veía el «somos 5» de ESE mensaje, y el de los
+    hechos sí. No se gasta otra llamada: es la tarea adelantada del extractor. El estado de verdad lo sigue escribiendo la
+    extracción.
+
+    El ORIGEN no: va el guardado. Mini de (3b) con el del mensaje (5-nov, ×2 por lado): los dos fallos que salen en las dos B
+    y en ninguna A son suyos. «Staying overnight» en las islas leído como salir de las islas (cambio-fecha-por-enfermedad) y,
+    con el origen en las entradas, la pieza de precios por código que no sale («almuerzo incluido» del Open Water)."""
     from src.agents.nucleo.extractor import lectura_del_extractor  # lazy
-    from src.agents.nucleo.lectura import foto_del_turno, origen_del_mensaje  # lazy
+    from src.agents.nucleo.lectura import foto_del_turno  # lazy
 
     datos = await lectura_del_extractor(state, message)
     if datos is None:
         return state
-    foto = foto_del_turno(state, datos, origen_del_mensaje(state, datos, True), message,
-                          state.history if history is None else history)
+    foto = foto_del_turno(state, datos, state.location, message, state.history if history is None else history)
     if foto.is_colombian != state.is_colombian:
         logger.info(f"[CORE][GEN14] el RAG ya sabe la nacionalidad de este mensaje: is_colombian={foto.is_colombian}")
     return foto
