@@ -314,3 +314,36 @@ def test_la_pregunta_ya_contestada_no_se_queda_en_medio():
     respuesta = f"En las islas tenemos nuestra base.\n\n{pregunta}\n\n*Precios por persona* (online · normal):\n• Salidas de Buceo: 124 USD"
     salida = compositor.componer(st, respuesta, escribio=True)
     assert "Desde dónde" not in salida and "En las islas tenemos nuestra base." in salida and "124 USD" in salida
+
+
+ENLACE_DE_UN_DIA = "https://book.divingplanet.org/book/fun-dives-already-on-island/19?language=en"
+
+
+def test_el_paquete_sin_enlace_no_recibe_el_enlace_de_otro_plan():
+    """Panel fijo: propone el paquete de 4, que reserva un asesor, y el escritor da el enlace de la salida de un día."""
+    st = _estado(language="en", location="island", hotel="cocoliso", is_colombian=False, detected_cert_days=2, detected_activity="certified_diving")
+    respuesta = f"The package is 204 USD.\n\nBook the divers here: {ENLACE_DE_UN_DIA}\n\nAnything else?"
+    limpia = compositor._sin_enlaces_de_reserva(st, respuesta)
+    assert "fun-dives" not in limpia and "204 USD" in limpia and "Anything else?" in limpia
+
+
+def test_con_un_plan_con_enlace_no_se_toca():
+    st = _estado(language="en", location="island", hotel="cocoliso", is_colombian=False, detected_cert_dives=2, detected_activity="certified_diving")
+    respuesta = f"Book here: {ENLACE_DE_UN_DIA}"
+    assert compositor._sin_enlaces_de_reserva(st, respuesta) == respuesta
+
+
+def test_sin_dias_ni_inmersiones_el_plan_es_recomendado_y_no_se_toca():
+    st = _estado(language="en", location="island", hotel="cocoliso", is_colombian=False, detected_activity="certified_diving")
+    respuesta = f"Book here: {ENLACE_DE_UN_DIA}"
+    assert compositor._sin_enlaces_de_reserva(st, respuesta) == respuesta
+
+
+def test_la_cuenta_del_corte_la_hace_el_codigo():
+    from datetime import datetime
+
+    from src.agents.rutas.contexto_rag import _si_la_web_admite_manana as corte
+
+    assert "hasta hoy a las 4:30" in corte(datetime(2026, 11, 5, 16, 29), "es")
+    assert "ya no admite" in corte(datetime(2026, 11, 5, 16, 30), "es") and "2026-11-07" in corte(datetime(2026, 11, 5, 16, 30), "es")
+    assert "no longer" in corte(datetime(2026, 11, 5, 20, 0), "en")

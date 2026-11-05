@@ -94,7 +94,10 @@ def _plan_is_single_day(state: ConversationState) -> bool:
 
 
 def _otro_paquete_de_esos_dias(dias: int | None) -> int | None:
-    """Las inmersiones del paquete mayor de esa duración, si hay más de uno (2 días: 4 y 5). Del catálogo."""
+    """Las inmersiones del paquete mayor de esa duración, si hay más de uno (2 días: 4 y 5). Del catálogo. Con un día no aplica: el plan de un día es
+    el recomendado de siempre (`_DAYS_TO_DIVES` solo tiene los de varios días)."""
+    if dias not in _DAYS_TO_DIVES:
+        return None
     tamanos = [n for n, (d, _) in dom.dive_packages().items() if d == dias]
     return max(tamanos) if len(tamanos) > 1 else None
 

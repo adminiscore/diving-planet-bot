@@ -106,3 +106,11 @@ def test_el_refresher_ocupa_uno_de_los_dias_que_queria_bucear():
     assert core._resolve_cert_plan(st) == "4_dives_2_days"
     st.detected_group_size = 2  # en un grupo no se sabe quién lo hace
     assert core._resolve_cert_plan(st) == "7_dives_3_days"
+
+
+def test_con_un_dia_no_revienta():
+    """Mini y panel de la 0.60: «KeyError: 1» en un turno. Hay dos paquetes de un día, y `_DAYS_TO_DIVES` no los lleva."""
+    st = ConversationState(conversation_id="c39", language="es", detected_cert_days=1)
+    st.location = "cartagena"
+    assert "2 inmersiones en 1 día" in core._recommended_plan_intro(st)
+    assert core._resolve_cert_plan(st) == "2_dives_1_day"

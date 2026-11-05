@@ -74,11 +74,27 @@ def _sin_enlaces_repetidos(respuesta: str) -> str:
     return f"{limpio}{_PARRAFO}{resto}" if limpio else resto
 
 
+def _enlaces_de_otro_plan_de_buceo(state, respuesta: str) -> set[str]:
+    """CALN-39 (panel fijo, 6-nov): el plan del cliente es un paquete sin enlace, que reserva un asesor, y el escritor le daba el de la salida de un
+    día («Book the divers here»), y reservaba otra cosa. Solo si dijo días o inmersiones: sin eso, el plan es una recomendación y puede cambiarlo."""
+    from src.agents.conversational_core import _resolve_cert_plan  # lazy
+    from src.domain import activities as dom  # lazy
+    from src.flows.catalog import RAW_SERVICES  # lazy
+
+    if not (getattr(state, "detected_cert_days", None) or getattr(state, "detected_cert_dives", None)) or (
+            RAW_SERVICES.get(_resolve_cert_plan(state)) or {}).get("booking_url"):
+        return set()
+    de_buceo = {enlace.group(0) for sid, s in RAW_SERVICES.items() if dom.activity_for_service(sid) == dom.activity_for_service("2_dives_1_day")
+                and (enlace := _ENLACE_DE_RESERVA_RE.search(s.get("booking_url") or ""))}
+    return set(_ENLACE_DE_RESERVA_RE.findall(respuesta)) & de_buceo
+
+
 def _sin_enlaces_de_reserva(state, respuesta: str) -> str:
     """CALN-35: a quien no reserva por enlace no le llega ninguno, venga de donde venga. El escritor corre a la vez que
     la lectura de este mensaje («…para colombianos», mini c055), así que no siempre lo sabe; aquí ya está todo leído."""
     if como_reserva(state) == ENLACE:
-        return respuesta
+        otros = _enlaces_de_otro_plan_de_buceo(state, respuesta)
+        return _sin_estos_enlaces(respuesta, otros) if otros else respuesta
     enlaces = set(_ENLACE_DE_RESERVA_RE.findall(respuesta))
     if not enlaces:
         return respuesta
