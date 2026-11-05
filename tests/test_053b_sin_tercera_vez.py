@@ -206,12 +206,13 @@ def _con_reparto(**senales):
 def test_quien_ya_tiene_la_certificacion_no_hace_el_curso():
     from src.agents.jev_router import QUIERE_CURSO
 
-    mensaje = "Somos 7. Tres ya tenemos el Open Water, dos quieren probar el minicurso y dos prefieren snorkel."
-    reparto = {"padi_open_water": 3, "minicourse": 2, "snorkel": 2}
-    assert extractor._reparto_valido(reparto, mensaje, _con_reparto(**{QUIERE_CURSO: False})) == {
-        "certified_diving": 3, "minicourse": 2, "snorkel": 2}
-    assert extractor._reparto_valido(reparto, mensaje, _con_reparto(**{QUIERE_CURSO: True}))["padi_open_water"] == 3
-    assert extractor._reparto_valido(reparto, mensaje, _con_reparto())["padi_open_water"] == 3  # Jev calla: como hoy
+    datos = {"group_allocation": {"padi_open_water": 3, "minicourse": 2, "snorkel": 2, "bubble_makers": None}, "group_size": 7}
+    limpio = extractor._sin_los_cursos_que_ya_tienen(_con_reparto(**{QUIERE_CURSO: False}), datos)
+    assert limpio["group_allocation"] == {"certified_diving": 3, "minicourse": 2, "snorkel": 2, "bubble_makers": None}
+    assert limpio["group_size"] == 7
+    assert extractor._sin_los_cursos_que_ya_tienen(_con_reparto(**{QUIERE_CURSO: True}), datos) == datos
+    assert extractor._sin_los_cursos_que_ya_tienen(_con_reparto(), datos) == datos  # Jev calla: como hoy
+    assert extractor._sin_los_cursos_que_ya_tienen(_con_reparto(**{QUIERE_CURSO: False}), None) is None
 
 
 def test_el_curso_ya_elegido_no_se_toca():
@@ -219,7 +220,8 @@ def test_el_curso_ya_elegido_no_se_toca():
 
     estado = _con_reparto(**{QUIERE_CURSO: False})
     estado.detected_activity = "padi_open_water"
-    assert extractor._reparto_valido({"padi_open_water": 2, "snorkel": 1}, "somos 3, 2 el curso y uno snorkel", estado)["padi_open_water"] == 2
+    datos = {"group_allocation": {"padi_open_water": 2, "snorkel": 1}}
+    assert extractor._sin_los_cursos_que_ya_tienen(estado, datos) == datos
 
 
 def test_al_snorkel_no_se_le_dice_la_espera_de_volar():

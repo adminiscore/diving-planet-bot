@@ -452,17 +452,9 @@ def _reparto_valido(reparto: dict | None, message: str, state: ConversationState
     if not _EXPLICIT_NUMBER_RE.search(message) and any(n > 1 and n not in conocidas for n in reparto.values()):
         logger.info(f"[EXTRACT][EX7] reparto sin cifras en el mensaje, no se usa: {reparto!r}")
         return None
-    from src.agents.jev_router import QUIERE_CURSO  # lazy
-
-    nadie_quiere_curso = (getattr(state, "_senales_router", None) or {}).get(QUIERE_CURSO) is False
     nombradas = matched_activity_categories(message)
     valido: dict = {}
     for act, n in reparto.items():
-        if nadie_quiere_curso and act.startswith("padi_") and act != state.detected_activity and n > guardado.get(act, 0):
-            # Tanda s05a: «Tres ya tenemos el Open Water» no son 3 plazas del curso: ya lo tienen, son buzos (ver `QUIERE_CURSO`).
-            logger.info(f"[EXTRACT][S05A] {act!r} × {n} en el reparto y Jev dice que nadie quiere un curso: buceo certificado")
-            valido["certified_diving"] = valido.get("certified_diving", 0) + n
-            continue
         categoria = "padi_course" if act.startswith("padi_") and act != "padi_specialty" else _CATEGORIA_DEL_REPARTO.get(act)
         # CALN-2 (27-oct, tanda de precios q2 t2): también por sus nombres del catálogo, en los dos idiomas
         # («she the mini course»; los patrones de categoría no tenían el nombre en inglés del propio producto).
@@ -1022,6 +1014,26 @@ def lanzar_segunda_nacionalidad_si_hace_falta(state: ConversationState, senales:
     logger.info("[EXTRACT][CALN10B] Jev dice que el mensaje afirma la nacionalidad: la segunda lectura sale ya")
 
 
+def _sin_los_cursos_que_ya_tienen(state: ConversationState, datos: dict | None) -> dict | None:
+    """Tanda s05a: «Tres ya tenemos el Open Water» no son 3 plazas del curso: si Jev dice que nadie quiere uno (`QUIERE_CURSO`), los
+    cursos que el reparto trae de nuevas son buzos. Aquí, por donde pasan todos los que leen el reparto: en `_reparto_valido` el
+    estado quedaba bien y la pieza de precios, que sale antes de guardarlo, seguía dando el curso (banco s05a, 2 de 5)."""
+    from src.agents.jev_router import QUIERE_CURSO  # lazy
+
+    reparto = (datos or {}).get("group_allocation")
+    if not isinstance(reparto, dict) or (getattr(state, "_senales_router", None) or {}).get(QUIERE_CURSO) is not False:
+        return datos
+    guardado = _reparto_guardado(state)
+    cursos = {a: n for a, n in reparto.items() if a.startswith("padi_") and isinstance(n, int) and n > 0
+              and a != state.detected_activity and n > guardado.get(a, 0)}
+    if not cursos:
+        return datos
+    logger.info(f"[EXTRACT][S05A] {cursos!r} en el reparto y Jev dice que nadie quiere un curso: buceo certificado")
+    nuevo = {a: n for a, n in reparto.items() if a not in cursos}
+    nuevo["certified_diving"] = (nuevo.get("certified_diving") or 0) + sum(cursos.values())
+    return {**datos, "group_allocation": nuevo}
+
+
 async def datos_del_extractor(state: ConversationState, message: str) -> dict | None:
     """Lo que el extractor sacó de ESTE mensaje (lanzado con el turno; si no se lanzó, se pide ahora). None = la
     llamada falló o no hay extractor: el turno sigue con lo de hoy."""
@@ -1039,7 +1051,7 @@ async def datos_del_extractor(state: ConversationState, message: str) -> dict | 
     except (asyncio.CancelledError, Exception) as exc:  # noqa: BLE001
         logger.warning(f"[EXTRACT][EX5] el extractor falló, se sigue con lo de hoy: {exc!r}")
         datos = None
-    datos = await _con_el_lector_del_grupo(state, message, datos)
+    datos = _sin_los_cursos_que_ya_tienen(state, await _con_el_lector_del_grupo(state, message, datos))
     # lat-6 (24-oct): lo que lea después este mismo turno (`lectura_del_extractor`: el redactor, el enrutado) sale de
     # aquí. Antes la tarea se soltaba y se pedía OTRA extracción en serie (~1 s; en real-1, 13 % de los turnos y antes
     # de que empezara el redactor).
