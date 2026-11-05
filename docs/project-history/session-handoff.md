@@ -59,6 +59,14 @@ integrar la rama del otro y suite en verde, porque en PRE gana el último; (3) *
 despliegue reinicia el contenedor y mata la medida del otro (avisar en el registro de Plan Coral con la hora de fin).
 Las doce normas, con su porqué, están en el documento.
 
+### ▶️ RETOMAR AQUÍ — 5-nov, ~14:10 (Gadea con Claude; Álvaro y Gonzalo sin conectar): 0.56.0 SUBE A PRE; EL JUEZ ES OPUS; meta, como mucho 2 graves en 60
+
+- **El juez cambió (decisión de Gadea):** Opus medium con Claude Code, cada uno con su suscripción, sin gastar OpenAI: `ENV_FILE=.env.ci python -m scripts.juez_claude --run <ronda>.jsonl`, `--no-cache --sufijo=-2` para la 2.ª pasada, `python -m scripts.ab_judge_compare A B`. Normas en `docs/robustness/protocolo-medicion.md` §2. Juzgar ya no cuesta dinero: dos pasadas por lado y contar lo firme. **No comparar con rondas de gpt-5-mini.** 1 de cada 3 fallos de Opus es falso: leer el texto. gpt-5.4-mini NO se quita: sigue de respaldo de OpenRouter.
+- **Qué hay en PRE:** 0.56.0 (HISTORY): `flows/como_reserva.py` (enlace, asesor o primero el hotel). Regla de Gadea: sin hotel no se reserva desde las islas, y no se ofrece Cartagena. Colombianos sin enlace ni «por la web». Mini 29 → 20 fallos firmes.
+- **Meta de CALN-22:** como mucho 2 graves en 60 clientes, de dos autores, con bancos sin bajar. Contador desde la 0.56: 0 de 60.
+- **Siguiente, por orden:** (1) tanda de clientes contra la 0.56, juzgada además a ciegas con Opus; la otra tanda, de otro autor. (2) CALN-36, revisar los criterios del golden que fallan a todos los jueces; votos en https://claude.ai/artifact/FvHWsHZ3AzSNNxKFsowERy. (3) CALN-37, medir el origen y la respuesta adelantada. (4) CALN-30, ~600 turnos (Gonzalo). (5) Ronda de difíciles, solo medir.
+- **Pregunta abierta a Gadea:** ¿puede Andrés exportar conversaciones de WhatsApp recientes? Son las únicas reales no vistas.
+
 ### ▶️ RETOMAR AQUÍ — 5-nov, ~07:30 (Gadea durmiendo; Claude de noche con Gonzalo; Álvaro sin señales desde la 01:44): OPENAI SIN SALDO DESDE LAS 06:21, PC APAGADO POR LA NORMA; 0.53.0, 0.54.0 Y 0.55.0 EN PRE; meta, 0 clientes de ~60
 
 - **⚠️ SIN SALDO:** OpenAI agotado a las 06:21 (429 `credit_balance_exhausted`: Luna, embeddings, juez) y sin recargar a las 07:29. PRE contesta con DeepSeek y sin búsqueda por significado, con otra voz: **nada de lo medido después de las 06:21 vale.** OpenRouter: quedan 1,11 $ de 160. Hay que recargar los dos antes de medir. Una mini con juez cuesta ~2,3 $. La 0.55 se probó antes (mini y juez a las 06:14, 0 errores); su humo en PRE, no: al recargar, repetir el humo de la hora de volar.

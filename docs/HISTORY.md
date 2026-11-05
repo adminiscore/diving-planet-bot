@@ -1,6 +1,23 @@
 History
 =======
 
+0.56.0 - (2026-11-05, SUBE A PRE: cómo reserva cada cliente, en un solo sitio; sin hotel no se reserva desde las islas; colombianos sin enlace web)
+---------------------
+* **Decisiones de Gadea (5-nov):** desde las islas, primero tiene que decirnos el hotel para poder reservar (si no, puede que reserve, le cancelen, no pueda quedarse en ese hotel, se olvide de avisar o acabe saliendo desde Cartagena). Sin hotel se le dice que vuelva cuando lo tenga; NO se le ofrece Cartagena. Con una casa o un Airbnb vale el nombre y un asesor confirma la recogida. De momento solo «desde las islas», no los planes desde Cartagena con noche en las islas. Base: política `hotel_before_booking` y decisión `hotel-antes-de-reservar`.
+* **Qué sube** (sobre 0.55.1; `feature/caln34-gadea`):
+  * **`src/flows/como_reserva.py`, un solo dueño:** enlace, asesor o primero el hotel. Lo decidían por separado los hechos, el cierre y el escritor. El compositor quita al final del turno el enlace de reserva a quien no le toca, venga de donde venga: la respuesta adelantada se escribe antes de leer «para colombianos».
+  * **El hotel:** se pregunta «¿En qué hotel te vas a alojar?». Sin él, la regla y los hoteles una vez (sin enlace ni pase al asesor); después, un recordatorio en vez de repetir la pregunta. Si vuelve con el nombre, la reserva sigue. Lo que pregunte mientras tanto se contesta con su precio. «En Isla Grande» no vale como hotel; preguntar por un hotel no es alojarse en él.
+  * **Señal nueva de Jev `sin_hotel`** (sonda 32 × 2: 0,93-0,97 los que aún no lo tienen; como mucho 0,38 el resto): a «¿ya estarás en las islas?», «todavía no tenemos hotel» confirma las islas. Antes se descartaba como «no confirmado» y volvía «¿desde dónde saldrías?». Sin tocar el prompt de Haiku.
+  * **Colombianos (decisión `pago-y-reserva`):** en 5 de 13 conversaciones de la mini se les hablaba de la web o del enlace, en A y en B. La pregunta del origen ya no promete el enlace; el descuento online de un colombiano no se explica como «al reservar por la web» (`description_colombian_*` en discounts.json); el catálogo que lee el escritor ya no define «online» como «por reservar en la web» para todos. Curso para colombianos: 6/8 → 8/8.
+  * **Grave encontrado midiendo:** el respaldo escribía 392 USD (5 inmersiones desde Cartagena) a quien sale de las islas, que paga 319; no cuadraba con la pieza y se quedaba su importe. Con el origen sabido manda la pieza (`origen_precio._con_la_pieza`). En el banco de graves.
+  * **Al quitar un enlace solo se va la frase que lo anuncia**, no la línea entera: se perdía «Yes, we operate on Easter Sunday». El fragmento (`#rvrd-1`) se va con el enlace.
+  * **De otras ramas:** CALN-32 («te dejo el precio abajo», `feature/caln32-gadea`) y la respuesta perdida en G3-07a (Gonzalo, `feature/respuesta-perdida-gonzalo`).
+* **Medida** (mini de los 43 visibles, una pasada del bot por lado, a solas; A = PRE 0.55.0 tal cual, B = cbafb87d con `kb_v2_gadea`; juez Opus medium, dos pasadas por lado y con la misma base; firme = falla en las dos): **fallos firmes 29 → 20; diálogos con fallo firme 22 → 18 de 43; limpios por pasada 20 y 21 → 25 y 23.** Respaldos: A 5, B 8. Primera medida con Opus: no se compara con rondas de gpt-5-mini.
+* **Bancos:** `banco-caln35.json` (nuevo, 21 casos) PRE 22/40 → 40/42 sobre el código anterior al último retoque; 053b 16/16; moneda 11/11; graves ×2 78/86, 2 de ellos un filtro corregido (A ×1 40/42); suite 3447.
+* **Presupuesto de complejidad (decisión de Gadea):** `src` 26.727 → 26.971 líneas (+244, +0,9 %), sin capa quitada a cambio.
+* **Sigue abierto:** Haiku lee a veces como su hotel el hotel que se pregunta (`h-pregunta-por-hoteles` 1 de 2; semana-santa: «alojándote en San Pedro de Majagua»); el prompt de Haiku no se toca; a los belgas el escritor a veces recomienda el paquete de 3 inmersiones en un día (s04i, CALN-19); los planes desde Cartagena con noche en las islas siguen sin la regla (Gadea: de momento no). gpt-5.4-mini sigue de respaldo de OpenRouter (Gadea).
+* **Siguiente:** tanda de clientes de dos autores contra esta versión (meta: como mucho 2 graves en 60), juzgada además a ciegas con Opus; CALN-36 (criterios), CALN-37 (origen y adelantada), CALN-30 (~600 turnos), ronda de difíciles.
+
 0.55.1 - (2026-11-05, NO cambia el bot: el juez pasa a Opus medium con Claude Code, sin gastar OpenAI)
 ---------------------
 * **Decisión de Gadea:** el juez era el 73,5 % del gasto de OpenAI del día (6,71 $ de 9,13 $). Ahora cada persona lo lanza con su suscripción de Claude (`scripts/juez_claude.py`); en PRO no hay juez. Cómo usarlo, en `protocolo-medicion.md`.
