@@ -479,13 +479,21 @@ def _poner_grupo(intent, state: ConversationState, message: str, datos: dict) ->
     guardado = _known_field_values(state)
     corrige = _has_correction_cue(state, message)
     reparto, total = _reparto_valido(datos.get("group_allocation"), message, state), datos.get("group_size")
-    from src.agents.jev_router import VIAJA_SOLO  # lazy
+    from src.agents.jev_router import GRUPO_MIXTO, VIAJA_SOLO  # lazy
 
+    senales = getattr(state, "_senales_router", None) or {}
     if (total is None and not reparto and guardado.get("group_size") is None and not guardado.get("group_allocation")
-            and (getattr(state, "_senales_router", None) or {}).get(VIAJA_SOLO)):
+            and senales.get(VIAJA_SOLO)):
         # CALN-18 (sparring s04j, el irlandés): «I'm travelling alone» lo leía Haiku 2 de 3 veces y se volvía a preguntar.
         logger.info("[EXTRACT][CALN18] Jev dice que va solo: group_size=1")
         total = 1
+    if (total is not None and not reparto and not corrige and senales.get(GRUPO_MIXTO)
+            and total < (guardado.get("group_size") or 0)):
+        # Mini 0.53 (nacionalidad-mixta-carrito): con 3 ya sabidos, «dos somos colombianos pero uno es extranjero» lo leía
+        # Haiku como group_size=2 y salía «¿lo cambio? 3 personas → 2 personas». Si Jev dice que el grupo mezcla
+        # nacionalidades, ese número es una parte del grupo, no el total. (En su prompt no: las frases nuevas mueven otras lecturas.)
+        logger.info(f"[EXTRACT][053B] group_size={total!r} en un grupo mixto de {guardado['group_size']}: es una parte, no el total")
+        total = None
     if total is not None and not reparto and state.core_pending_slot == SLOT_COMPANION_QTY:
         # lat-11 T6b (26-oct): con «¿Cuántos serían para X?» pendiente, la cifra sola («3 personas», «son 2») contesta
         # esa pregunta, no el total del grupo: la reparte la red de acompañantes (el resolutor). El extractor la tomaba

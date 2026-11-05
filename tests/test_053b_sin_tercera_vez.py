@@ -121,3 +121,24 @@ def test_preguntar_como_reservar_cuenta_como_pedir_el_enlace():
 
     texto = _INTENCIONES_Q[PIDE_ENLACE]["instructions"]
     assert "how to book or reserve" in texto and "only say that they want to book" in texto
+
+
+def _grupo_de_tres(**senales):
+    estado = ConversationState(conversation_id="053b", language="es", detected_group_size=3)
+    estado._senales_router = senales
+    return estado
+
+
+def test_en_un_grupo_mixto_el_numero_que_baja_es_una_parte_del_grupo():
+    from src.agents.jev_router import GRUPO_MIXTO
+
+    estado, intent = _grupo_de_tres(**{GRUPO_MIXTO: True}), DetectedIntent()
+    extractor._poner_grupo(intent, estado, "dos somos colombianos pero uno es extranjero", {"group_size": 2})
+    assert intent.group_size is None and not estado.pending_correction
+
+
+def test_sin_grupo_mixto_el_cambio_se_sigue_confirmando():
+    estado, intent = _grupo_de_tres(), DetectedIntent()
+    with patch.object(extractor, "_jev_dice_que_nadie_se_suma", return_value=False):
+        extractor._poner_grupo(intent, estado, "al final vamos solo 2", {"group_size": 2})
+    assert (estado.pending_correction or {}).get("group_size") == 2 or intent.group_size == 2
