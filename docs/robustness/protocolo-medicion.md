@@ -53,7 +53,7 @@ python -m scripts.ab_judge_compare <ronda A> <ronda B>                          
 - **Un fallo de Opus no es una sentencia:** 1 de cada 3 fue falso. Leer el texto del bot antes de arreglar nada, como siempre.
 - **Las cifras no se comparan con las de gpt-5-mini:** con Opus salen más fallos (32 frente a 23 en la misma mini) sin que el bot
   empeore. A y B, con el mismo juez y la misma base. Una ronda vieja se rejuzga gratis.
-- **Si cambia el modelo por defecto de `opus`** en Claude Code, rejuzgar la base antes de comparar: el nombre es un alias.
+- **El modelo va fijado** (`juez_claude.MODELO_EXACTO`, claude-opus-5-5): el alias `opus` depende de la versión de Claude Code (5-nov: la 2.1.126 da claude-opus-4-7 y la 2.1.318, claude-opus-5-5). Si alguien no llega a él, el juez da error: `claude update`. Cambiarlo obliga a rejuzgar la base antes de comparar.
 - **Cómo es distinto:** una llamada por diálogo con todos sus criterios (43 por lado, no 268). Cada una va aislada (sin herramientas, sin
   memoria ni CLAUDE.md, fuera del repo y sin saber si es A o B). Sin `ANTHROPIC_API_KEY` en el entorno: con ella facturaría a la API;
   el script la quita. No usar `--bare`: anula la suscripción.

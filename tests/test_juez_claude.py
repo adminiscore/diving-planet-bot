@@ -100,3 +100,20 @@ def test_una_tanda_se_juzga_con_los_generales_y_el_de_graves(monkeypatch, tmp_pa
     assert jc.juzgar_charlas(args) == 0
     assert set(vistos[0][0]) == {"sin-graves", "global:x"} and vistos[0][1] == 1
     assert "1 de 1" in capsys.readouterr().out
+
+
+def test_el_modelo_va_fijado_y_otro_modelo_no_se_cuenta(monkeypatch, tmp_path):
+    """5-nov (Álvaro, #3513): el alias `opus` da modelos distintos según la versión de Claude Code."""
+    pedidos, responde = [], ["claude-opus-5-5"]
+
+    def correr(cmd, **_k):
+        pedidos.append(cmd[cmd.index("--model") + 1])
+        salida = {"result": json.dumps({"veredictos": []}), "modelUsage": {responde[0]: {}}}
+        return SimpleNamespace(returncode=0, stderr="", stdout=json.dumps(salida))
+
+    monkeypatch.setattr(jc.subprocess, "run", correr)
+    assert jc.llamar("claude", tmp_path / "s.txt", "opus", "medium", "m", str(tmp_path))[0] == []
+    assert pedidos == ["claude-opus-5-5"]
+    responde[0] = "claude-opus-4-7"
+    with pytest.raises(RuntimeError, match="no se compararía"):
+        jc.llamar("claude", tmp_path / "s.txt", "opus", "medium", "m", str(tmp_path))

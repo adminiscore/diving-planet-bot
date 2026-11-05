@@ -99,10 +99,20 @@ def ejecutable() -> str:
     return exe
 
 
+# 5-nov (Álvaro, #3513): `opus` es un alias que depende de la versión de Claude Code: 2.1.126 da claude-opus-4-7 y 2.1.318, claude-opus-5-5. Con el
+# modelo fijado, los juicios de cada uno se comparan; quien no llegue a él recibe un error, no otro juez sin saberlo. Cambiarlo obliga a rejuzgar la base.
+MODELO_EXACTO = {"opus": "claude-opus-5-5"}
+
+
+def modelo_exacto(modelo: str) -> str:
+    return MODELO_EXACTO.get(modelo, modelo)
+
+
 def llamar(exe: str, sistema: Path, modelo: str, esfuerzo: str, mensaje: str, cwd: str) -> tuple[list[dict], dict]:
     """Los veredictos de una llamada y su uso. Reintenta una vez si la respuesta no es JSON válido."""
+    exacto = modelo_exacto(modelo)
     cmd = [exe, "-p", "--safe-mode", "--tools", "", "--no-session-persistence", "--system-prompt-file", str(sistema),
-           "--model", modelo, "--effort", esfuerzo, "--output-format", "json"]
+           "--model", exacto, "--effort", esfuerzo, "--output-format", "json"]
     ultimo = ""
     for _ in range(2):
         r = subprocess.run(cmd, input=mensaje, capture_output=True, text=True, encoding="utf-8", errors="replace",
@@ -124,6 +134,9 @@ def llamar(exe: str, sistema: Path, modelo: str, esfuerzo: str, mensaje: str, cw
         except (ValueError, KeyError, TypeError):
             ultimo = f"sin JSON: {texto[:200]}"
             continue
+        reales = list(salida.get("modelUsage") or {})
+        if modelo in MODELO_EXACTO and reales and exacto not in reales:
+            raise RuntimeError(f"se pidió {exacto} y contestó {reales}: el juicio no se compararía con los demás")
         uso = salida.get("usage") or {}
         return veredictos, {"input": uso.get("input_tokens", 0), "cache_read": uso.get("cache_read_input_tokens", 0),
                             "cache_write": uso.get("cache_creation_input_tokens", 0), "output": uso.get("output_tokens", 0),
@@ -146,7 +159,7 @@ def juzgar_dialogo(dialogue, records, todos, ctx) -> tuple[list[dict], dict]:
     """Como `judge_golden_set.judge_criteria`: primero los concretos y luego los generales, con el descuento por código."""
     llm = [c for c in todos if not c.get("auto")]
     mensaje = mensaje_del_dialogo(dialogue, records, llm)
-    clave = hashlib.sha256("\x1f".join([ctx["modelo"], ctx["esfuerzo"], ctx["huella"], mensaje]).encode()).hexdigest()
+    clave = hashlib.sha256("\x1f".join([modelo_exacto(ctx["modelo"]), ctx["esfuerzo"], ctx["huella"], mensaje]).encode()).hexdigest()
     uso: dict = {}
     crudos = None if ctx["cache"] is None else ctx["cache"].get(clave)
     if crudos is None:
@@ -229,7 +242,7 @@ def juzgar_ronda(args) -> int:
     results = [hechos[d["id"]] for d in todo]
     summary = summarize(results)
     report = {"judged_at": datetime.now(UTC).isoformat(timespec="seconds"), "run_file": args.run.replace("\\", "/"),
-              "golden_version": golden["version"], "model": f"claude-{args.modelo}", "effort": args.esfuerzo,
+              "golden_version": golden["version"], "model": f"claude-{args.modelo}", "modelo_exacto": modelo_exacto(args.modelo), "effort": args.esfuerzo,
               "referencia": REFERENCIA_POR_DEFECTO, "usage": dict(uso), "cost_usd": 0.0, "summary": summary,
               "minutos": round((time.perf_counter() - t0) / 60, 1),
               "human_review": review_list(results, 5, Path(args.run).stem), "dialogues": results}
@@ -317,7 +330,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--calibrar", action="store_true", help="medir contra las etiquetas de calibration/")
     parser.add_argument("--charlas", help="conversaciones de una tanda de sparring, separadas por comas")
     parser.add_argument("--nombre", default="tanda", help="con --charlas: el nombre de la tanda")
-    parser.add_argument("--modelo", default="opus", help="alias de Claude Code: opus, sonnet, haiku")
+    parser.add_argument("--modelo", default="opus", help="opus (fijado en MODELO_EXACTO), sonnet, haiku")
     parser.add_argument("--esfuerzo", default="medium")
     parser.add_argument("--ids", help="solo estos diálogos, separados por comas")
     parser.add_argument("--paralelo", type=int, default=3)

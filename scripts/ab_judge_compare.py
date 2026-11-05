@@ -107,6 +107,9 @@ def main(argv: list[str] | None = None) -> int:
     if ref_a != ref_b:
         print(f"!! OJO: A se juzgo con la referencia '{ref_a}' y B con '{ref_b}'. Re-juzgad una con la otra "
               "(judge_golden_set --referencia) antes de sacar conclusiones.\n")
+    exacto_a, exacto_b = res_a.get("modelo_exacto"), res_b.get("modelo_exacto")
+    if exacto_a and exacto_b and exacto_a != exacto_b:
+        print(f"!! OJO: A se juzgo con {exacto_a} y B con {exacto_b}: la comparacion mide el juez, no el bot.\n")
     for n, d in (("A", res_a), ("B", res_b)):
         s = d["summary"]
         print(f"{n}: dialogos {s['dialogues_passed']}/{s['dialogues']} ({s['dialogues_pass_pct']}%) | criterios "
