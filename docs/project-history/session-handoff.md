@@ -59,6 +59,12 @@ integrar la rama del otro y suite en verde, porque en PRE gana el último; (3) *
 despliegue reinicia el contenedor y mata la medida del otro (avisar en el registro de Plan Coral con la hora de fin).
 Las doce normas, con su porqué, están en el documento.
 
+### ▶️ RETOMAR AQUÍ — 5-nov, ~18:40 (Gadea con Claude; Álvaro y Gonzalo sin conectar): 0.58.0 SUBE A PRE, sin respuesta adelantada; juez, una pasada por lado
+
+- **Tasa de graves:** 7 de 31 clientes (23 %), leídos por Gadea: Opus acierta 7 de 8 en lo que marca como grave. Meta, 2 graves en 60, de dos autores, con `juez_claude --charlas`.
+- **Foco de Gadea:** esfuerzos genéricos en las dos causas: el escritor afirma sin dato (CALN-38) y la tarjeta sigue un plan que ya no quiere (CALN-39). Revisor ampliado: medido y descartado.
+- **Siguiente:** (1) tanda contra la 0.58. (2) Si va bien, borrar el código de la adelantada. (3) Hotel preguntado que Haiku lee como propio: señal de Jev. (4) Origen preguntado a quien ya lo dijo (CALN-37). (5) Juez: pasarle solo la referencia relevante, midiendo que no pierda fallos. (6) CALN-36, CALN-30, ronda de difíciles.
+
 ### ▶️ RETOMAR AQUÍ — 5-nov, ~17:10 (Gadea con Claude; Álvaro y Gonzalo sin conectar): 0.57.0 SUBE A PRE; LA TASA REAL DE GRAVES RONDA EL 20-25 %
 
 - **Lo importante:** Opus a ciegas rejuzgó las tandas: s05a y s05c dan 5 con grave de 21 frente a los 2 de 20 que contamos; s05d, 2-3 de 10. Cada tanda se cuenta con `juez_claude --charlas <convs> --nombre <tanda>` y leyendo cada grave. Contador de la meta (2 graves en 60), desde la 0.57: 0 de 60.

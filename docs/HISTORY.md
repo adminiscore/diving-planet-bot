@@ -1,6 +1,19 @@
 History
 =======
 
+0.58.0 - (2026-11-05, SUBE A PRE: fuera de servicio la respuesta adelantada; a quien se despide, sin tarjeta; lectura de Gadea de los graves)
+---------------------
+* **Lectura de Gadea de los 8 clientes que Opus marca como graves:** 7 graves y 1 no es fallo (las profesoras como responsables de menores). Opus acierta 7 de 8 en lo que marca como grave. **Tasa: 7 de 31 clientes, 23 %.** Decisión: el juez, **una pasada por lado** (dos coinciden en el 98,9 % de los criterios y gastan el doble).
+* **Qué sube** (sobre 0.57.0):
+  * **Respuesta adelantada apagada (CALN-37, `rag_adelantado`):** se escribía antes de leer el mensaje; en 201 turnos se aprovechaba 26 veces (13 %), se tiraba 153 (76 %) y se rehacía 21. El código sigue y se quita cuando esta versión lleve una tanda en PRE.
+  * **A quien se despide, sin tarjeta (CALN-39):** Jev veía la despedida, pero solo se miraba con una pregunta pendiente, y el crucero recibía la tarjeta con su enlace.
+  * **La pregunta del turno ya contestada, fuera (`compositor`):** el escritor cerraba con la del origen fijada al empezar el turno; tiene dos frases y debajo va la pieza, así que nadie la reconocía como final (2 de 3 → 0 de 4).
+  * **Fuera la frase de los profesores** que metió la 0.57: Gadea leyó que no es fallo.
+* **Medida** (mini de los 43 visibles; A = PRE 0.57.0, B = e2086456 con `kb_v2_gadea`; Opus medium, una pasada, misma base): **fallos 25 → 26; diálogos limpios 25 → 24.** Empate. Llamadas por turno **5,2 → 4,53**. Turno p50 3,35 → 3,48 s; p90 5,51 → 5,42 s y p95 6,12 → 5,97 s (en las otras dos vueltas sin adelantada, p90 5,03 y 5,25; p95 5,57 y 5,63). Respaldos: A 2, B 5.
+* **Bancos:** graves ×1 45/47 (sobre 43674f21); `banco-caln35` ×1 21/22 (sobre 43674f21); suite 3462.
+* **Medido y descartado:** ampliar el revisor a las respuestas sin cifras: con la mejor referencia posible caza 2 de 4 graves del escritor y rechaza 14 de 36 respuestas correctas.
+* **Sigue abierto:** Haiku lee como su hotel el que se pregunta (`h-pregunta-por-hoteles`); `s04i-belgas` y `g-vuelo-dia-siguiente` (el escritor); CALN-37, el origen preguntado a quien ya lo dijo.
+
 0.57.0 - (2026-11-05, SUBE A PRE: alojamiento fuera de la lista, el asesor confirma la recogida antes de reservar; los graves de la tanda s05d; profesores y menores)
 ---------------------
 * **Decisión de Gadea:** con una casa, un Airbnb o un hotel fuera de nuestra lista, el asesor confirma la recogida ANTES de reservar y pagar (`como_reserva.RECOGIDA_POR_CONFIRMAR`): ve el precio, sin enlace, y pasa al asesor. Antes: «You don't need to wait for that confirmation to book».
