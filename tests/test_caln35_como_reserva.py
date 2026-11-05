@@ -13,6 +13,7 @@ from src.agents.nucleo.origen_precio import (
     ORIGEN_TRAS_LAS_VARIANTES_EN,
     ORIGEN_TRAS_LAS_VARIANTES_ES,
 )
+from src.agents.supervisor import route_message
 from src.flows import hechos
 from src.flows.como_reserva import ASESOR, ENLACE, HOTEL_PRIMERO, como_reserva, hotel_conocido
 from src.flows.state import ConversationState
@@ -39,6 +40,8 @@ def _estado(**campos) -> ConversationState:
     ({"location": "island", "hotel": "Casa Azul"}, ENLACE),
     ({"location": "island", "is_colombian": True}, HOTEL_PRIMERO),  # sin hotel, tampoco pasa al asesor
     ({"location": "island", "hotel": "cocoliso", "is_colombian": True}, ASESOR),
+    ({"pending_correction": {"location": "island"}}, HOTEL_PRIMERO),  # se le está confirmando
+    ({"pending_correction": {"location": "cartagena"}}, ENLACE),
 ])
 def test_como_reserva(campos, esperado):
     assert como_reserva(_estado(**campos)) == esperado
@@ -154,3 +157,17 @@ def test_la_base_lleva_la_regla_y_la_decision():
     assert any(d["id"] == "hotel-antes-de-reservar" for d in decisiones)
     preguntas = json.loads((base / "curada" / "preguntas.json").read_text(encoding="utf-8"))["reglas"]
     assert preguntas["politica:hotel_before_booking"]["es"]
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(("sin_hotel", "location"), [(True, "island"), (False, None)])
+async def test_a_ya_estaras_en_las_islas_sin_hotel_es_que_si(monkeypatch, sin_hotel, location):
+    """A «¿ya estarás en las islas?», «todavía no tenemos hotel» volvía a preguntar desde dónde saldría."""
+    monkeypatch.setattr(extractor, "_dice_que_no_tiene_hotel", lambda _state: sin_hotel)
+    st = _estado(language="es", detected_activity="certified_diving", is_certified=True,
+                 pending_correction={"location": "island"}, core_pending_slot=core.SLOT_CONFIRM_CORRECTION)
+    respuesta = str(await route_message(st, "todavía no tenemos hotel"))
+    assert st.location == location
+    assert not st.pending_correction
+    if sin_hotel:
+        assert st.hotel == "por confirmar" and "resérvalo primero" in respuesta and "book.divingplanet.org" not in respuesta

@@ -26,8 +26,13 @@ def hotel_conocido(state) -> str | None:
     return None if hotel in POR_CONFIRMAR.values() or solo_nombra_una_isla(hotel) else hotel
 
 
+def _sale_desde_las_islas(state) -> bool:
+    """Lo ha dicho, o se le está confirmando porque lo parece: el enlace de una reserva no puede salir en ese turno."""
+    return (getattr(state, "location", None) or (getattr(state, "pending_correction", None) or {}).get("location")) == "island"
+
+
 def como_reserva(state) -> str:
-    if getattr(state, "location", None) == "island" and not hotel_conocido(state):
+    if _sale_desde_las_islas(state) and not hotel_conocido(state):
         return HOTEL_PRIMERO
     if getattr(state, "is_colombian", None) and not getattr(state, "mixed_nationality_notice", False):
         return ASESOR

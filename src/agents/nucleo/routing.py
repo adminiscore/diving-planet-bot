@@ -764,8 +764,14 @@ async def _routing_phase(
         # mensaje siga con una pregunta ("sí, ¿y cuánto es?"); cualquier otra cosa = no confirmado:
         # se queda lo guardado y el turno sigue normal (el mensaje puede traer otra cosa).
         first = next(iter(_words(message)), "")
-        if state.pending_correction and (is_affirmative(first) or is_agree(first)):
+        from src.agents.nucleo.extractor import _dice_que_no_tiene_hotel  # lazy
+
+        # CALN-35: a «¿ya estarás en las islas?», «todavía no tenemos hotel» no lo niega: confirma, y sin hotel no se reserva.
+        sin_hotel_en_las_islas = state.pending_correction == {"location": "island"} and _dice_que_no_tiene_hotel(state)
+        if state.pending_correction and (is_affirmative(first) or is_agree(first) or sin_hotel_en_las_islas):
             resolved_short = _accept_pending_correction(state, message)
+            if sin_hotel_en_las_islas:
+                state.hotel = state.detected_hotel = POR_CONFIRMAR["es" if state.language == "es" else "en"]
         elif state.pending_correction:
             logger.info(f"[CORE] correccion no confirmada, se queda lo guardado: {sorted(state.pending_correction)}")
             state.pending_correction = None
