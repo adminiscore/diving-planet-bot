@@ -243,3 +243,33 @@ def test_el_catalogo_no_dice_que_el_precio_online_es_por_reservar_en_la_web():
     for lang, frase in (("es", "por reservar en la web"), ("en", "for booking on the website")):
         assert frase not in catalog_facts(lang).split("\n")[0]
     assert "no reservan por la web" in catalog_facts("es")
+
+
+def test_salidas_sueltas_no_son_un_paquete():
+    """Tanda s05d: «dos salidas de un día, en vez del paquete» seguía con los 2 días de antes y la tarjeta del paquete de 5."""
+    from src.agents.jev_router import SALIDAS_SUELTAS
+
+    st = _estado(language="es", detected_activity="certified_diving", detected_duration="multi_day", detected_cert_days=2)
+    st._senales_router = {SALIDAS_SUELTAS: True}
+    intent = DetectedIntent()
+    intent.cert_days = 2
+    extractor._poner_duracion(intent, st, {"dias_de_buceo": 2})
+    assert intent.duration == "single_day" and intent.cert_days is None and st.detected_cert_days is None
+    assert extractor.dias_de_buceo_de({"dias_de_buceo": 2}, st) is None
+
+
+def test_sin_la_senal_los_dias_siguen():
+    st = _estado(language="es", detected_activity="certified_diving")
+    intent = DetectedIntent()
+    extractor._poner_duracion(intent, st, {"dias_de_buceo": 2})
+    assert intent.duration == "multi_day" and intent.cert_days == 2
+
+
+def test_lo_que_puede_cada_edad_va_en_los_hechos_y_se_exige():
+    st = _estado(language="en", location="cartagena", detected_ages=[7, 11, 40], is_colombian=False)
+    [b] = hechos.hechos(st, ["precio"], ["certified_diving"])
+    notas = b["lo_que_puede_cada_edad"]
+    assert len(notas) == 2 and "snorkel" in notas[0].lower()  # los adultos no
+    assert any("snorkel" in x.lower() for x in hechos.faltan("The two dives cost 178 USD.", [b], ["precio"]))
+    [c] = hechos.hechos(_estado(language="en", location="cartagena", is_colombian=False), ["precio"], ["certified_diving"])
+    assert "lo_que_puede_cada_edad" not in c

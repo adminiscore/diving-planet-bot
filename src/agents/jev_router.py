@@ -929,6 +929,19 @@ _SIN_HOTEL_Q = {
         "not have yet is something else (a certification, equipment, a date)."
     ),
 }
+# Tanda s05d (amigos de Bogotá, grave): «dos salidas de un día, ida y vuelta, en vez del paquete» seguía con los 2 días de antes y la
+# tarjeta era la del paquete de 5. Sonda `scripts/sonda_jev_salidas_sueltas.py` (20 × 2): 0,69-0,95 quien las pide; como mucho 0,26 el
+# resto, también «dos días de buceo» a secas, que no dice cómo.
+SALIDAS_SUELTAS = "salidas_sueltas"
+SALIDAS_SUELTAS_MIN = 0.6
+_SALIDAS_SUELTAS_Q = {
+    "type": "noul",
+    "instructions": (
+        "The customer wants to dive on several days as SEPARATE one-day trips, each a same-day round trip, instead of a multi-day package "
+        "or sleeping on the islands. It is FALSE if they want a multi-day package, want to stay on the islands, want a single day, or only "
+        "say how many days they want to dive without saying that they want separate one-day trips."
+    ),
+}
 SE_DESPIDE = "se_despide"
 SE_DESPIDE_MIN = 0.7
 _SE_DESPIDE_Q = {
@@ -1081,6 +1094,7 @@ _DEL_TURNO = (
     _DelTurno(SE_DESPIDE, _SE_DESPIDE_Q, _si(SE_DESPIDE_MIN)),
     _DelTurno(QUIERE_CURSO, _QUIERE_CURSO_Q, _si(QUIERE_CURSO_MIN)),
     _DelTurno(SIN_HOTEL, _SIN_HOTEL_Q, _si(SIN_HOTEL_MIN)),
+    _DelTurno(SALIDAS_SUELTAS, _SALIDAS_SUELTAS_Q, _si(SALIDAS_SUELTAS_MIN)),
     _DelTurno(VIAJA_SOLO, _VIAJA_SOLO_Q, _si(VIAJA_SOLO_MIN)),
     _DelTurno(HABLA_DE_SI, _HABLA_DE_SI_Q, _si(HABLA_DE_SI_MIN)),
     # Solo se descarta cuando Jev está seguro de que NO (`nucleo/extractor.dias_de_buceo_de`).

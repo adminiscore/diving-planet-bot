@@ -215,6 +215,12 @@ async def _aplicar_extractor(intent, state: ConversationState, message: str, pis
     intent._actividad_preguntada = datos.get("actividad_preguntada")  # la de ESTE mensaje (flu-1, `_flag_cert_or_course`)
 
 
+def _pide_salidas_sueltas(state: ConversationState) -> bool:
+    from src.agents.jev_router import SALIDAS_SUELTAS  # lazy
+
+    return bool((getattr(state, "_senales_router", None) or {}).get(SALIDAS_SUELTAS))
+
+
 def dias_de_buceo_de(datos: dict | None, state: ConversationState) -> int | None:
     """CALN-25 (decisión de Gadea, 4-nov): los días de buceo del extractor, salvo que diga varios y Jev esté seguro de que el
     cliente no habla de varios días. «Two dives» salía como 2 días (sparring s04h): varios días se comía la salida de 2 y la cifra
@@ -226,6 +232,8 @@ def dias_de_buceo_de(datos: dict | None, state: ConversationState) -> int | None
     if not isinstance(dias, int) or isinstance(dias, bool) or dias <= 0:
         return None
     if dias >= 2:
+        if _pide_salidas_sueltas(state):
+            return None  # Tanda s05d: varios días, pero cada uno es una salida de un día: no es un paquete
         p = (getattr(state, "_senales_router", None) or {}).get(SON_DIAS_DE_BUCEO)
         if p is not None and p < SON_DIAS_NO_MAX:
             logger.info(f"[EXTRACT][CALN25] son inmersiones, no días (Jev {p:.2f}): dias_de_buceo={dias!r} se descarta")
@@ -262,6 +270,8 @@ def duracion_del_extractor(datos: dict | None, state: ConversationState) -> tupl
     """ex-9b paso 6 (`duracion_por_extractor`): (single_day / multi_day, ¿son días de BUCEO?) según lo que dice el
     cliente. Manda lo que dice que quiere bucear; si solo dice su estancia, la estancia, salvo que ya se sepa cuántos días
     quiere bucear (decisión de Gadea, 19-oct). (None, False) si no dice nada de días que cambie lo sabido."""
+    if _pide_salidas_sueltas(state):
+        return "single_day", True
     dias_buceo, dias_estancia = dias_de_buceo_de(datos, state), (datos or {}).get("dias_de_estancia")
     if dias_buceo:
         return ("multi_day" if dias_buceo > 1 else "single_day"), True
@@ -289,6 +299,16 @@ def _poner_duracion(intent, state: ConversationState, datos: dict, message: str 
     regex = intent.duration
     intent.duration = None
     intent.detected_fields = [f for f in intent.detected_fields if f != "duration"]
+    if _pide_salidas_sueltas(state):
+        # Lo de antes (2 días, el paquete) ya no vale: la tarjeta es la salida de un día.
+        from src.flows.catalog import MULTI_DAY_SERVICES  # lazy
+
+        intent.cert_days = None
+        state.detected_cert_days = state.detected_cert_dives = None
+        if state.selected_service in MULTI_DAY_SERVICES:
+            state.selected_service = None
+        if state.detected_service_id in MULTI_DAY_SERVICES:
+            state.detected_service_id = None
     duracion, de_buceo = duracion_del_extractor(datos, state)
     if duracion is None and not state.detected_duration and _paquete_de_varios_dias_nombrado(message):
         duracion = "multi_day"

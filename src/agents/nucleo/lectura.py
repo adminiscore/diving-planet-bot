@@ -106,6 +106,8 @@ def foto_del_turno(state: ConversationState, datos: dict, origen: str | None, me
 
         dicho = [message, *(m.get("content") or "" for m in (history or []) if m.get("role") == "user")]
         foto._aloja_en_baru = any(_solo_baru(t) for t in dicho)
+    if edades := [e for e in (datos.get("edades") or []) if isinstance(e, int) and not isinstance(e, bool) and 1 <= e <= 99]:
+        foto.detected_ages = sorted({*(foto.detected_ages or []), *edades})  # Tanda s05d: «hijos de 11 y 7» en ESTE mensaje
     if isinstance(datos.get("group_size"), int) and datos["group_size"] > (foto.detected_group_size or 0):
         foto.detected_group_size = datos["group_size"]  # CALN-3: «somos 5» en ESTE mensaje, para el descuento de grupo
     if not foto.selected_service and (plan := _paquete_nombrado(message, None) or _paquete_nocturno(foto, datos, message)

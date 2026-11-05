@@ -19,7 +19,7 @@ from pathlib import Path
 
 from src.domain import activities as dom
 from src.domain.politicas import politica
-from src.flows import cart_render, moneda
+from src.flows import cart_render, eligibility, moneda
 from src.flows.catalog import (
     COMPANION_INCLUDES,
     COMPANION_NO_INCLUYE,
@@ -136,8 +136,21 @@ _SIN_PLAN_DESDE_LAS_ISLAS = {
 }
 
 
+def _lo_que_puede_cada_edad(state: ConversationState, lang: str) -> list[str]:
+    """Tanda s05d (familia de Canadá, grave): con los hechos del buceo de los padres, a la niña de 7 se le decía que no había nada para
+    ella, y el snorkel es desde los 6. Lo que puede hacer cada menor que se ha nombrado; `faltan` lo exige."""
+    return [eligibility.age_eligibility_note(a, lang) for a in sorted({a for a in (state.detected_ages or []) if 1 <= a <= 17})]
+
+
 def hechos(state: ConversationState, intenciones: list[str], actividades: list[str]) -> list[dict]:
     """Un bloque de hechos por actividad, con solo las intenciones pedidas (y las que el registro sabe dar)."""
+    bloques = _hechos_por_actividad(state, intenciones, actividades)
+    if bloques and (edades := _lo_que_puede_cada_edad(state, "es" if state.language == "es" else "en")):
+        bloques[0]["lo_que_puede_cada_edad"] = edades
+    return bloques
+
+
+def _hechos_por_actividad(state: ConversationState, intenciones: list[str], actividades: list[str]) -> list[dict]:
     lang = "es" if state.language == "es" else "en"
     origen = state.location if state.location in ORIGENES else None
     origenes = (origen,) if origen else ORIGENES
@@ -760,6 +773,7 @@ def faltan(answer: str, bloques: list[dict], intenciones: list[str]) -> list[str
                     perdidos.append(elemento)
         if b.get("alojamiento") and not _elemento_dado(b["alojamiento"], raices, answer):
             perdidos.append(b["alojamiento"])
+        perdidos += [e for e in b.get("lo_que_puede_cada_edad") or [] if not _elemento_dado(e, raices, answer)]
         if "horario" in intenciones:
             horas = {h for lista in (b.get("horario") or {}).values() for e in lista
                      for h in re.findall(r"\b(\d{1,2}):\d{2}", e)}
