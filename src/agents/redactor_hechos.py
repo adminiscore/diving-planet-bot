@@ -227,9 +227,9 @@ _ORIGEN_DEL_ENLACE = {"es": {"cartagena": "Desde Cartagena", "island": "Ya en la
 
 
 def _con_los_enlaces_que_faltan(answer: str, bloques: list[dict], lang: str) -> str:
-    """CALN-27 (un dato, un solo dueño): sin saber el origen, «cómo reservamos» lleva los dos enlaces; si el escritor se deja
-    alguno, lo pone el código (`hechos.faltan` lo ve, pero `_completar_con_hechos` no añade enlaces). Banco-053b: «Reserva con el
-    de tu punto de salida» sin ningún enlace, 2 de 2."""
+    """CALN-27 (un dato, un solo dueño): sin saber el origen, «cómo reservamos» lleva los enlaces que hay (el de las islas, con el
+    hotel: CALN-35); si el escritor se deja alguno, lo pone el código (`hechos.faltan` lo ve, pero `_completar_con_hechos` no
+    añade enlaces). Banco-053b: la pregunta de reservar sin ningún enlace, 2 de 2."""
     faltan = [f"• {_ORIGEN_DEL_ENLACE[lang][origen]}: {url}" for bloque in bloques
               for origen, url in (bloque.get("enlace") or {}).items()
               if origen in _ORIGEN_DEL_ENLACE[lang] and isinstance(url, str) and url.split("?")[0] not in answer]
@@ -356,9 +356,11 @@ async def _con_el_escritor(state: ConversationState, message: str, history: list
     if pieza:
         answer = con_la_pieza(answer, pieza)
     if origen_pendiente:
-        if "enlace" in intenciones:
+        con_enlaces = "enlace" in intenciones and any(
+            isinstance(u, str) for b in bloques for u in (b.get("enlace") or {}).values())  # CALN-35: a un colombiano, ninguno
+        if con_enlaces:
             answer = _con_los_enlaces_que_faltan(answer, bloques, lang)
-        tras = ((core.ORIGEN_TRAS_LOS_ENLACES_ES, core.ORIGEN_TRAS_LOS_ENLACES_EN) if "enlace" in intenciones
+        tras = ((core.ORIGEN_TRAS_LOS_ENLACES_ES, core.ORIGEN_TRAS_LOS_ENLACES_EN) if con_enlaces
                 else (core.ORIGEN_TRAS_LAS_VARIANTES_ES, core.ORIGEN_TRAS_LAS_VARIANTES_EN))
         pregunta = tras[0] if lang == "es" else tras[1]
         from src.agents.nucleo.extractor import origen_por_confirmar  # lazy

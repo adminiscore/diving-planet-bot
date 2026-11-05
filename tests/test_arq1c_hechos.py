@@ -16,7 +16,8 @@ def test_sin_origen_las_dos_variantes_y_la_pregunta_del_origen():
     [b] = h.hechos(_conv(), ["precio", "incluye", "enlace"], ["minicourse"])
     assert b["precio"]["cartagena"]["online"] == "183 USD" and b["precio"]["island"]["online"] == "134 USD"
     assert "Almuerzo" in b["incluye"]["cartagena"] and "Almuerzo" not in b["incluye"]["island"]
-    assert set(b["enlace"]) == {"cartagena", "island"} and b["pregunta_pendiente"] == "origen"
+    # CALN-35: el enlace de las islas, cuando diga su hotel.
+    assert set(b["enlace"]) == {"cartagena"} and b["hotel_primero"] and b["pregunta_pendiente"] == "origen"
 
 
 def test_con_origen_solo_su_variante_y_sin_pregunta():

@@ -69,7 +69,7 @@ def test_la_confirmacion_del_origen_es_la_misma_pregunta():
 def test_tras_los_dos_enlaces_se_queda_la_indicacion_y_no_la_pregunta():
     fija = core.ORIGEN_TRAS_LOS_ENLACES_ES
     texto = componer(_estado_sin_slot(veces=2), f"{RESPUESTA}\n\n{fija}", escribio=True)
-    assert "Reserva con el de tu punto de salida." in texto and "¿Saldrías" not in texto
+    assert core.SIN_ENLACE_DE_LAS_ISLAS_ES in texto and "¿Saldrías" not in texto
 
 
 def test_el_origen_si_sale_si_pide_el_enlace():

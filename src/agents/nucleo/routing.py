@@ -58,6 +58,7 @@ from src.agents.nucleo.reparto import (
 )
 from src.domain import activities as dom
 from src.flows import cart_render, moneda
+from src.flows.como_reserva import POR_CONFIRMAR
 from src.flows.state import ConversationState
 from src.utils.fuzzy import is_affirmative, is_agree, is_negative
 from src.utils.text import strip_accents
@@ -234,7 +235,7 @@ def _hotel_por_la_ia(state: ConversationState, message: str, ia: dict) -> bool:
     """El hotel en la respuesta corta ("¿en qué hotel o isla te hospedas?"), según el extractor: el nombre tal como lo
     escribe, con su cita; si es del catálogo de las islas (la lista cerrada que guarda `_conservar_hotel`), su id y su
     isla. Si el extractor no trae hotel, el del catálogo que nombre el mensaje ("en el Ubuntu"; "en isla grande" da la
-    isla). Sin hotel, "por confirmar" como hoy (lo coordina el asesor y no se pregunta en bucle). Nunca se guarda el
+    isla). Sin hotel, "por confirmar" (no se pregunta en bucle y no se reserva hasta que lo diga: CALN-35). Nunca se guarda el
     mensaje entero como hotel."""
     hotel = ((ia.get("extractor") or {}).get("hotel") or "").strip()
     del_catalogo, isla = _lugar_del_catalogo(hotel or message)
@@ -242,7 +243,7 @@ def _hotel_por_la_ia(state: ConversationState, message: str, ia: dict) -> bool:
     if isla and not state.detected_island:
         state.island = state.detected_island = isla
     if not nombre:
-        marker = "por confirmar" if state.language == "es" else "to be confirmed"
+        marker = POR_CONFIRMAR["es" if state.language == "es" else "en"]
         state.hotel = state.detected_hotel = marker
         if not state.island:
             state.island = marker
@@ -337,7 +338,7 @@ def _apply_short_answer(state: ConversationState, message: str, ia: dict | None 
         # definir" en vez de una frase de duda como si fuera un hotel real, y
         # el flujo no se queda pidiendo hotel para siempre.
         if _HOTEL_UNKNOWN_RE.search(msg):
-            marker = "por confirmar" if state.language == "es" else "to be confirmed"
+            marker = POR_CONFIRMAR["es" if state.language == "es" else "en"]
             state.hotel = state.detected_hotel = marker
             if not state.island:
                 state.island = marker

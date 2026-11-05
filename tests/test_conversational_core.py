@@ -900,16 +900,18 @@ async def test_slot_resolver_abstains_no_infinite_state_change(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_hotel_dont_know_stored_as_marker_not_verbatim():
-    """"no sé todavía" al preguntar el hotel NO se guarda como nombre de hotel;
-    se guarda un marcador claro y el flujo avanza (no bucle, no basura)."""
+    """"no sé todavía" al preguntar el hotel NO se guarda como nombre de hotel: se guarda un marcador claro, se le dice que
+    vuelva cuando lo tenga (CALN-35) y su siguiente mensaje se lee como el hotel."""
     state = make_state("es")
     state.detected_activity = "certified_diving"
     state.is_certified = True
     state.location = "island"
     state.core_pending_slot = core.SLOT_HOTEL
-    await route_message(state, "no sé todavía")
+    respuesta = await route_message(state, "no sé todavía")
     assert state.hotel == "por confirmar"
-    assert state.core_pending_slot != core.SLOT_HOTEL
+    assert state.core_pending_slot == core.SLOT_HOTEL
+    texto = respuesta if isinstance(respuesta, str) else str(respuesta)
+    assert "book.divingplanet.org" not in texto and "hotel" in texto
 
 
 @pytest.mark.asyncio

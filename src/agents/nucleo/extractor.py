@@ -32,6 +32,7 @@ from src.agents.nucleo.reparto import (
 from src.config import settings
 from src.domain import activities as dom
 from src.flows import grupo
+from src.flows.como_reserva import hotel_conocido
 from src.flows.state import ConversationState
 
 logger = logging.getLogger("uvicorn.error")
@@ -752,7 +753,7 @@ def _poner_hotel(intent, state: ConversationState, datos: dict) -> None:
     la conversación aún no tiene uno, para no preguntarle "¿En qué hotel o isla te hospedas?" (cal-41, cal-67/68). El
     del regex (lista cerrada, con su isla) manda si lo hay: sirve para la recogida."""
     hotel = (datos or {}).get("hotel")
-    if not hotel or intent.hotel or state.hotel or state.detected_hotel:
+    if not hotel or intent.hotel or hotel_conocido(state):
         return
     intent.hotel = hotel
     if "hotel" not in intent.detected_fields:
@@ -1246,7 +1247,7 @@ async def _guardar_lo_dicho(state: ConversationState, motivo: str) -> None:
             state.location = valor
         guardados[campo] = valor
     hotel = (datos or {}).get("hotel")
-    if hotel and not (state.hotel or state.detected_hotel):
+    if hotel and not hotel_conocido(state):
         # CAL-C3e (17-oct): "I just booked… We are staying at the Ubuntu Hotel" acababa en el pase y el hotel se perdía;
         # en el turno siguiente el RAG preguntaba "Are you departing from Cartagena or staying on the islands?" (cal-46).
         del_catalogo = _hotel_del_catalogo(hotel)

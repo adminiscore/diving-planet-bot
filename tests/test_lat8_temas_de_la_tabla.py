@@ -44,7 +44,8 @@ def test_la_senal_da_la_intencion():
     assert graph.intenciones_del_turno(_st(), {j.PIDE_REGRESO: True}) == ["regreso"]
 
 
-@pytest.mark.parametrize("tema, claves", [("hoteles", ["other_island_hotels"]), ("regreso", ["return_different_day"]),
+@pytest.mark.parametrize("tema, claves", [("hoteles", ["other_island_hotels", "hotel_before_booking"]),
+                                          ("regreso", ["return_different_day"]),
                                           ("fotos", ["photos_videos_policy"]),
                                           ("cambios", ["reschedule", "modify_booking", "cancellation"])])
 @pytest.mark.parametrize("lang", ["es", "en"])

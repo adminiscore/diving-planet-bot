@@ -13,7 +13,7 @@ def test_sin_enlace_de_reserva_en_la_base_no_se_da_la_pagina_informativa():
 
 def test_el_plan_sin_enlace_lo_reserva_un_asesor():
     st = ConversationState(conversation_id="s03g", language="en")
-    st.location, st.is_colombian, st.is_certified = "island", False, True
+    st.location, st.is_colombian, st.is_certified, st.hotel = "island", False, True, "cocoliso"
     st.selected_service = "4_dives_2_days_already_on_island"
     [b] = hechos.hechos(st, ["enlace"], ["certified_diving"])
     assert b["enlace"] == {"asesor": True} and "como_reservar" not in b

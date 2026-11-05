@@ -27,7 +27,7 @@ def test_a_la_tercera_sin_nada_que_decir_van_las_dos_salidas():
     estado = _estado()
     texto = componer(estado, f"¡Perfecto! 🙌\n\n{PREGUNTA}", escribio=False)
     assert "Desde dónde" not in texto and "Desde Cartagena" in texto and "Ya en las islas" in texto
-    assert "book.divingplanet.org" in texto and "Reserva con el de tu punto de salida." in texto
+    assert "book.divingplanet.org" in texto and core.SIN_ENLACE_DE_LAS_ISLAS_ES in texto
     assert estado.core_pending_slot == "location"  # sigue pendiente, por si contesta
 
 
@@ -49,7 +49,7 @@ def test_tras_los_dos_enlaces_la_pregunta_sobra_aunque_pida_el_enlace():
     estado._preguntas_del_turno, estado.core_pending_slot, estado._intenciones = [], None, ["enlace"]
     enlaces = "• Desde Cartagena: https://book.divingplanet.org/book/a/1\n• Ya en las islas: https://book.divingplanet.org/book/b/2"
     texto = componer(estado, f"{enlaces}\n\n{fija}", escribio=True)
-    assert "Reserva con el de tu punto de salida." in texto and "¿Saldrías" not in texto
+    assert core.SIN_ENLACE_DE_LAS_ISLAS_ES in texto and "¿Saldrías" not in texto
 
 
 def _con_las_islas_por_confirmar():
@@ -269,6 +269,9 @@ def test_el_curso_sin_plan_desde_las_islas_da_el_de_cartagena_y_lo_dice():
 
     st = ConversationState(conversation_id="s05c", language="en", detected_activity="padi_rescue", location="island",
                            detected_location="island", is_colombian=False)
+    [sin_hotel] = hechos.hechos(st, ["precio", "enlace"], ["padi_rescue"])
+    assert "enlace" not in sin_hotel and sin_hotel["hotel_primero"]  # CALN-35
+    st.hotel = "cocoliso"
     [b] = hechos.hechos(st, ["precio", "enlace"], ["padi_rescue"])
     assert b["precio"]["cartagena"]["online"] == "796 USD" and "curso-de-rescate" in b["enlace"]["cartagena"]
     assert "advisor" in b["sin_plan_desde_las_islas"] and b["origen"] == "cartagena"

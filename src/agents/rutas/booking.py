@@ -13,6 +13,7 @@ from src.agents.intent_detector import DetectedIntent
 from src.agents.lead_summary import build_lead_summary
 from src.domain import activities as dom
 from src.flows import cart_render, grupo
+from src.flows.como_reserva import hotel_conocido
 from src.flows.state import ConversationState, Step
 from src.utils.text import strip_accents as _strip_accents
 
@@ -495,7 +496,7 @@ def _apply_detected_intent(intent, state: ConversationState, message: str | None
         state.island = intent.island
         logger.info(f"[INTENT] Detected island: {intent.island}")
 
-    if intent.hotel and not state.detected_hotel:
+    if intent.hotel and not hotel_conocido(state):
         state.detected_hotel = intent.hotel
         state.hotel = intent.hotel
         logger.info(f"[INTENT] Detected hotel: {intent.hotel}")

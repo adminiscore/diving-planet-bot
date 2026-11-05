@@ -36,6 +36,7 @@ from src.agents.intent_detector import (
 )
 from src.domain import activities as dom
 from src.flows import cart_render, eligibility
+from src.flows.como_reserva import HOTEL_PRIMERO, como_reserva, hotel_conocido
 from src.flows.state import ConversationState, Step
 from src.utils.number_words import number_alt
 from src.utils.text import strip_accents
@@ -272,6 +273,8 @@ def next_missing_slot(state: ConversationState, saltar: frozenset[str] | set[str
         return SLOT_LOCATION
     if state.location == "island" and not state.hotel and SLOT_HOTEL not in saltar:
         return SLOT_HOTEL
+    if como_reserva(state) == HOTEL_PRIMERO:
+        return None  # CALN-35: sin hotel no se sigue con la reserva; lo dice `slotfill_close._hotel_primero`
     # Plan: no se pregunta — se recomienda el más popular (decisión owner
     # v0.20.27) y el cliente puede cambiarlo por texto en cualquier momento.
     #
@@ -712,9 +715,9 @@ def _texto_de_la_pregunta(state: ConversationState, slot: str, *, reasking: bool
         return _pregunta_origen(lang, mismo_dia=True)
     if slot == SLOT_HOTEL:
         return (
-            "¿En qué hotel o isla te hospedas? Así coordinamos la recogida."
+            "¿En qué hotel te vas a alojar? Lo necesito para reservar y coordinar la recogida."
             if lang == "es" else
-            "Which hotel or island are you staying at? That way we can arrange pickup."
+            "Which hotel are you staying at? I need it to book and arrange pickup."
         )
     if slot == SLOT_SAFETY:
         state.quick_replies = (
@@ -912,11 +915,11 @@ def _texto_de_la_pregunta(state: ConversationState, slot: str, *, reasking: bool
              "for foreigners)?")
         )
         if lang == "es":
-            cabeza = ("Para darte el precio y el link correctos:" if not _es_la_ultima_pregunta(state)
-                      else "Última cosa para darte el precio y el link correctos:")
+            cabeza = ("Para darte el precio correcto:" if not _es_la_ultima_pregunta(state)
+                      else "Última cosa para darte el precio correcto:")
         else:
-            cabeza = ("So I can give you the right price and link:" if not _es_la_ultima_pregunta(state)
-                      else "One last thing so I can give you the right price and link:")
+            cabeza = ("So I can give you the right price:" if not _es_la_ultima_pregunta(state)
+                      else "One last thing so I can give you the right price:")
         return f"{cabeza} {pregunta}"
     raise ValueError(f"unknown slot {slot!r}")
 
@@ -1149,7 +1152,7 @@ def _known_field_values(state: ConversationState) -> dict:
         "group_allocation": state.detected_group_allocation,
         "location": state.location or state.detected_location,
         "island": state.island or state.detected_island,
-        "hotel": state.hotel or state.detected_hotel,
+        "hotel": hotel_conocido(state),
         "ages": state.detected_ages,
         "last_dive_over_2_years": state.last_dive_over_2_years
         if state.last_dive_over_2_years is not None
@@ -1187,7 +1190,7 @@ def _full_booking_recap(state: ConversationState) -> str | None:
     if loc == "cartagena":
         lines.append("📍 Salida *desde Cartagena*" if es else "📍 Departing *from Cartagena*")
     elif loc == "island":
-        hotel = state.hotel or state.detected_hotel
+        hotel = hotel_conocido(state)
         suffix = f" (hotel {hotel})" if hotel else ""
         lines.append((f"📍 Ya *en las islas*{suffix}") if es else (f"📍 Already *on the islands*{suffix}"))
     name = f", {state.client_name}" if state.client_name else ""
@@ -1255,7 +1258,7 @@ def _recall_answer(state: ConversationState, field: str) -> str | None:
         ages_str = ", ".join(str(a) for a in ages)
         return f"Me dijiste que las edades eran: *{ages_str}*." if es else f"You told me the ages were: *{ages_str}*."
     if field == "hotel":
-        if not state.hotel:
+        if not hotel_conocido(state):
             return None
         return f"Me dijiste que estás en el *{state.hotel}*." if es else f"You told me you're staying at *{state.hotel}*."
     if field == "last_dive_over_2_years":
@@ -2011,6 +2014,8 @@ from src.agents.nucleo.origen_precio import (  # noqa: E402, F401
     ORIGEN_TRAS_LAS_VARIANTES_ES,
     ORIGEN_TRAS_LOS_ENLACES_EN,
     ORIGEN_TRAS_LOS_ENLACES_ES,
+    SIN_ENLACE_DE_LAS_ISLAS_EN,
+    SIN_ENLACE_DE_LAS_ISLAS_ES,
     _answer_already_asks,
     _answer_asks_the_origin,
     _cierra_preguntando_el_origen,

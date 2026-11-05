@@ -20,6 +20,7 @@ from src.agents.conversational_core import (
 )
 from src.domain import activities as dom
 from src.flows import cart_render, moneda
+from src.flows.como_reserva import ENLACE, como_reserva, hotel_conocido
 from src.flows.state import ConversationState
 
 logger = logging.getLogger("uvicorn.error")
@@ -137,9 +138,10 @@ def _origen_antes_del_precio(state: ConversationState, message: str, answer: str
     if por_confirmar in _CONFIRMA_ORIGEN:
         # ORIGEN-CONFIRMA: el extractor leyó un origen que falta confirmar; se pregunta eso, no «¿desde dónde?».
         pregunta = _CONFIRMA_ORIGEN[por_confirmar]["es" if state.language == "es" else "en"]
-    variantes = _dos_variantes(state, answer, con_enlace=da_enlace)
+    con_enlaces = da_enlace and como_reserva(state) == ENLACE  # CALN-35
+    variantes = _dos_variantes(state, answer, con_enlace=con_enlaces)
     if variantes:
-        tras = (ORIGEN_TRAS_LOS_ENLACES_ES, ORIGEN_TRAS_LOS_ENLACES_EN) if da_enlace else (
+        tras = (ORIGEN_TRAS_LOS_ENLACES_ES, ORIGEN_TRAS_LOS_ENLACES_EN) if con_enlaces else (
             ORIGEN_TRAS_LAS_VARIANTES_ES, ORIGEN_TRAS_LAS_VARIANTES_EN)
         pregunta = f"{variantes}\n\n{tras[0] if state.language == 'es' else tras[1]}"
     elif not da_enlace and _cotiza_los_dos_origenes(state, answer):
@@ -211,10 +213,12 @@ def _es_pregunta_de_origen(answer: str | None) -> bool:
 # precio, lo que incluye, el almuerzo y el enlace, y el cliente se quedaba sin nada de lo que preguntó (g10-029: «¿hay
 # comida?», g9-003: «¿qué incluye?»). Con las dos variantes del catálogo se contesta sin suponer el origen; la pregunta
 # del origen va después, para el enlace y el plan exacto.
-ORIGEN_TRAS_LAS_VARIANTES_ES = "¿Saldrías *desde Cartagena* o ya estás *en las Islas del Rosario*? Así te paso el plan y el enlace exactos. 🌊"
-ORIGEN_TRAS_LAS_VARIANTES_EN = "Would you leave *from Cartagena* or are you already *on the Rosario Islands*? Then I'll send you the exact plan and booking link. 🌊"
-ORIGEN_TRAS_LOS_ENLACES_ES = "Reserva con el de tu punto de salida. ¿Saldrías *desde Cartagena* o ya estás *en las Islas del Rosario*? 🌊"
-ORIGEN_TRAS_LOS_ENLACES_EN = "Book with the one for your starting point. Would you leave *from Cartagena* or are you already *on the Rosario Islands*? 🌊"
+ORIGEN_TRAS_LAS_VARIANTES_ES = "¿Saldrías *desde Cartagena* o ya estás *en las Islas del Rosario*? Así te paso el plan exacto. 🌊"
+ORIGEN_TRAS_LAS_VARIANTES_EN = "Would you leave *from Cartagena* or are you already *on the Rosario Islands*? Then I'll give you the exact plan. 🌊"
+SIN_ENLACE_DE_LAS_ISLAS_ES = "Si sales desde las islas, antes necesito saber tu hotel."
+SIN_ENLACE_DE_LAS_ISLAS_EN = "If you're leaving from the islands, I first need to know your hotel."
+ORIGEN_TRAS_LOS_ENLACES_ES = f"{SIN_ENLACE_DE_LAS_ISLAS_ES} ¿Saldrías *desde Cartagena* o ya estás *en las Islas del Rosario*? 🌊"
+ORIGEN_TRAS_LOS_ENLACES_EN = f"{SIN_ENLACE_DE_LAS_ISLAS_EN} Would you leave *from Cartagena* or are you already *on the Rosario Islands*? 🌊"
 _VARIANTE = {
     "es": {"cartagena": ("Desde Cartagena", "lancha ida y vuelta desde el Muelle de la Bodeguita"),
            "island": ("Ya en las islas", "recogida en tu hotel si tiene acceso marítimo"),
@@ -258,7 +262,9 @@ def _dos_variantes(state: ConversationState, answer: str = "", con_enlace: bool 
         nombre, transporte = textos[origen]
         almuerzo = textos["con_almuerzo" if "almuerzo" in (servicio.get("includes_es") or "").lower() else "sin_almuerzo"]
         linea = f"• *{nombre}*: {precio}, {transporte}; {almuerzo}."
-        url = cart_render._resolve_service_booking_url(servicio, state) if con_enlace else None
+        # CALN-35: el de las islas, cuando diga su hotel.
+        url = (cart_render._resolve_service_booking_url(servicio, state)
+               if con_enlace and (origen != "island" or hotel_conocido(state)) else None)
         lineas.append(f"{linea} {url}" if url else linea)
     return "\n".join(lineas)
 

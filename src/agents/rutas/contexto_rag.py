@@ -11,6 +11,7 @@ from zoneinfo import ZoneInfo
 
 from src.domain import activities as dom
 from src.flows import cart_render, eligibility
+from src.flows.como_reserva import HOTEL_PRIMERO, como_reserva, hotel_conocido
 from src.flows.state import ConversationState
 
 # Cliente aclarando explicitamente que, dentro de una conversacion DIVE TO
@@ -433,8 +434,12 @@ def _build_extra_context(state: ConversationState) -> str | None:
     # Isla / hotel
     if getattr(state, "island", None):
         parts.append(f"Se hospeda (o se hospedara) en la isla: {state.island}.")
-    if getattr(state, "hotel", None):
-        parts.append(f"Hotel/alojamiento reportado: {state.hotel}.")
+    if hotel_conocido(state):
+        parts.append(f"Hotel/alojamiento reportado: {hotel_conocido(state)}.")
+    if como_reserva(state) == HOTEL_PRIMERO:
+        # CALN-35 (decisión de Gadea, 5-nov).
+        parts.append("Sale desde las islas y aun no nos ha dicho su hotel: para reservar, primero tiene que tener hotel y "
+                     "decirnos cual. No le compartas el link de reserva ni le ofrezcas pasarle con un asesor para reservar.")
 
     # Actividad seleccionada
     if getattr(state, "selected_service", None):
@@ -549,7 +554,8 @@ def _build_extra_context(state: ConversationState) -> str | None:
         # el RAG le daba antes (banco dialogos-gen4-moneda, g4-colombiana) le hacía pagar por otro camino.
         parts.append("Al ser colombiano/a o residente, su pago (100 % online, o un anticipo del 50 % con el enlace, el "
                      "QR o Llave que le envía un asesor y el otro 50 % el día de la actividad, en COP) lo coordina un "
-                     "asesor al cerrar la reserva: no le compartas el link de reserva.")
+                     "asesor al cerrar la reserva, al mismo precio online: no le compartas el link de reserva ni le digas que "
+                     "reserve por la web.")
     elif getattr(state, "is_colombian", None) is False:
         parts.append("El cliente indico que no es colombiano/a (mostrar precios en USD).")
     else:

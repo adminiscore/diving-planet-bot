@@ -82,11 +82,12 @@ def test_jev_pide_precio_nombra_las_actividades(monkeypatch):
     assert "snorkeling" in jev_router._questions_for_turn()[jev_router.PIDE_PRECIO]["instructions"]
 
 
-def test_sin_origen_un_enlace_da_los_dos():
-    """«Mándame el enlace del Open Water» sin origen daba el de Cartagena: ahora las dos variantes con su enlace."""
+def test_sin_origen_un_enlace_da_las_dos_variantes():
+    """«Mándame el enlace del Open Water» sin origen daba el de Cartagena: ahora las dos variantes, y el enlace de las islas
+    cuando diga su hotel (CALN-35)."""
     respuesta = ("Claro, aquí tienes el enlace del Open Water: "
                  "https://book.divingplanet.org/book/basic-course/4?language=es")
     texto = cc._origen_antes_del_precio(_conv(actividad_preguntada="padi_open_water"),
                                         "mándame el enlace del open water", respuesta)
-    assert "basic-course/4" in texto and "basic-course-already-on-the-island" in texto
+    assert "basic-course/4" in texto and "basic-course-already-on-the-island" not in texto
     assert texto.endswith(cc.ORIGEN_TRAS_LOS_ENLACES_ES) and cc._es_pregunta_de_origen(texto)

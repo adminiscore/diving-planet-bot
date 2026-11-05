@@ -21,6 +21,8 @@ import logging
 import re
 import unicodedata
 
+from src.flows.como_reserva import ENLACE, como_reserva, hotel_conocido
+
 logger = logging.getLogger("uvicorn.error")
 
 _PARRAFO = "\n\n"
@@ -59,8 +61,7 @@ _FIN_DE_FRASE_RE = re.compile(r"(?<=[.!?:])\s+")
 
 
 def _sin_enlaces_repetidos(respuesta: str) -> str:
-    """Quita de lo que escribe el escritor la frase del enlace que ya sale más abajo. Lo que anunciaba el enlace («Reserva aquí:»)
-    se va con él; si el párrafo se queda sin nada, se va entero."""
+    """Quita de lo que escribe el escritor la frase del enlace que ya sale más abajo."""
     tarjeta = _TARJETA_RE.search(respuesta)
     if not tarjeta:
         return respuesta
@@ -68,13 +69,33 @@ def _sin_enlaces_repetidos(respuesta: str) -> str:
     de_la_tarjeta = set(_ENLACE_DE_RESERVA_RE.findall(resto))
     if not de_la_tarjeta & set(_ENLACE_DE_RESERVA_RE.findall(cuerpo)):
         return respuesta
+    limpio = _sin_estos_enlaces(cuerpo, de_la_tarjeta)
+    logger.info("[CORE][CALN27] compositor: el enlace del escritor ya sale en la tarjeta: fuera el suyo")
+    return f"{limpio}{_PARRAFO}{resto}" if limpio else resto
+
+
+def _sin_enlaces_de_reserva(state, respuesta: str) -> str:
+    """CALN-35: a quien no reserva por enlace no le llega ninguno, venga de donde venga. La respuesta adelantada se escribe antes
+    de leer este mensaje («…para colombianos», mini c055), así que el escritor no siempre lo sabe; aquí ya está todo leído."""
+    if como_reserva(state) == ENLACE:
+        return respuesta
+    enlaces = set(_ENLACE_DE_RESERVA_RE.findall(respuesta))
+    if not enlaces:
+        return respuesta
+    logger.info(f"[CORE][CALN35] compositor: fuera el enlace de reserva ({como_reserva(state)})")
+    return _sin_estos_enlaces(respuesta, enlaces)
+
+
+def _sin_estos_enlaces(cuerpo: str, enlaces: set[str]) -> str:
+    """El texto sin la frase de esos enlaces. Lo que anunciaba el enlace («Reserva aquí:») se va con él; si el párrafo se queda sin
+    nada, se va entero."""
     parrafos = []
     for parrafo in cuerpo.split(_PARRAFO):
         lineas = []
         for linea in parrafo.split("\n"):
             frases = []
             for frase in _FIN_DE_FRASE_RE.split(linea):
-                if set(_ENLACE_DE_RESERVA_RE.findall(frase)) & de_la_tarjeta:
+                if set(_ENLACE_DE_RESERVA_RE.findall(frase)) & enlaces:
                     if frases and frases[-1].rstrip().endswith(":"):
                         frases.pop()
                     # Lo que venga detrás del enlace sin punto («…: https://… Lleva tu carné.») no es la frase del enlace.
@@ -89,8 +110,7 @@ def _sin_enlaces_repetidos(respuesta: str) -> str:
             lineas.pop()
         if any(x.strip() for x in lineas):
             parrafos.append("\n".join(lineas))
-    logger.info("[CORE][CALN27] compositor: el enlace del escritor ya sale en la tarjeta: fuera el suyo")
-    return f"{_PARRAFO.join(p.strip() for p in parrafos if p.strip())}{_PARRAFO}{resto}" if parrafos else resto
+    return _PARRAFO.join(p.strip() for p in parrafos if p.strip())
 
 
 def _veces_preguntada(state, slot: str | None) -> int:
@@ -115,13 +135,14 @@ def _las_dos_salidas(state, cuerpo: str) -> str | None:
     cliente elige. Sin eso (varios planes por origen), None: se pregunta."""
     from src.agents import conversational_core as core  # lazy
 
-    salidas = core._dos_variantes(state, con_enlace=True)
+    salidas = core._dos_variantes(state, con_enlace=como_reserva(state) == ENLACE)
     if not salidas:
         return None
     logger.info(f"[CORE][053B] compositor: el origen ya salió {_VECES_MAX} veces: van las dos salidas en vez de la pregunta")
     _aplazar(state)
-    cola = "Reserva con el de tu punto de salida." if state.language == "es" else "Book with the one for your starting point."
-    return _PARRAFO.join(x for x in (cuerpo.strip(), salidas, cola if "http" in salidas else "") if x)
+    # Con enlaces, el de las islas falta hasta que diga su hotel (CALN-35).
+    cola = core.SIN_ENLACE_DE_LAS_ISLAS_ES if state.language == "es" else core.SIN_ENLACE_DE_LAS_ISLAS_EN
+    return _PARRAFO.join(x for x in (cuerpo.strip(), salidas, cola if "http" in salidas and not hotel_conocido(state) else "") if x)
 
 
 def _con_el_freno_del_origen(state, respuesta: str) -> str:
@@ -134,8 +155,8 @@ def _con_el_freno_del_origen(state, respuesta: str) -> str:
         **{texto: "" for por_idioma in core._CONFIRMA_ORIGEN.values() for texto in por_idioma.values()},
         core.ORIGEN_TRAS_LAS_VARIANTES_ES: "",
         core.ORIGEN_TRAS_LAS_VARIANTES_EN: "",
-        core.ORIGEN_TRAS_LOS_ENLACES_ES: "Reserva con el de tu punto de salida.",
-        core.ORIGEN_TRAS_LOS_ENLACES_EN: "Book with the one for your starting point.",
+        core.ORIGEN_TRAS_LOS_ENLACES_ES: core.SIN_ENLACE_DE_LAS_ISLAS_ES,
+        core.ORIGEN_TRAS_LOS_ENLACES_EN: core.SIN_ENLACE_DE_LAS_ISLAS_EN,
     }
     fija = next((p for p in resto_por_pregunta if p in respuesta), None)
     if fija is None:
@@ -310,6 +331,11 @@ def _sin_parrafos_repetidos(respuesta: str) -> str:
 
 
 def componer(state, respuesta: str, *, pase: bool = False, escribio: bool | None = None) -> str:
+    """La respuesta del turno, ya compuesta, sin enlaces para quien no le tocan (CALN-35)."""
+    return _sin_enlaces_de_reserva(state, _componer(state, respuesta, pase=pase, escribio=escribio))
+
+
+def _componer(state, respuesta: str, *, pase: bool = False, escribio: bool | None = None) -> str:
     """La respuesta del turno con la pregunta de la reserva una vez y al final (paso 1), si no pregunta ya otra cosa
     (paso 2). En un turno que pasa a un asesor, sus copias salen y no se vuelve a poner: sigue una persona (y la nota
     de la tarjeta, si va, ya pregunta). `escribio`: si en el turno contestó el escritor (sin darlo, lo dice la traza

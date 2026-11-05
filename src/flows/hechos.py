@@ -30,6 +30,7 @@ from src.flows.catalog import (
     descuentos_de_la_base,
     requisitos_de_politica,
 )
+from src.flows.como_reserva import ASESOR, HOTEL_PRIMERO, como_reserva, hotel_conocido
 from src.flows.state import ConversationState
 from src.utils import money
 from src.utils.text import strip_accents
@@ -43,12 +44,14 @@ _DISCOUNTS = Path(__file__).resolve().parents[2] / "data" / "knowledge_base" / "
 
 
 @lru_cache(maxsize=1)
-def _descuento_online(lang: str) -> str | None:
+def _descuento_online(lang: str, *, asesor: bool = False) -> str | None:
     """El descuento online (10 %, se aplica solo al reservar por la web), de discounts.json: va con el enlace (G10 nº 2:
-    daba el enlace sin decir que reservando ahí se aplica el precio online)."""
+    daba el enlace sin decir que reservando ahí se aplica el precio online). `asesor` (CALN-35): quien no reserva por la web lo
+    tiene igual; se lo aplica el asesor."""
     datos = json.loads(_DISCOUNTS.read_text(encoding="utf-8-sig")).get("discounts", {})
     online = datos.get("online_direct_booking") or {}
-    return online.get(f"description_{lang}") or online.get("description_es")
+    clave = "description_colombian" if asesor else "description"
+    return online.get(f"{clave}_{lang}") or online.get(f"{clave}_es")
 
 
 def _politica(clave: str, lang: str) -> str | None:
@@ -282,13 +285,19 @@ def hechos(state: ConversationState, intenciones: list[str], actividades: list[s
         # página web» sin el enlace (3 diálogos). Con el pago va también el enlace del plan; el cómo pagar ya lo lleva
         # el pago, así que no se repite en `como_reservar`.
         if "enlace" in pedidas or "pago" in pedidas or "disponibilidad" in pedidas:
-            if state.is_colombian and not getattr(state, "mixed_nationality_notice", False):
+            forma = como_reserva(state)
+            if forma == ASESOR:
                 # Decisión de Gadea (21-oct): el cierre de un colombiano lo coordina un asesor (pago en COP), sin enlace.
                 bloque["enlace"] = {"asesor": True}
+            elif forma == HOTEL_PRIMERO:
+                bloque["hotel_primero"] = _politica("hotel_before_booking", lang)  # CALN-35 (decisión de Gadea, 5-nov)
             else:
                 bloque["enlace"] = _por_origen(
                     actividad, origenes,
                     lambda sid: cart_render._resolve_service_booking_url(SERVICES.get(sid) or {}, state), elegido)
+                if "island" in bloque["enlace"] and not hotel_conocido(state):  # sin saber el origen: el de las islas, con el hotel
+                    del bloque["enlace"]["island"]
+                    bloque["hotel_primero"] = _politica("hotel_before_booking", lang)
                 if not bloque["enlace"] and any(_plan_base(actividad, o, elegido) for o in origenes):
                     bloque["enlace"] = {"asesor": True}  # s03g: el plan no tiene enlace de reserva: lo reserva un asesor
                 elif bloque["enlace"]:
@@ -423,6 +432,8 @@ def _descuentos(state: ConversationState, lang: str, grupo: str | None = None) -
     textos = descuentos_de_la_base(lang)  # arq-8h: de la función del catálogo, con la nota del acompañante
     if grupo and "group_discount" in textos:
         textos = {**textos, "group_discount": grupo}
+    if como_reserva(state) == ASESOR and "online_direct_booking" in textos:
+        textos = {**textos, "online_direct_booking": _descuento_online(lang, asesor=True)}  # CALN-35
     if getattr(state, "mixed_nationality_notice", False):
         # arq-8a (G10 nº 6, g10-043): «mi pareja es colombiana y yo extranjera, ¿hay descuento?» llevaba «los
         # colombianos pagan en COP» y no la regla del grupo mixto (esa solo iba con el precio): «tu pareja paga en pesos y
@@ -605,7 +616,7 @@ def _clima_y_pago(state: ConversationState, pedidas: list[str], lang: str) -> di
 # lat-8 (26-oct, #1880): cuatro temas más, con las políticas que la base ya tiene. En «cambios», la política general
 # (cambiar la fecha o el número de personas, la cancelación); una reserva ya hecha la lleva un asesor (no llega aquí).
 _POLITICAS_DE_LAT8 = {
-    "hoteles": ("other_island_hotels",),
+    "hoteles": ("other_island_hotels", "hotel_before_booking"),
     "regreso": ("return_different_day",),
     "fotos": ("photos_videos_policy",),
     "cambios": ("reschedule", "modify_booking", "cancellation"),

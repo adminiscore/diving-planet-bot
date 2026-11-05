@@ -14,6 +14,7 @@ from src.agents.conversational_core import (
     _IMPORTE_RE,
     _SLOTS_APLAZABLES,
     SLOT_COMPANION_QTY,
+    SLOT_HOTEL,
     SLOT_SAFETY,
     _answer_already_asks,
     _answer_asks_the_origin,
@@ -36,8 +37,10 @@ from src.agents.conversational_core import (
     next_missing_slot,
 )
 from src.domain import activities as dom
+from src.domain.politicas import politica
 from src.flows import cart_render, grupo
 from src.flows.catalog import politica_breve
+from src.flows.como_reserva import HOTEL_PRIMERO, como_reserva
 from src.flows.state import ConversationState, Step
 from src.utils import money
 
@@ -265,6 +268,46 @@ def _si_chocan_los_enlaces(answer: str, cierre: str, lang: str, history: list[di
             continue
         quedan.append(parrafo)
     return "\n\n".join([*quedan, pregunta])
+
+
+# CALN-35 (decisión de Gadea, 5-nov): si reserva antes que el hotel, puede que le cancelen, que no pueda quedarse en ese hotel, que
+# se olvide de avisar o que acabe saliendo desde Cartagena. Se le dice que vuelva cuando lo tenga; no se le ofrece Cartagena.
+_HOTEL_PRIMERO = {
+    "es_uno": ("Para reservar desde las islas necesito saber en qué hotel te alojas: la recogida se coordina allí y, si el hotel "
+               "cambia o se cancela, cambia también tu plan. Si aún no lo tienes, resérvalo primero y escríbeme con el nombre; "
+               "entonces seguimos con la reserva. 🌊"),
+    "es_grupo": ("Para reservar desde las islas necesito saber en qué hotel se alojan: la recogida se coordina allí y, si el hotel "
+                 "cambia o se cancela, cambia también su plan. Si aún no lo tienen, resérvenlo primero y escríbanme con el nombre; "
+                 "entonces seguimos con la reserva. 🌊"),
+    "en": ("To book from the islands I need to know which hotel you're staying at: pickup is arranged there, and if the hotel "
+           "changes or falls through, your plan changes too. If you don't have one yet, book it first and message me with its "
+           "name; then we'll carry on with the booking. 🌊"),
+}
+_HOTEL_PRIMERO_YA_DICHO = {
+    "es_uno": "Cuando tengas el hotel, escríbeme con el nombre y seguimos con la reserva. 🌊",
+    "es_grupo": "Cuando tengan el hotel, escríbanme con el nombre y seguimos con la reserva. 🌊",
+    "en": "Once you have the hotel, message me with its name and we'll carry on with the booking. 🌊",
+}
+_PASO_HOTEL_PRIMERO = "hotel_primero"  # en `preguntas_hechas`: cuántas veces se ha dicho
+
+
+def _hotel_primero_ya_dicho(state: ConversationState) -> bool:
+    return bool((state.preguntas_hechas or {}).get(_PASO_HOTEL_PRIMERO))
+
+
+def _hotel_primero(state: ConversationState) -> str:
+    """Sale desde las islas y no nos ha dicho su hotel: la regla y los hoteles una vez; después, solo que vuelva con el nombre. Su
+    siguiente mensaje se lee como la respuesta a «¿en qué hotel?»."""
+    from src.agents.compositor import _contar_la_pregunta  # lazy
+
+    lang = state.language
+    clave = "en" if lang != "es" else ("es_grupo" if (state.detected_group_size or 1) > 1 else "es_uno")
+    state.quick_replies = []
+    state.core_pending_slot = SLOT_HOTEL
+    if _hotel_primero_ya_dicho(state):
+        return _HOTEL_PRIMERO_YA_DICHO[clave]
+    _contar_la_pregunta(state, _PASO_HOTEL_PRIMERO)
+    return f"{_HOTEL_PRIMERO[clave]}\n\n{politica('other_island_hotels', lang)}"
 
 
 def _finalize(state: ConversationState, *, pasar_al_asesor: bool = True, ofrecer: bool = True) -> str:
@@ -510,6 +553,8 @@ async def _slotfill_close_phase(
     prev_pending = carry["prev_pending"]
     finalized = False
     sin_seguridad = False
+    hotel_primero = False
+    hotel_ya_dicho = False
     cierre_previo = None
 
     # El reparto sigue a un cambio de la actividad principal cuando solo tenia la
@@ -560,7 +605,13 @@ async def _slotfill_close_phase(
         state.step = Step.FREE_TEXT
     else:
         nxt = next_missing_slot(state)
-        if _tarjeta_sin_seguridad(state, nxt, prev_pending):
+        if nxt is None and como_reserva(state) == HOTEL_PRIMERO:
+            # CALN-35: no es un cierre: no hay tarjeta ni pase, y lo que pregunte se contesta con su precio.
+            hotel_primero = True
+            hotel_ya_dicho = _hotel_primero_ya_dicho(state)
+            response = _hotel_primero(state)
+            state.step = Step.FREE_TEXT
+        elif _tarjeta_sin_seguridad(state, nxt, prev_pending):
             # CAL-F pareja-certificados-cop-descuento-almuerzo (decisión de Gadea, 18-oct): solo falta la seguridad y el
             # cliente no la contestó; la tarjeta sale igualmente, con la pregunta una vez dentro (ver la función).
             finalized = True
@@ -633,7 +684,7 @@ async def _slotfill_close_phase(
         # tengo a la mano" no aporta nada y, por la regla de arriba, TAPABA el cierre: "great, how do
         # i pay" se quedaba sin el link (ronda B de u3-5). El cierre ya contesta "¿cómo pago?".
         answer = None
-    cierre_igual = bool(finalized and cierre_previo and state.mixed_last_summary == cierre_previo)
+    cierre_igual = bool(finalized and cierre_previo and state.mixed_last_summary == cierre_previo) or hotel_ya_dicho
     if answer and finalized and not cierre_igual and (
             cual := _si_chocan_los_enlaces(answer, response, state.language, state.history)):
         state.mixed_last_summary = cierre_previo  # la tarjeta no se ha visto: con su respuesta tiene que salir
@@ -667,13 +718,13 @@ async def _slotfill_close_phase(
         state.history.append({"role": "assistant", "content": response})
         return response
 
-    if not first_turn and not finalized and prev_pending and (escrita := await _sin_dato(state, message, prev_pending,
+    if not first_turn and not finalized and not hotel_primero and prev_pending and (escrita := await _sin_dato(state, message, prev_pending,
                                                                                          response)):
         state.history.append({"role": "assistant", "content": escrita})
         return escrita
 
     ack = ""
-    if not first_turn:
+    if not first_turn and not hotel_primero:
         ack = _acuse_por_codigo(state, prev_pending)
         if ack:
             ack = ack.rstrip() + "\n\n"
