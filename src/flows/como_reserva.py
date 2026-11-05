@@ -4,17 +4,19 @@ Lo decidían por separado los hechos, el cierre y el escritor, y cada uno miraba
 colombianos se hablaba de la web o del enlace (mini c055, en A y en B), y quien salía desde las islas sin hotel reservaba igual.
 - `HOTEL_PRIMERO`: sale desde las islas y no nos ha dicho su hotel. No hay enlace ni asesor hasta que lo diga.
 - `ASESOR`: colombianos y residentes pagan en pesos y les cierra un asesor por el chat. Sin enlace de la web.
+- `RECOGIDA_POR_CONFIRMAR`: sale desde las islas y se aloja fuera de nuestras listas (una casa, un Airbnb, otro hotel): un asesor le
+  confirma la recogida ANTES de reservar y pagar (Gadea, 5-nov; el Airbnb de la tanda s05d podía pagar sin saber si le recogían).
 - `ENLACE`: el resto, también un grupo mixto, que paga en dólares.
-Vale con cualquier nombre de alojamiento (casa, Airbnb): un asesor confirma la recogida. De momento solo «desde las islas», no los
-planes desde Cartagena con noche en las islas (Gadea, 5-nov).
+De momento solo «desde las islas», no los planes desde Cartagena con noche en las islas (Gadea, 5-nov).
 """
 from __future__ import annotations
 
-from src.domain.lugares import solo_nombra_una_isla
+from src.domain.lugares import recogida_conocida, solo_nombra_una_isla
 
 ENLACE = "enlace"
 ASESOR = "asesor"
 HOTEL_PRIMERO = "hotel_primero"
+RECOGIDA_POR_CONFIRMAR = "recogida_por_confirmar"
 
 # Lo que se guarda si la respuesta a «¿en qué hotel?» no trae ninguno: el lead dice «sin definir» y no se pregunta en bucle.
 POR_CONFIRMAR = {"es": "por confirmar", "en": "to be confirmed"}
@@ -49,8 +51,11 @@ def _sale_desde_las_islas(state) -> bool:
 
 
 def como_reserva(state) -> str:
-    if _sale_desde_las_islas(state) and not hotel_conocido(state):
+    islas, hotel = _sale_desde_las_islas(state), hotel_conocido(state)
+    if islas and not hotel:
         return HOTEL_PRIMERO
     if getattr(state, "is_colombian", None) and not getattr(state, "mixed_nationality_notice", False):
         return ASESOR
+    if islas and not recogida_conocida(hotel):
+        return RECOGIDA_POR_CONFIRMAR
     return ENLACE

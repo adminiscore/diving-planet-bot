@@ -57,6 +57,14 @@ def isla_nombrada(texto: str, *, nombra_una_isla: bool) -> str | None:
     return None
 
 
+def recogida_conocida(hotel: str) -> bool:
+    """¿Es un alojamiento de nuestras listas (`alias_de_los_hoteles` o `hoteles_con_recogida`)? Vale el id o el nombre que dijo el
+    cliente. Fuera de ellas (una casa, un Airbnb, otro hotel) la recogida la confirma un asesor antes de reservar (CALN-35)."""
+    texto = (hotel or "").lower().replace("_", " ")
+    return bool(hotel_nombrado(texto, nombra_un_hotel=True)) or any(
+        h["nombre"].lower() in texto for h in _datos()["hoteles_con_recogida"])
+
+
 def solo_nombra_una_isla(texto: str) -> bool:
     """«En Isla Grande»: nombra una isla y ningún alojamiento (CALN-35). «Casa Azul en Isla Grande» sí lo nombra."""
     limpio = re.sub(r"^((en|la|el|in|at|on|the)\s+)+", "", (texto or "").lower()).strip(" .,;!¡")

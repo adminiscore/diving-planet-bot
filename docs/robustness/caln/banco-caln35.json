@@ -110,16 +110,23 @@
   },
   {
    "id": "h-airbnb",
-   "tarea": "una casa o un Airbnb: vale el nombre",
+   "tarea": "una casa o un Airbnb: vale el nombre, pero el asesor confirma la recogida antes de reservar: sin enlace",
    "turnos": [
     "Soy buzo certificado y voy solo, ya estaré en las islas, quiero 2 inmersiones",
-    "Me alojo en un Airbnb que se llama Casa Azul"
+    "Me alojo en un Airbnb que se llama Casa Azul",
+    "no, buceé hace poco",
+    "no soy colombiano"
    ],
    "estado_no": {
     "hotel": "por confirmar"
    },
    "ninguno": [
-    "para reservar desde las islas necesito"
+    "para reservar desde las islas necesito",
+    "book.divingplanet.org"
+   ],
+   "debe": [
+    "asesor",
+    "124"
    ]
   },
   {
@@ -296,6 +303,20 @@
    ],
    "debe": [
     "hotel"
+   ]
+  },
+  {
+   "id": "h-airbnb-pregunta-si-puede",
+   "tarea": "airbnb-isla de s05d: «You don't need to wait for that confirmation to book»",
+   "turnos": [
+    "Hey! I'm an American diver, Advanced Open Water, staying at an Airbnb on Isla Grande called Villa Marea. I'd like two dives. Can you pick me up?",
+    "How much is it and can I book it online now, or do I have to wait for the advisor to confirm the pick-up? I last dove about 6 months ago."
+   ],
+   "ninguno": [
+    "book.divingplanet.org",
+    "don't need to wait",
+    "don’t need to wait",
+    "you can book online now"
    ]
   }
  ]

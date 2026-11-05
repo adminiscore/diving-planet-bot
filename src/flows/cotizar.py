@@ -21,6 +21,7 @@ import logging
 import re
 
 from src.domain import activities as dom
+from src.flows import eligibility
 from src.flows import hechos as hechos_mod
 
 logger = logging.getLogger("uvicorn.error")
@@ -44,12 +45,23 @@ def candidatos(state) -> list[str]:
     (CALN3-P01: «nunca he buceado» a «¿cuánto cuesta bucear?» no pide el snorkel); sin saber si está certificado, el
     buceo y el minicurso. Solo se llama cuando pide precio: «hola, ¿cuánto cuesta bucear?» llega sin lectura del
     extractor (Jev: nada que apuntar), así que no se espera a `quiere_bucear`."""
+    return list(dict.fromkeys([*_candidatos_de_quien_escribe(state), *_opciones_de_los_menores(state)]))
+
+
+def _candidatos_de_quien_escribe(state) -> list[str]:
     if state.is_certified is True:
         # CALN-3c (p07): «yo soy buzo certificado y mi novia nunca ha buceado» sin reparto: también el minicurso de ella.
         return ["certified_diving", *(["minicourse"] if getattr(state, "acompanante_sin_certificar", False) else [])]
     if state.is_certified is False:
         return ["minicourse"] if getattr(state, "quiere_bucear", False) else ["minicourse", "snorkel"]
     return ["certified_diving", "minicourse"]
+
+
+def _opciones_de_los_menores(state) -> list[str]:
+    """Tanda s05d (familia de Canadá): con padres certificados, los candidatos eran solo su buceo, y a los hijos de 11 y 7 no les llegaba
+    ningún precio; a la de 7 se le decía que no había nada. Lo que puede hacer cada menor nombrado, sin el acompañante, que no es plan."""
+    return [eligibility.option_activity_id(o) for a in sorted({e for e in (state.detected_ages or []) if 1 <= e <= 17})
+            for o in eligibility.beginner_options_for_age(a) if o != eligibility.COMPANION]
 
 
 def actividades_a_cotizar(state) -> list[str]:

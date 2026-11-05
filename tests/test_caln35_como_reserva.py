@@ -20,6 +20,7 @@ from src.flows.como_reserva import (
     ASESOR,
     ENLACE,
     HOTEL_PRIMERO,
+    RECOGIDA_POR_CONFIRMAR,
     como_reserva,
     cuando_tenga_el_hotel,
     hotel_conocido,
@@ -45,7 +46,12 @@ def _estado(**campos) -> ConversationState:
     ({"location": "island"}, HOTEL_PRIMERO),
     ({"location": "island", "hotel": "por confirmar"}, HOTEL_PRIMERO),
     ({"location": "island", "hotel": "to be confirmed"}, HOTEL_PRIMERO),
-    ({"location": "island", "hotel": "Casa Azul"}, ENLACE),
+    ({"location": "island", "hotel": "Casa Azul"}, RECOGIDA_POR_CONFIRMAR),  # fuera de la lista: confirma un asesor
+    ({"location": "island", "hotel": "ubuntu"}, ENLACE),
+    ({"location": "island", "hotel": "Hotel Cocoliso"}, ENLACE),
+    ({"location": "island", "hotel": "Mulata"}, ENLACE),
+    ({"location": "island", "hotel": "Casa Azul", "is_colombian": True}, ASESOR),
+    ({"location": "cartagena", "hotel": "Casa Azul"}, ENLACE),
     ({"location": "island", "is_colombian": True}, HOTEL_PRIMERO),  # sin hotel, tampoco pasa al asesor
     ({"location": "island", "hotel": "cocoliso", "is_colombian": True}, ASESOR),
     ({"pending_correction": {"location": "island"}}, HOTEL_PRIMERO),  # se le está confirmando
@@ -273,3 +279,28 @@ def test_lo_que_puede_cada_edad_va_en_los_hechos_y_se_exige():
     assert any("snorkel" in x.lower() for x in hechos.faltan("The two dives cost 178 USD.", [b], ["precio"]))
     [c] = hechos.hechos(_estado(language="en", location="cartagena", is_colombian=False), ["precio"], ["certified_diving"])
     assert "lo_que_puede_cada_edad" not in c
+
+
+def test_fuera_de_la_lista_ve_el_precio_sin_enlace_y_pasa_al_asesor():
+    st = _estado(language="es", location="island", hotel="Casa Azul", is_colombian=False, detected_activity="certified_diving",
+                 is_certified=True, last_dive_over_2_years=False, detected_group_size=1)
+    texto = slotfill_close._finalize(st)
+    assert "book.divingplanet.org" not in texto and "asesor" in texto and "USD" in texto
+    assert st.pending_escalation_reason
+
+
+def test_si_aun_no_quiere_reservar_se_le_ofrece_el_asesor():
+    st = _estado(language="es", location="island", hotel="Casa Azul", is_colombian=False, detected_activity="certified_diving",
+                 is_certified=True, last_dive_over_2_years=False, detected_group_size=1)
+    texto = slotfill_close._finalize(st, pasar_al_asesor=False)
+    assert "book.divingplanet.org" not in texto and "asesor" in texto and not st.pending_escalation_reason
+
+
+def test_las_opciones_de_los_menores_entran_en_los_candidatos():
+    from src.flows.cotizar import candidatos
+
+    padres = {"is_certified": True, "language": "en"}
+    assert candidatos(_estado(**padres)) == ["certified_diving"]
+    assert candidatos(_estado(**padres, detected_ages=[7, 11])) == ["certified_diving", "snorkel", "minicourse"]
+    assert candidatos(_estado(**padres, detected_ages=[9])) == ["certified_diving", "bubble_makers", "snorkel"]
+    assert candidatos(_estado(**padres, detected_ages=[40])) == ["certified_diving"]  # un adulto no cambia nada

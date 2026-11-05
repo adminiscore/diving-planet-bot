@@ -41,7 +41,9 @@ from src.domain.politicas import politica
 from src.flows import cart_render, grupo
 from src.flows.catalog import politica_breve
 from src.flows.como_reserva import (
+    ENLACE,
     HOTEL_PRIMERO,
+    RECOGIDA_POR_CONFIRMAR,
     clave_de_idioma_y_grupo,
     como_reserva,
     cuando_tenga_el_hotel,
@@ -86,7 +88,7 @@ def _tras_la_tarjeta_ya_vista(state: ConversationState) -> str:
     if _veces_preguntada(state, SLOT_SAFETY) < _VECES_MAX:
         _contar_la_pregunta(state, SLOT_SAFETY)
         return _nota_seguridad(state).strip()
-    if state.is_colombian:
+    if como_reserva(state) != ENLACE:
         lang = state.language if state.language != "es" else ("es_grupo" if (state.detected_group_size or 1) > 1 else "es_uno")
         return _OFERTA_DEL_ASESOR.get(lang, _OFERTA_DEL_ASESOR["en"])
     return ("Cuando quieras, reservas con el enlace de arriba: ahí eliges la fecha y las personas. 🌊" if state.language == "es"
@@ -340,6 +342,9 @@ def _finalize(state: ConversationState, *, pasar_al_asesor: bool = True, ofrecer
                 f"You pay in Colombian pesos (COP): {politica_breve('payment_colombian', 'en')}."
                 + (f"\n\n{_OFERTA_DEL_ASESOR['en']}" if ofrecer else ""))
 
+    if como_reserva(state) == RECOGIDA_POR_CONFIRMAR:
+        return _recogida_por_confirmar(state, refresher_note, pasar_al_asesor, ofrecer)
+
     if state.is_colombian:
         # Gating colombiano: SIN link de reserva directa — el asesor coordina el
         # pago en COP (100% online o 50/50). Resumen determinista del catálogo.
@@ -386,17 +391,57 @@ def _finalize(state: ConversationState, *, pasar_al_asesor: bool = True, ofrecer
     return refresher_note + response
 
 
+_RECOGIDA_POR_CONFIRMAR = {
+    "es": ("Tu alojamiento no está en nuestra lista de hoteles, así que un asesor tiene que confirmarte la recogida antes de reservar y "
+           "pagar."),
+    "en": "Your accommodation isn't on our hotel list, so an advisor needs to confirm your pickup before you book and pay.",
+}
+_PASE_DE_LA_RECOGIDA = {
+    "es": "Te paso con un asesor; enseguida se pone en contacto contigo. 🌊",
+    "en": "I'll connect you with an advisor — they'll be in touch shortly. 🌊",
+}
+
+
+def _recogida_por_confirmar(state: ConversationState, refresher_note: str, pasar_al_asesor: bool, ofrecer: bool) -> str:
+    """Decisión de Gadea (5-nov): se aloja fuera de nuestras listas; ve el precio, sin enlace, y el asesor le confirma la recogida antes
+    de reservar y pagar. Como el cierre en pesos: si aún no quiere reservar, se le ofrece el asesor."""
+    from src.agents.lead_summary import build_lead_summary
+
+    lang = "es" if state.language == "es" else "en"
+    summary = _resumen_sin_enlace(state)
+    ya_la_vio = state.mixed_last_summary == summary
+    state.mixed_last_summary = summary
+    state.quick_replies = []
+    if not pasar_al_asesor:
+        state.pending_lead_note_reason = "núcleo conversacional - alojamiento fuera de la lista: se le ofrece el asesor"
+        oferta = _OFERTA_DEL_ASESOR["es_uno" if lang == "es" else "en"]
+        return f"{refresher_note}{summary}\n\n{_RECOGIDA_POR_CONFIRMAR[lang]}" + (f"\n\n{oferta}" if ofrecer else "")
+    state.step = Step.ESCALATE
+    reason = "núcleo conversacional - alojamiento fuera de la lista: confirmar la recogida antes de reservar"
+    state.pending_escalation_reason = reason
+    state.pending_note = build_lead_summary(state, escalation_reason=reason)
+    if ya_la_vio:
+        return _PASE_DE_LA_RECOGIDA[lang]
+    return f"{refresher_note}{summary}\n\n{_RECOGIDA_POR_CONFIRMAR[lang]} {_PASE_DE_LA_RECOGIDA[lang]}"
+
+
 def _colombian_summary_lines(state: ConversationState) -> str:
-    """Resumen por actividad para clientes colombianos: label + cantidad +
-    precio en COP del catálogo, sin URLs de reserva directa."""
+    return _resumen_sin_enlace(state)
+
+
+def _resumen_sin_enlace(state: ConversationState) -> str:
+    """Resumen por actividad para quien reserva con un asesor: label + cantidad + precio del catálogo en su moneda (COP a colombianos),
+    sin URLs de reserva directa."""
     lang = state.language
     lines: list[str] = []
     for b in cart_render.cart_booking_blocks(state):
         qty = b["qty"]
         lines.append(f"🤿 *{b['label']}*")
         cop = b.get("cop")
-        if cop:
+        if state.is_colombian and cop:
             lines.append(cart_render.linea_de_precio(money.cop(cop), qty, lang))
+        elif not state.is_colombian and b.get("usd"):
+            lines.append(cart_render.linea_de_precio(money.usd(b["usd"]), qty, lang))
         if b.get("note"):
             lines.append(b["note"])
         lines.append("")
