@@ -492,7 +492,7 @@
       "modelos": [
         "rag_answer_model"
       ],
-      "interruptores": [],
+      "interruptores": ["rag_adelantado"],
       "tiempo_medido": {
         "p50": 1.9,
         "fuente": "medido dentro de PRE el 28-sep (8 preguntas, HISTORY 0.29.65)"
@@ -851,6 +851,11 @@
   "sin_efecto": {},
   "pesos_fuente": "Los % del enrutador y de las fases de la reserva salen de la foto de la ronda; los del revisor y el reintento, de los logs de PRE de la misma ronda. La cascada y los textos fijos no dejan rastro medible: se animan con una estimación y no llevan porcentaje.",
   "interruptores": {
+    "rag_adelantado": {
+      "area": "Preguntas",
+      "titulo": "Respuesta adelantada",
+      "texto": "El escritor empieza a la vez que el enrutador, antes de leer el mensaje, para ganar tiempo. CALN-37 (5-nov), a medir: se aprovecha el 13 % de los turnos y se tira el 76 %."
+    },
     "chatwoot_typing_indicator": {
       "area": "Chat",
       "titulo": "“Escribiendo…” en el chat",

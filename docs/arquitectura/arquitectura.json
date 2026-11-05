@@ -1,8 +1,8 @@
 {
  "meta": {
-  "generado": "2026-10-28T19:12:12+00:00",
-  "commit": "662c340c",
-  "rama": "feature/caln-gadea"
+  "generado": "2026-11-05T16:26:10+00:00",
+  "commit": "ae398150",
+  "rama": "feature/caln34-gadea"
  },
  "vistas": {
   "general": {
@@ -661,7 +661,15 @@
      "pre": "gpt-6-luna"
     }
    ],
-   "interruptores": [],
+   "interruptores": [
+    {
+     "nombre": "rag_adelantado",
+     "titulo": "Respuesta adelantada",
+     "codigo": true,
+     "pre": true,
+     "sin_efecto": false
+    }
+   ],
    "tiempo_medido": {
     "p50": 1.9,
     "fuente": "medido dentro de PRE el 28-sep (8 preguntas, HISTORY 0.29.65)"
@@ -1324,6 +1332,19 @@
    "pre": true,
    "fijado_en_pre": true,
    "usado_por": [],
+   "sin_efecto": null
+  },
+  {
+   "nombre": "rag_adelantado",
+   "area": "Preguntas",
+   "titulo": "Respuesta adelantada",
+   "texto": "El escritor empieza a la vez que el enrutador, antes de leer el mensaje, para ganar tiempo. CALN-37 (5-nov), a medir: se aprovecha el 13 % de los turnos y se tira el 76 %.",
+   "codigo": true,
+   "pre": true,
+   "fijado_en_pre": false,
+   "usado_por": [
+    "r_escribir"
+   ],
    "sin_efecto": null
   }
  ],

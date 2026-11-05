@@ -44,12 +44,12 @@ mide. Cada persona lo lanza con SU suscripción; no toca OpenAI ni va en ningún
 ```
 ENV_FILE=.env.ci python -m scripts.juez_claude --run docs/robustness/synthetic-runs/<ronda>.jsonl   # opus, medium; ~5 min
 python -m scripts.ab_judge_compare <ronda A> <ronda B>                                             # las dos, con Opus
-ENV_FILE=.env.ci python -m scripts.juez_claude --run <ronda>.jsonl --no-cache --sufijo=-2           # otra pasada, para el ruido del juez
 ```
 
 - **Por qué Opus** (mini c055-B; Gadea votó a ciegas los 41 criterios en que los jueces no coincidían): de unos 24 fallos reales, Opus
   detecta 21, gpt-5-mini 15, Sonnet y Haiku 12. Falsos: Opus 11, gpt-5-mini 8, Sonnet 8, Haiku 11. Es una persona y una mini:
   en errores totales no hay diferencia clara con gpt-5-mini (p 0,69); en reales que detecta solo uno, 8 frente a 2 (p 0,11).
+- **Una pasada por lado (Gadea, 5-nov):** dos pasadas coinciden en el 98,9 % de los criterios (351-352 de 355) y gastan el doble. Si A y B salen muy cerca, se lee el texto de lo que difiere.
 - **Un fallo de Opus no es una sentencia:** 1 de cada 3 fue falso. Leer el texto del bot antes de arreglar nada, como siempre.
 - **Las cifras no se comparan con las de gpt-5-mini:** con Opus salen más fallos (32 frente a 23 en la misma mini) sin que el bot
   empeore. A y B, con el mismo juez y la misma base. Una ronda vieja se rejuzga gratis.

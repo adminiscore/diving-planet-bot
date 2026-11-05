@@ -1672,8 +1672,10 @@ def lanzar_rag_adelantado(state: ConversationState, message: str) -> None:
     `_setup_phase` (sin llamadas) y la foto queda como la dejará él (idioma y paso de conversación libre). Si la
     regla no sabe el idioma (`_setup_phase` preguntaría al LLM), no se adelanta. Si al final decide otra cosa, la
     huella no coincide y se rehace, como siempre."""
+    from src.config import settings  # lazy
+
     texto = (message or "").strip()
-    if not texto or texto.isdigit():
+    if not settings.rag_adelantado or not texto or texto.isdigit():
         return
     import copy
 
