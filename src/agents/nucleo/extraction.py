@@ -38,7 +38,6 @@ from src.agents.conversational_core import (
     _prepend_parallel_answer,
     _recall_answer,
     _set_concrete_activity,
-    ask_slot,
     next_missing_slot,
 )
 from src.agents.intent_detector import (
@@ -58,6 +57,7 @@ from src.agents.nucleo.extractor import (
     _CAMPOS_LISTA_CERRADA,
     _aplicar_extractor,
 )
+from src.agents.nucleo.huecos import ask_slot
 from src.agents.nucleo.reparto import (
     _apply_cert_or_course,
     _apply_group_total,
