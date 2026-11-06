@@ -40,12 +40,22 @@ def rag(monkeypatch):
     return poner
 
 
+async def _turno(monkeypatch, st, mensaje, senales):
+    """El turno entero (`route_message`) con el nodo de escalado como grafo: desde el 6-nov (#3664) lo demás del mensaje
+    lo contesta el cierre del turno, no el nodo."""
+    async def _grafo(state, message):
+        state._senales_router = senales
+        return (await ea.escalation_node({"conv_state": state, "message": message, "signals": senales}))["reply"]
+    monkeypatch.setattr("src.orchestration.graph.run_turn_via_graph", _grafo)
+    return await supervisor.route_message(st, mensaje)
+
+
 async def test_con_el_flag_contesta_lo_demas_y_luego_pasa(monkeypatch, rag):
     llamadas = rag(EDADES)
     st = _estado()
-    out = await ea.escalation_node({"conv_state": st, "message": ASMA_Y_EDADES, "signals": dict(MEDICO)})
-    assert out["reply"].startswith(EDADES)
-    assert "staff" in out["reply"]  # la línea del pase va después
+    reply = await _turno(monkeypatch, st, ASMA_Y_EDADES, dict(MEDICO))
+    assert reply.startswith(EDADES)
+    assert "staff" in reply  # la línea del pase va después
     assert st.step == Step.ESCALATE and st.pending_escalation_reason == "medical_questions"
     assert "su salud o una condición médica" in llamadas[0]  # el RAG sabe qué NO tiene que contestar
 
@@ -96,5 +106,5 @@ def test_la_dieta_no_es_medica_en_la_definicion():
 async def test_el_rag_no_cree_que_el_pase_ya_esta_hecho(monkeypatch, rag):
     """Con el paso ya en ESCALATE, `tras_pase_recuerda_el_pase` le decía al RAG que el asesor ya tenía el caso."""
     llamadas = rag(EDADES)
-    await ea.escalation_node({"conv_state": _estado(), "message": ASMA_Y_EDADES, "signals": dict(MEDICO)})
+    await _turno(monkeypatch, _estado(), ASMA_Y_EDADES, dict(MEDICO))
     assert "YA está pasada" not in llamadas[0]

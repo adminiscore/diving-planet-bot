@@ -184,7 +184,6 @@ async def route_message(state: ConversationState, message: str) -> str:
 
     escalation_before = state.pending_escalation_reason
     paso_antes = state.step
-    state._contestado_antes_del_pase = False  # gen-13: se renueva cada turno
     state._senales_router = None
     state._preguntas_del_turno = []  # CALN-6: las preguntas de la reserva de ESTE turno (`ask_slot`)
     state._sugerida_al_empezar = state.suggested_activity  # CALN-6 paso 2: si su pregunta no sale, se deshace

@@ -14,13 +14,8 @@ predicados puros → este nodo los reproduce directamente, equivalencia exacta):
 
 1. **PII** (`detect_pii`) → bloqueo de privacidad (`privacy_block_message`),
    `step=ESCALATE`. No toca historial ni quick_replies (igual que la cascada).
-2. **Link roto por keyword** (`_detect_broken_link_complaint`) →
-   `_broken_link_escalation_response` (dueño de su propio estado).
-3. **Link roto por señal LLM** (`broken_link_complaint` + `_has_link_tech_context`)
-   → misma respuesta.
-4. **Tema sensible por keyword** (`detect_sensitive_escalation`, suprimido si el
-   turno es DIVE TO HEAL) → escala con `pending_note` (lead summary).
-5. **Tema sensible por señal LLM** (`sensitive_topic` → `sensitive_response_for`).
+2-5. **Link roto, tema sensible y post-venta**: 6-nov (#3664), ya no se copian aquí; los mira la cascada, a la
+   que se delega, con el mismo orden y las mismas condiciones (más el filtro del clima en general, que aquí faltaba).
 6. **DIVE TO HEAL precio/reserva** (`adaptive_diving_context` + `_PRICE_OR_BOOKING_Q`)
    → respuesta de asesor, sin precios genéricos. Persiste `adaptive_diving_context`
    igual que la cascada.
@@ -88,16 +83,6 @@ _SOLO_LO_DEMAS = {
 }
 
 
-async def _lo_contestable(conv, message: str, reason: str, lang: str) -> str | None:
-    """Lo que el RAG contesta del mensaje APARTE del tema sensible, o None (flag apagado, otro tema, nada más que
-    contestar, "no lo tengo" o un fallo: entonces el pase va solo, como siempre)."""
-    if reason not in _TEMA_QUE_PASA:
-        return None
-    conv._contestado_antes_del_pase = True  # gen-13: el cierre del turno no lo repite
-    key = "es" if lang == "es" else "en"
-    return await _contestar_lo_demas(conv, message, _TEMA_QUE_PASA[reason][key], key, reason)
-
-
 # gen-13 (21-oct, flag `contesta_antes_de_cualquier_pase`): en G9 y G10, ~27 fallos en unos 15 diálogos eran pases a un
 # asesor (contacto, pago, grupo privado, cambios de reserva, necesidades especiales, post-venta, «pásame con alguien»)
 # que se comían el resto del mensaje: el cliente preguntaba también el precio, qué incluye o el enlace y se quedaba sin
@@ -113,13 +98,15 @@ async def lo_contestable_en_cualquier_pase(conv, message: str) -> str | None:
     sin tocar el motivo del pase, o None (flag apagado, ya contestado por gen-1, pase que va solo, mensaje sin
     pregunta, nada más que contestar, «no lo tengo» o un fallo)."""
     reason = conv.pending_escalation_reason or ""
-    if getattr(conv, "_contestado_antes_del_pase", False) or any(m in reason for m in _PASE_QUE_VA_SOLO):
+    if any(m in reason for m in _PASE_QUE_VA_SOLO):
         return None
     from src.agents.conversational_core import _turn_has_question  # lazy
+    from src.agents.supervisor import _reply_language  # lazy
 
     if not _turn_has_question(message, getattr(conv, "_senales_router", None) or {}):
         return None
-    key = "es" if conv.language == "es" else "en"
+    # s4-21 (5): en la apertura el idioma aún no está fijado; se estima del mensaje, como el aviso del pase.
+    key = "es" if _reply_language(conv, message) == "es" else "en"
     tema = _TEMA_QUE_PASA[reason][key] if reason in _TEMA_QUE_PASA else _TEMA_DEL_PASE[key].format(motivo=reason)
     return await _contestar_lo_demas(conv, message, tema, key, reason)
 
@@ -187,27 +174,17 @@ async def escalation_node(state: BotState) -> dict:
     from src.agents.supervisor import (
         _ADAPTIVE_DIVING_PATTERN,
         _PRICE_OR_BOOKING_Q,
-        _broken_link_escalation_response,
-        _detect_broken_link_complaint,
-        _has_link_tech_context,
-        _needs_staff_handoff,
-        _reply_language,
         _shared_turn_handler,
         detect_pii,
-        detect_sensitive_escalation,
         pasar_a_persona,
         pase_pedido_o_aceptado,
         privacy_block_message,
         regex_decide,
-        sensitive_response_for,
     )
 
     conv = state["conv_state"]
     message = state["message"]
     signals = state.get("signals") or {}
-    # s4-21 (5): en el mensaje de apertura el idioma aun no esta fijado; el aviso medico salia en
-    # espanol a quien escribe en ingles. Misma estimacion local que la deflexion (`deflection_agent`).
-    sensitive_lang = _reply_language(conv, message)
 
     # 1 · PII (pre-núcleo). Igual que la cascada: NO toca historial ni quick_replies.
     if detect_pii(message):
@@ -215,45 +192,9 @@ async def escalation_node(state: BotState) -> dict:
         logger.warning("[NODE:escalation] PII detectado -> bloqueo de privacidad")
         return {"reply": privacy_block_message(conv.language)}
 
-    # 2 · Link roto por keyword (pre-núcleo).
-    if regex_decide(signals) and _detect_broken_link_complaint(message, conv.history):
-        logger.info("[NODE:escalation] link roto (keyword) -> escalado")
-        return {"reply": _broken_link_escalation_response(conv, message)}
-
-    # 3 · Link roto por señal LLM + contexto técnico (pre-núcleo).
-    if signals.get("broken_link_complaint") and _has_link_tech_context(message, conv.history):
-        logger.info("[NODE:escalation] link roto (señal LLM) -> escalado")
-        return {"reply": _broken_link_escalation_response(conv, message)}
-
-    # 4 · Tema sensible por keyword (suprimido si el turno es DIVE TO HEAL, igual
-    #     que la cascada: sensitive_escalation_early es None si adaptive_diving_topic).
-    sensitive_early = (
-        None if signals.get("adaptive_diving_topic") or not regex_decide(signals)
-        else detect_sensitive_escalation(message, sensitive_lang)
-    )
-    if sensitive_early:
-        reason, response = sensitive_early
-        # Antes de marcar el pase: con el paso en ESCALATE el RAG creía que ya estaba hecho ("el asesor ya tiene tu
-        # caso") justo encima de "te paso ahora".
-        antes = await _lo_contestable(conv, message, reason, sensitive_lang)
-        pasar_a_persona(conv, reason)
-        logger.info(f"[NODE:escalation] sensible (keyword) reason={reason}")
-        return {"reply": f"{antes}\n\n{response}" if antes else response}
-
-    # 5 · Tema sensible por señal LLM.
-    if signals.get("sensitive_topic"):
-        found = sensitive_response_for(signals["sensitive_topic"], sensitive_lang)
-        if found:
-            reason, response = found
-            antes = await _lo_contestable(conv, message, reason, sensitive_lang)  # antes del pase (ver arriba)
-            pasar_a_persona(conv, reason)
-            logger.info(f"[NODE:escalation] sensible (señal LLM) reason={reason}")
-            return {"reply": f"{antes}\n\n{response}" if antes else response}
-
-    # 5b · s4-20: post-venta / empresa (Jev `needs_staff`) -> una persona.
-    staff = _needs_staff_handoff(conv, message, signals)
-    if staff:
-        return {"reply": staff}
+    # 2-5 · El link roto, el tema sensible y la post-venta los mira la cascada (`supervisor._shared_turn_handler`),
+    #     a la que se delega abajo: antes estaban copiados aquí (6-nov, «el pase en una función», #3664). Lo que el
+    #     mensaje pregunta aparte del tema sensible lo contesta el cierre del turno (`lo_contestable_en_cualquier_pase`).
 
     # 6 · DIVE TO HEAL precio/reserva -> asesor (sin precios genéricos). Persiste
     #     el contexto adaptativo igual que la cascada (líneas 2130-2146). El router

@@ -76,16 +76,18 @@ async def test_sin_pregunta_en_el_mensaje_el_pase_va_solo(monkeypatch, lo_demas)
 
 
 @pytest.mark.asyncio
-async def test_si_gen1_ya_contesto_no_se_repite(monkeypatch, lo_demas):
+async def test_el_pase_medico_contesta_lo_demas_una_vez_con_su_tema(monkeypatch, lo_demas):
+    """6-nov (#3664): el nodo de escalado ya no contesta antes por su cuenta (gen-1); lo hace solo el cierre del turno,
+    con el tema del pase médico, así que no hay nada que repetir."""
     async def _grafo(state, message):
         state._senales_router = {"asks_question": True}
-        state._contestado_antes_del_pase = True  # lo hizo el nodo de escalado (médico o clima)
         state.step = Step.ESCALATE
         state.pending_escalation_reason = "medical_questions"
         return PASE
     monkeypatch.setattr("src.orchestration.graph.run_turn_via_graph", _grafo)
     resp = await supervisor.route_message(_conv(), "tengo asma, ¿y qué incluye el minicurso?")
-    assert resp == PASE and not lo_demas
+    assert resp.endswith(PASE) and resp != PASE
+    assert len(lo_demas) == 1 and lo_demas[0]["tema"] == "su salud o una condición médica"
 
 
 @pytest.mark.asyncio
