@@ -1,7 +1,10 @@
 # CALN-30 · Quitar la segunda lectura de la nacionalidad (CALN-10b) con una señal de Jev — estudio (5-nov, Gonzalo)
 
-**Recomendación: quitar 10b es razonable, pero el dato no basta para decir que es igual de seguro.** Con la señal de residente, en esta medida no sale ninguna
-nacionalidad equivocada y baja el coste. Pero 0 de 108 no descarta una tasa del 2,5 %, la que justificó poner 10b. Decide Gadea.
+**Recomendación (6-nov, tras la medida grande): quitar 10b.** Sin ella y con la señal de residente, 0 de 540 nacionalidades
+equivocadas sobre la 0.59 (por debajo del 0,55 %, frente al 2,5 % que justificó 10b), y 0,8 llamadas menos por turno. Quitarla borra
+código (la 2.ª lectura y su comparación). Decide Gadea.
+
+(Primera medida, 5-nov: quitar 10b es razonable, pero 0 de 108 no descartaba una tasa del 2,5 %.)
 
 ## Qué se midió
 
@@ -39,6 +42,28 @@ m1 («nací en Colombia y vivo en Madrid») falla en los dos lados, A 1/3 y B 2/
 - **Primer turno:** el banco de nacionalidad mide solo un primer mensaje. La moneda sí mira varios turnos.
 - **Latencia:** dato secundario, con una tanda de Gadea a la vez. Intercalado en nacionalidad; moneda en serie, A y luego B.
 - **El banco lo escribí yo**, con frases nuestras, sin el golden.
+
+## Segunda medida, grande, sobre la 0.59 (5-6 nov)
+
+Rama `feature/caln30b-gonzalo` sobre 216c1e6 (0.59) con la señal de residente; A con 10b y B sin ella, `--codigo-local`, tandas de 54
+intercaladas (A B / B A). Se pidieron 11 por lado; se cortó la red en la 20.ª, así que quedan 9 de A y 10 de B. Sin juez; cuenta
+`is_colombian` del estado tras el primer turno contra el banco, sumando todas las tandas (no por `rep`).
+
+| | A, con 10b | B, sin 10b |
+|---|---:|---:|
+| Turnos | 486 | 540 |
+| Nacionalidad equivocada | **0** | **0** |
+| Dicha y bien leída | 351 de 351 | 390 de 390 |
+| No la dice: sin dato / False | 81 / 54 | 91 / 59 |
+| Llamadas por turno | 3,98 | 3,15 |
+| Llamadas al extractor por turno | 1,83 | 1,00 |
+| Latencia p50 / p90 (secundaria: medían Álvaro y Gadea a la vez) | 3,63 / 5,08 s | 3,36 / 4,21 s |
+| `llm_errores` / Jev cortado | 0 / 0 | 0 / 0 |
+| Respaldos | rag 18, notas 1, extractor 1 | rag 12, notas 1 |
+
+**0 de 540 sin 10b** deja la tasa de equivocadas por debajo del 0,55 % (95 %, regla del 3); sumando las 108 de la 0.54, 0 de 648,
+por debajo del 0,46 %. 10b se puso por un 2,5 %: con la señal de residente, ese riesgo ya no está en este banco. Límites que siguen:
+solo primer turno, y el banco es de frases nuestras.
 
 ## Qué falta para decidir
 
