@@ -175,15 +175,17 @@ def test_la_salida_que_va_siempre_no_quita_sitio_a_los_paquetes():
     assert any("night dive" in p for p in planes) and any("5-dive" in p for p in planes)  # y los paquetes (s04i)
 
 
-def test_quien_bucea_dos_dias_no_recibe_el_paquete_de_tres():
+def test_quien_dijo_sus_dias_recibe_su_plan_sin_lista_de_otros():
+    """CALN-43: la tabla decide; antes se recortaba la lista (s04l: «those are packages of 2 and 3 days»)."""
     from src.flows import hechos
 
     st = ConversationState(conversation_id="053b", language="en", is_certified=True, detected_activity="certified_diving",
                            location="cartagena", detected_location="cartagena", detected_duration="multi_day",
                            detected_cert_days=2, is_colombian=False)
     st.duracion_de_buceo = True
-    planes = [p["plan"] for p in hechos.hechos(st, ["precio"], ["certified_diving"])[0]["otros_planes"]]
-    assert not any("3 days" in p for p in planes) and any("Fun Dives - 2 dives" in p for p in planes)
+    bloque = hechos.hechos(st, ["precio"], ["certified_diving"])[0]
+    assert "otros_planes" not in bloque
+    assert "4" in bloque["precio"]["cartagena"]["plan"]
 
 
 def test_la_politica_dice_que_el_residente_no_es_extranjero():

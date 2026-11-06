@@ -222,8 +222,9 @@ def _hechos_por_actividad(state: ConversationState, intenciones: list[str], acti
             # salida de un día, que es lo que haría cada día. Sin plan elegido, la salida base va siempre en la lista.
             una_salida = dom.base_service_id(actividad)
             otros = _acotados(otros, varios_dias and state.duracion_de_buceo,
-                              {una_salida, ISLAND_SERVICE_MAP.get(una_salida)} if sin_plan else frozenset(),
-                              state.detected_cert_days)
+                              {una_salida, ISLAND_SERVICE_MAP.get(una_salida)} if sin_plan else frozenset())
+            if actividad == "certified_diving" and plan_de_buceo.ha_dicho_su_plan(state):
+                otros = []  # CALN-43: ya hay plan: sin lista de los demás, que el escritor recitaba aunque los hubiera descartado (tanda s05e)
             if otros:  # el buceo y los paquetes: el plan base y la lista de los demás con su precio
                 bloque["otros_planes"] = [{"plan": _nombre(s, lang), "precio": _precio(s, moneda),
                                            **({} if origen else {"origen": "island" if s in _DE_LAS_ISLAS else "cartagena"})}
@@ -400,16 +401,13 @@ def _origen_del_plan(sid: str) -> str:
     return "island" if sid.endswith("_already_on_island") else "cartagena"
 
 
-def _acotados(otros: list[str], paquetes_primero: bool, siempre=frozenset(), dias: int | None = None) -> list[str]:
+def _acotados(otros: list[str], paquetes_primero: bool, siempre=frozenset()) -> list[str]:
     def duracion(sid: str) -> int:
         return (SERVICES.get(sid) or {}).get("duration_days") or 1
 
     def varios(sid: str) -> bool:
         return duracion(sid) > 1
 
-    if paquetes_primero and dias:
-        # Quien bucea 2 días no recibe el paquete de 3 (s04l: «those are packages of 2 and 3 days» y salía otra vez).
-        otros = [s for s in otros if duracion(s) <= dias]
     orden = sorted(otros, key=lambda s: (s not in siempre, not varios(s))) if paquetes_primero else otros
     # Con los paquetes primero, la salida que va siempre no le quita el sitio a uno: el banco de graves (s04i, las belgas) perdió
     # el de 4 con nocturna y el de 5, que es el que cotizaba el escritor.
