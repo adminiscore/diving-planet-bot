@@ -1,6 +1,18 @@
 History
 =======
 
+0.61.0 - (2026-11-06, SUBE A PRE: el pase aceptado se hace; Jev ve el principio y el final del mensaje del bot; el niño que no paga, sin tarjeta)
+---------------------
+* **Qué sube** (sobre 0.60.0):
+  * **El pase al asesor que acepta el cliente se hace (Álvaro, da212c39):** señal `acepta_el_pase`, cuando el último mensaje del bot lo ofrecía. Antes solo valía un «sí» a secas (conv 6940 y 6952). `banco-pase` ×3: 3/12 → 7/12; los que faltan no son de esto (el Airbnb en inglés no recibe la oferta; a un colombiano se le pregunta el origen).
+  * **Jev ve el principio y el final del mensaje del bot**, en vez de los 400 primeros caracteres: la oferta o la pregunta del bot suelen ir al final. Solo con el final, las repreguntas subían (14 y 15, frente a 11 y 11); con las dos partes, no (11, 10 y 11).
+  * **El niño que no paga no lleva tarjeta de acompañante** (conv 6960, tanda s06a).
+* **Panel fijo:** 0.60: 18, 21, 15 y 17 (media 17,8); ciegos 12, 12, 10 y 12. **0.61: 19, 17 y 16 (media 17,3); ciegos 13, 11 y 13.** Empate. Empeora de forma estable 1 cliente: visto-6916 (Rescue desde las islas, escritor), de 1 de 4 a 3 de 3.
+* **Mini** (43 visibles): 30 fallos, 21/43 limpios; 0.60 28; 0.59 27 y 28; ruido de varios fallos. Leídas las 12 regresiones: ninguna señala al cambio. Latencia: p90 5,01 → 5,18 s, p95 5,71 → 5,72 s, 4,51 llamadas por turno.
+* **Bancos:** graves ×1 53/55 (`s05d-familia-nina-7` ×4: 0.60 1/4, 0.61 3/4); `banco-caln35` 22/22; `banco-caln39` 10/10; suite 3466.
+* **Tanda s06a contra la 0.60:** 2 de 10 con grave. Las tres últimas: 5, 2 y 2 de 10.
+* **Sigue abierto:** la propuesta de tablas de Álvaro (CALN-43), pendiente de Gadea; la misma pregunta por 3.ª vez; visto-6916; el corte de las 4:30.
+
 0.60.0 - (2026-11-06, SUBE A PRE: el plan que no pidió, por causa; huecos fuera del núcleo. Empata en el panel: sube por lo decidido, no por una mejora medida)
 ---------------------
 * **Qué sube** (sobre 0.59.0):
