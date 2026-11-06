@@ -7,10 +7,9 @@ Movido tal cual desde `conversational_core.py`, que lo re-exporta. Ver `src/agen
 
 from __future__ import annotations
 
-from src.agents.conversational_core import _DIVES_TO_BASE_PLAN
 from src.domain import activities as dom
 from src.flows import cart_render
-from src.flows.plan_de_buceo import paquetes_de
+from src.flows.plan_de_buceo import paquetes_de, plan_del_estado, servicio_del_plan
 from src.flows.state import ConversationState
 
 
@@ -121,16 +120,6 @@ def _recommended_plan_intro(state: ConversationState) -> str:
             "me.)\n\n")
 
 
-def plan_del_estado(state: ConversationState):
-    """La tabla del plan, con lo que dice el estado. Con un grupo no se sabe quién hace el refresher (tanda s05f, conv 6947, va una persona)."""
-    from src.flows.plan_de_buceo import plan_de_buceo  # lazy
-
-    return plan_de_buceo(inmersiones=state.detected_cert_dives, dias=state.detected_cert_days, sin_nocturna=getattr(state, "sin_nocturna", False),
-                         salidas_sueltas=getattr(state, "salidas_sueltas", None), origen=state.location,
-                         refresher_solo=bool(state.refresher_interested) and (state.detected_group_size or 1) == 1)
-
-
 def _resolve_cert_plan(state: ConversationState) -> str | None:
     """Plan de buceo certificado desde lo que ha dicho (sin consumirlo), o el recomendado por defecto. Lo decide la tabla (`flows/plan_de_buceo.py`)."""
-    base = _DIVES_TO_BASE_PLAN.get(plan_del_estado(state).inmersiones, "2_dives_1_day")
-    return cart_render.service_for_location(base, state)
+    return cart_render.service_for_location(servicio_del_plan(plan_del_estado(state)), state)

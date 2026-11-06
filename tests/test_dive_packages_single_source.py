@@ -20,7 +20,6 @@ def test_packages_come_from_the_catalog():
         5: (2, "5_dives_2_days"), 7: (3, "7_dives_3_days"), 9: (4, "9_dives_4_days"),
     }
     # El nucleo conserva sus tablas de antes, ahora derivadas.
-    assert core._DIVES_TO_BASE_PLAN == {n: sid for n, (_, sid) in dom.dive_packages().items()}
 
 
 @pytest.mark.parametrize("text, counts", [

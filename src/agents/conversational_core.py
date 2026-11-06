@@ -78,8 +78,6 @@ SLOT_CONFIRM_CORRECTION = "confirm_correction"
 # dedicado en maybe_handle_turn (gate `not resolved_short`).
 
 
-# Desde el catalogo (`dom.dive_packages`, 2026-09-15). Con solo los dias, lo decide la tabla (`flows/plan_de_buceo.py`).
-_DIVES_TO_BASE_PLAN = {dives: service for dives, (_, service) in dom.dive_packages().items()}
 
 
 def _effective_activity(state: ConversationState) -> str | None:

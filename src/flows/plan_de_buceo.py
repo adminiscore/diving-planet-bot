@@ -44,3 +44,21 @@ def plan_de_buceo(*, inmersiones: int | None = None, dias: int | None = None, si
         # P2 y P3: durmiendo en Cartagena, una salida cada día; el paquete obliga a dormir en las islas.
         return Plan(SALIDA_DE_UN_DIA, veces=dias)
     return Plan(paquetes[0])  # P1 y P4: el pequeño, sin nocturna
+
+
+def plan_del_estado(state) -> Plan:
+    """La tabla, con lo que dice el estado. Con un grupo no se sabe quién hace el refresher (tanda s05f, conv 6947, va una persona)."""
+    return plan_de_buceo(inmersiones=getattr(state, "detected_cert_dives", None), dias=getattr(state, "detected_cert_days", None),
+                         sin_nocturna=getattr(state, "sin_nocturna", False), salidas_sueltas=getattr(state, "salidas_sueltas", None),
+                         origen=getattr(state, "location", None),
+                         refresher_solo=bool(getattr(state, "refresher_interested", None)) and (getattr(state, "detected_group_size", None) or 1) == 1)
+
+
+def servicio_del_plan(plan: Plan) -> str:
+    """El servicio base del catálogo (el de Cartagena); su variante de las islas la da quien sabe el origen."""
+    return dom.dive_packages()[plan.inmersiones][1]
+
+
+def ha_dicho_su_plan(state) -> bool:
+    """¿Ha dicho inmersiones, días o salidas? Si no, el plan es la recomendación de siempre, no una decisión."""
+    return bool(getattr(state, "detected_cert_dives", None) or getattr(state, "detected_cert_days", None) or getattr(state, "salidas_sueltas", None))

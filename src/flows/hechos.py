@@ -19,7 +19,7 @@ from pathlib import Path
 
 from src.domain import activities as dom
 from src.domain.politicas import politica
-from src.flows import cart_render, eligibility, moneda
+from src.flows import cart_render, eligibility, moneda, plan_de_buceo
 from src.flows.catalog import (
     COMPANION_INCLUDES,
     COMPANION_NO_INCLUYE,
@@ -187,6 +187,9 @@ def _hechos_por_actividad(state: ConversationState, intenciones: list[str], acti
         paquetes = {o: s for o, s in paquetes.items() if s}
         if paquetes:
             elegido = paquetes.get("cartagena", next(iter(paquetes.values())))[0]  # el primero, como base del precio
+        if actividad == "certified_diving" and not state.selected_service and plan_de_buceo.ha_dicho_su_plan(state):
+            # CALN-43: el escritor cotiza el plan que decide la tabla, el mismo de la tarjeta (`nucleo/plan._resolve_cert_plan`).
+            elegido = plan_de_buceo.servicio_del_plan(plan_de_buceo.plan_del_estado(state))
         bloque: dict = {"actividad": actividad, "nombre": dom.label(actividad, lang), "origen": origen}
         if solo_cartagena:
             bloque["sin_plan_desde_las_islas"] = _SIN_PLAN_DESDE_LAS_ISLAS[lang]
