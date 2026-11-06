@@ -203,10 +203,22 @@ def _sin_importes(answer: str) -> str:
     return texto if len(texto) >= 40 else ""
 
 
+def _preguntas_fijas_del_origen() -> tuple[str, ...]:
+    return (ORIGEN_ANTES_DEL_PRECIO_ES, ORIGEN_ANTES_DEL_PRECIO_EN, ORIGEN_TRAS_LAS_VARIANTES_ES, ORIGEN_TRAS_LAS_VARIANTES_EN,
+            ORIGEN_TRAS_LOS_ENLACES_ES, ORIGEN_TRAS_LOS_ENLACES_EN)
+
+
 def _es_pregunta_de_origen(answer: str | None) -> bool:
-    return bool(answer) and any(p in answer for p in (ORIGEN_ANTES_DEL_PRECIO_ES, ORIGEN_ANTES_DEL_PRECIO_EN,
-                                                      ORIGEN_TRAS_LAS_VARIANTES_ES, ORIGEN_TRAS_LAS_VARIANTES_EN,
-                                                      ORIGEN_TRAS_LOS_ENLACES_ES, ORIGEN_TRAS_LOS_ENLACES_EN))
+    return bool(answer) and any(p in answer for p in _preguntas_fijas_del_origen())
+
+
+def en_lugar_de_la_pregunta_del_origen() -> dict[str, str]:
+    """CALN-43, qué preguntar, paso 5: cada pregunta fija del origen, en un sitio, y lo que queda en su lugar cuando ya salió 2 veces
+    (`que_preguntar`). Todas son la pregunta del origen y cuentan como ella; también la confirmación de ORIGEN-CONFIRMA. Antes
+    faltaba la de antes del precio: no se contaba y podía salir una 3.ª vez."""
+    return {**{texto: "" for texto in _preguntas_fijas_del_origen()},
+            **{texto: "" for por_idioma in _CONFIRMA_ORIGEN.values() for texto in por_idioma.values()},
+            ORIGEN_TRAS_LOS_ENLACES_ES: SIN_ENLACE_DE_LAS_ISLAS_ES, ORIGEN_TRAS_LOS_ENLACES_EN: SIN_ENLACE_DE_LAS_ISLAS_EN}
 
 
 # ord-7 (21-oct, flag `origen_dos_variantes`, decisión de Gadea con ord-0): sin saber el origen, la puerta quitaba el

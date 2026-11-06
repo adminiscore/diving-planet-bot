@@ -186,3 +186,26 @@ def test_en_ningun_caso_sale_una_pregunta_por_3a_vez(prev_pending):
                 assert all(not qp.se_puede_preguntar(hechas.get(s, 0)) for s in faltan), (sabidos, veces)
                 assert slot not in qp.SE_SIGUE_SIN_ELLA, (sabidos, veces)
                 assert qp.que_hacer(slot, hechas[slot], hay_respuesta=True) == qp.SIN_ELLA
+
+
+# ─── Paso 5: todas las preguntas fijas del origen cuentan como la del origen ───
+
+def test_la_pregunta_del_origen_antes_del_precio_cuenta_y_a_la_tercera_no_sale():
+    from src.agents.nucleo.origen_precio import ORIGEN_ANTES_DEL_PRECIO_ES
+
+    estado = _estado(None, "", veces=0, intenciones=["precio"])
+    estado.preguntas_hechas = {}
+    respuesta = f"El minicurso incluye la lancha y el almuerzo.\n\n{ORIGEN_ANTES_DEL_PRECIO_ES}"
+    assert componer(estado, respuesta, escribio=True) == respuesta
+    assert componer(estado, respuesta, escribio=True) == respuesta
+    assert estado.preguntas_hechas[core.SLOT_LOCATION] == 2
+    assert componer(estado, respuesta, escribio=True) == "El minicurso incluye la lancha y el almuerzo."
+
+
+def test_la_lista_de_las_preguntas_del_origen_es_una_sola():
+    from src.agents.nucleo import origen_precio as op
+
+    lista = op.en_lugar_de_la_pregunta_del_origen()
+    assert all(texto in lista for texto in op._preguntas_fijas_del_origen())
+    assert all(texto in lista for por_idioma in core._CONFIRMA_ORIGEN.values() for texto in por_idioma.values())
+    assert all("?" not in resto for resto in lista.values())  # lo que queda en su lugar no pregunta

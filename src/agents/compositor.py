@@ -169,16 +169,12 @@ def _las_dos_salidas(state, cuerpo: str) -> str | None:
 def _con_el_freno_del_origen(state, respuesta: str) -> str:
     """0.52b: el origen también se pregunta por caminos que no pasan por `ask_slot` (tras la lista de precios de los dos orígenes,
     tras los dos enlaces y la confirmación de ORIGEN-CONFIRMA), y en la mini eran 7 de 7 turnos sumando los tres: cuentan como la
-    misma pregunta. Si ya salió bastante, se quita y se queda lo que el cliente pidió. Son textos nuestros, fijos, no del cliente."""
+    misma pregunta. Si ya salió bastante, se quita y se queda lo que el cliente pidió. Son textos nuestros, fijos, no del cliente.
+    CALN-43 paso 5: la lista es una sola (`origen_precio.en_lugar_de_la_pregunta_del_origen`), con la de antes del precio."""
     from src.agents import conversational_core as core  # lazy
+    from src.agents.nucleo.origen_precio import en_lugar_de_la_pregunta_del_origen  # lazy
 
-    resto_por_pregunta = {
-        **{texto: "" for por_idioma in core._CONFIRMA_ORIGEN.values() for texto in por_idioma.values()},
-        core.ORIGEN_TRAS_LAS_VARIANTES_ES: "",
-        core.ORIGEN_TRAS_LAS_VARIANTES_EN: "",
-        core.ORIGEN_TRAS_LOS_ENLACES_ES: core.SIN_ENLACE_DE_LAS_ISLAS_ES,
-        core.ORIGEN_TRAS_LOS_ENLACES_EN: core.SIN_ENLACE_DE_LAS_ISLAS_EN,
-    }
+    resto_por_pregunta = en_lugar_de_la_pregunta_del_origen()
     fija = next((p for p in resto_por_pregunta if p in respuesta), None)
     if fija is None:
         return respuesta
