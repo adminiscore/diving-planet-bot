@@ -38,7 +38,7 @@ from src.agents.conversational_core import (
 )
 from src.domain import activities as dom
 from src.domain.politicas import politica
-from src.flows import cart_render, grupo
+from src.flows import cart_render, grupo, que_preguntar
 from src.flows.catalog import politica_breve
 from src.flows.como_reserva import (
     ENLACE,
@@ -111,7 +111,9 @@ def _siguiente_pregunta(state: ConversationState, prev_pending: str | None) -> s
             and nxt not in state.preguntas_aplazadas):
         state.preguntas_aplazadas.append(nxt)
         logger.info(f"[CORE][APLAZA] el cliente no contestó {nxt!r} dos veces: se pregunta antes del resumen")
-    otro = next_missing_slot(state, saltar=set(state.preguntas_aplazadas))
+    # CALN-43 P11 (decisión de Gadea, 6-nov): la que ya salió 2 veces tampoco vuelve si falta otro dato; si no falta otro, la frena el
+    # compositor, que pone en su lugar lo que dice `que_preguntar`.
+    otro = next_missing_slot(state, saltar=set(state.preguntas_aplazadas) | que_preguntar.agotadas(state.preguntas_hechas))
     return otro if otro is not None else nxt
 
 
