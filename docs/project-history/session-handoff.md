@@ -59,7 +59,17 @@ integrar la rama del otro y suite en verde, porque en PRE gana el último; (3) *
 despliegue reinicia el contenedor y mata la medida del otro (avisar en el registro de Plan Coral con la hora de fin).
 Las doce normas, con su porqué, están en el documento.
 
-### ▶️ RETOMAR AQUÍ — 6-nov, ~05:50 (Gadea con Claude, de noche; Álvaro y Gonzalo sin señales desde las 02:35 y las 00:50): 0.61.0 SUBE A PRE
+### ▶️ RETOMAR AQUÍ — 6-nov, ~12:00 (Gadea con Claude; Álvaro conectado): PRE 0.61.0; bloque de QUITAR en marcha; PC apagado a petición de Gadea
+
+**Sin saldo:** OpenRouter a cero desde las 10:48 (175,20 $ de 175): Jev cortado y PRE degradada. Pedida a Álvaro la recarga de OpenRouter y de OpenAI (#3669), sin confirmar. **Lo medido con el corte no vale:** mira `OpenRouter cortado` en la traza (panel 062c; bancos `p3-*`).
+**Decisiones de Gadea (6-nov):** acepta el análisis de Álvaro (`docs/robustness/caln/analisis-situacion-6nov.md`). Una semana sin piezas nuevas por caso. Se QUITA: un solo dueño para plan, preguntas y pase. Panel solo al final de cada bloque; la señal es que el código encoge y los tests sin IA crecen. Nada sube a PRE hasta cerrar el bloque del plan. En la reserva, pregunta fija nuestra, una vez y al final. P1-P11 en `tablas-decisiones.md`.
+**Plan (Gadea con Claude), `feature/caln34-gadea` 53db3b5c:** `src` +60 −105 desde 7e647345. Hechos: fuera `_DAYS_TO_DIVES` y `_DIVES_TO_BASE_PLAN`; el escritor recibe el plan de la tabla; fuera el árbitro de CALN-24; con plan dicho, sin lista de otros; una cifra en un mensaje que rechaza o cuenta no elige el plan. **Sin medir:** repetir con saldo los bancos (`banco-caln39`, `banco-graves`, `banco-caln35`), y ver si quien pregunta «¿qué más hay?» sigue teniendo respuesta. Faltan: P7, planes por persona en un grupo, `_plan_en_duda`, `_plan_needs_overnight`, `_plan_is_single_day`, `_dias_del_plan`.
+**Qué preguntar (Álvaro), `feature/caln43-preguntar-alvaro` 5802abd1:** `src` −87; 4096 combinaciones sin IA; le falta el paso 4. **Grupos, P9 y P10:** `feature/caln43-grupos-alvaro`, sin medir. **Pase:** libre (Gonzalo, sin señales desde las 00:50, o quien quede libre).
+**PRE lleva un fallo de la 0.60:** el filtro de enlaces le quita al cliente el que pide (s04j); arreglado en la rama, sube con el bloque.
+**Panel con la referencia nueva (decisiones de hoy):** 0.61 21, 25 y 21; ciegos 15, 15 y 16. 0.62 23 y 21; ciegos 14 y 15. Es la base para comparar; las cifras de antes usan otra referencia.
+**Ojo:** `TaskStop` no para los hijos de un script en Windows (el juez siguió y gastó ventana): matar también el proceso. Con `\\n` en heredocs de Python a través de la herramienta se rompen los parches: escribir el parche con Write.
+
+### Relevo anterior — 6-nov, ~05:50 (Gadea con Claude, de noche; Álvaro y Gonzalo sin señales desde las 02:35 y las 00:50): 0.61.0 SUBE A PRE
 
 **Tandas, últimas cuatro:** 5 (0.58), 2 (0.59), 2 (0.60) y 5 de 10 (0.61, cargada a propósito): 35 %, sin tendencia clara; panel plano desde la 0.59.
 **Decisión que espera a Gadea:** la propuesta de tablas de Álvaro (Coral #3627; inventario y preguntas P2-P11 en #3629; P1 ya decidida). Es lo siguiente del grupo 2, y Claude la recomienda: esta noche ninguna idea probada ha bajado los ciegos del panel.
