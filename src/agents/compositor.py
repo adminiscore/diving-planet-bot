@@ -21,6 +21,7 @@ import logging
 import re
 import unicodedata
 
+from src.flows import que_preguntar
 from src.flows.como_reserva import ENLACE, como_reserva, hotel_conocido
 
 logger = logging.getLogger("uvicorn.error")
@@ -45,9 +46,10 @@ def _palabras(texto: str) -> set[str]:
 
 
 # 0.52b: la misma pregunta por 3.ª vez es grave (criterio de Álvaro, #2716). «¿Desde dónde saldrías?» salía 7 veces en 7 turnos a quien
-# aún lo estaba decidiendo. Lo que pregunta el flujo sale como mucho 2 veces, salvo que pida reservar o pagar, porque entonces
-# hace falta, o que no haya nada más que decir (un «¡Perfecto!» suelto no es una respuesta).
-_VECES_MAX = 2
+# aún lo estaba decidiendo. CALN-43 P11 (decisión de Gadea, 6-nov): lo que pregunta el flujo sale como mucho 2 veces, sin excepciones; qué va
+# en su lugar lo dice la tabla (`src/flows/que_preguntar.py`). Antes salía una 3.ª si pedía reservar o pagar, y así salieron las tres del
+# panel 059c. Un «¡Perfecto!» suelto no es una respuesta: con el origen van las dos salidas.
+_VECES_MAX = que_preguntar.VECES_MAX
 _PALABRAS_DE_UNA_RESPUESTA = 5
 
 
@@ -136,10 +138,13 @@ def _veces_preguntada(state, slot: str | None) -> int:
     return (getattr(state, "preguntas_hechas", None) or {}).get(slot, 0)
 
 
-def _ya_se_pregunto_bastante(state, slot: str | None) -> bool:
-    """Si pide el enlace, hace falta. Para contestar cómo se paga, no: «¿y por transferencia tiene descuento?» recibía el origen
-    por 3.ª vez (certificado-fecha-precio, mini 0.53, en los dos lados)."""
-    return _veces_preguntada(state, slot) >= _VECES_MAX and "enlace" not in set(getattr(state, "_intenciones", None) or [])
+def _sin_la_pregunta(state, cuerpo: str) -> str:
+    """Lo que va en vez de la 3.ª vez (`que_preguntar.SIN_ELLA`): la respuesta; si no contesta nada (vacía, o un «¡Perfecto!» suelto),
+    detrás un recordatorio que no pregunta, para que el cliente sepa cómo seguir."""
+    _aplazar(state)
+    if len(_palabras(cuerpo)) >= _PALABRAS_DE_UNA_RESPUESTA:
+        return cuerpo
+    return _PARRAFO.join(x for x in (cuerpo.strip(), que_preguntar.recordatorio(state.language)) if x)
 
 
 def _contar_la_pregunta(state, slot: str | None) -> None:
@@ -180,19 +185,17 @@ def _con_el_freno_del_origen(state, respuesta: str) -> str:
     fija = next((p for p in resto_por_pregunta if p in respuesta), None)
     if fija is None:
         return respuesta
-    # Tras los dos enlaces la pregunta sobra aunque pida el enlace: ya los tiene, con la indicación de cuál usar.
-    con_los_enlaces = (resto_por_pregunta[fija] and "book.divingplanet.org" in respuesta
-                       and _veces_preguntada(state, core.SLOT_LOCATION) >= _VECES_MAX)
-    if _ya_se_pregunto_bastante(state, core.SLOT_LOCATION) or con_los_enlaces:
-        sin = respuesta.replace(fija, resto_por_pregunta[fija]).rstrip()
-        if len(_palabras(sin)) >= _PALABRAS_DE_UNA_RESPUESTA:
-            logger.info(f"[CORE][052B] compositor: el origen ya salió {_VECES_MAX} veces sin contestarse: no sale otra")
-            _aplazar(state)
-            return sin
-        if salidas := _las_dos_salidas(state, sin):
-            return salidas
-    _contar_la_pregunta(state, core.SLOT_LOCATION)
-    return respuesta
+    # Tras los dos enlaces, lo que queda en su lugar es la indicación de cuál usar.
+    sin = respuesta.replace(fija, resto_por_pregunta[fija]).rstrip()
+    accion = que_preguntar.que_hacer(core.SLOT_LOCATION, _veces_preguntada(state, core.SLOT_LOCATION),
+                                     hay_respuesta=len(_palabras(sin)) >= _PALABRAS_DE_UNA_RESPUESTA)
+    if accion == que_preguntar.PREGUNTAR:
+        _contar_la_pregunta(state, core.SLOT_LOCATION)
+        return respuesta
+    if accion == que_preguntar.LAS_DOS_SALIDAS and (salidas := _las_dos_salidas(state, sin)):
+        return salidas
+    logger.info(f"[CORE][CALN43] compositor: el origen ya salió {_VECES_MAX} veces sin contestarse: no sale otra")
+    return _sin_la_pregunta(state, sin)
 
 
 def _es_la_misma(a: str, b: str) -> bool:
@@ -394,12 +397,12 @@ def _componer(state, respuesta: str, *, pase: bool = False, escribio: bool | Non
         _aplazar(state)
         return cuerpo
     cuerpo = _sin_las_frases_de(cuerpo, final)
-    if _ya_se_pregunto_bastante(state, pendiente):
-        if len(_palabras(cuerpo)) >= _PALABRAS_DE_UNA_RESPUESTA:
-            logger.info(f"[CORE][052B] compositor: {pendiente!r} ya salió {_VECES_MAX} veces sin contestarse: no sale otra")
-            _aplazar(state)
-            return cuerpo
-        if pendiente == "location" and (salidas := _las_dos_salidas(state, cuerpo)):
-            return salidas
-    _contar_la_pregunta(state, pendiente)
-    return f"{cuerpo.rstrip()}{_PARRAFO}{final}" if cuerpo.strip() else final
+    accion = que_preguntar.que_hacer(pendiente, _veces_preguntada(state, pendiente),
+                                     hay_respuesta=len(_palabras(cuerpo)) >= _PALABRAS_DE_UNA_RESPUESTA)
+    if accion == que_preguntar.PREGUNTAR:
+        _contar_la_pregunta(state, pendiente)
+        return f"{cuerpo.rstrip()}{_PARRAFO}{final}" if cuerpo.strip() else final
+    if accion == que_preguntar.LAS_DOS_SALIDAS and (salidas := _las_dos_salidas(state, cuerpo)):
+        return salidas
+    logger.info(f"[CORE][CALN43] compositor: {pendiente!r} ya salió {_VECES_MAX} veces sin contestarse: no sale otra")
+    return _sin_la_pregunta(state, cuerpo)

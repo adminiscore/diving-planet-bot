@@ -31,8 +31,12 @@ def test_a_la_tercera_sin_nada_que_decir_van_las_dos_salidas():
     assert estado.core_pending_slot == "location"  # sigue pendiente, por si contesta
 
 
-def test_con_varios_planes_por_origen_se_pregunta():
-    assert PREGUNTA in componer(_estado(actividad="certified_diving"), f"¡Perfecto! 🙌\n\n{PREGUNTA}", escribio=False)
+def test_con_varios_planes_por_origen_va_el_recordatorio():
+    # CALN-43 P11: con varios planes por origen no hay dos salidas que dar, y tampoco sale una 3.ª vez: va el recordatorio, que no pregunta.
+    from src.flows.que_preguntar import RECORDATORIO
+
+    texto = componer(_estado(actividad="certified_diving"), f"¡Perfecto! 🙌\n\n{PREGUNTA}", escribio=False)
+    assert texto == f"¡Perfecto! 🙌\n\n{RECORDATORIO['es']}"
 
 
 def test_la_pregunta_sobre_el_pago_no_trae_el_origen_otra_vez():
@@ -157,11 +161,13 @@ def test_si_el_escritor_se_deja_los_enlaces_los_pone_el_codigo():
     assert _con_los_enlaces_que_faltan("Lo cierra un asesor.", [{"enlace": {"asesor": True}}], "es") == "Lo cierra un asesor."
 
 
-def test_sin_los_enlaces_en_la_respuesta_la_pregunta_se_queda():
+def test_sin_los_enlaces_en_la_respuesta_tampoco_sale_la_pregunta():
+    # CALN-43 P11: nunca una 3.ª vez, aunque pida el enlace; queda la indicación del hotel, que no pregunta.
     fija = core.ORIGEN_TRAS_LOS_ENLACES_ES
     estado = _estado()
     estado._preguntas_del_turno, estado.core_pending_slot, estado._intenciones = [], None, ["enlace"]
-    assert fija in componer(estado, f"La reserva es por la web, y son unas cuantas palabras más.\n\n{fija}", escribio=True)
+    texto = componer(estado, f"La reserva es por la web, y son unas cuantas palabras más.\n\n{fija}", escribio=True)
+    assert "¿Saldrías" not in texto and core.SIN_ENLACE_DE_LAS_ISLAS_ES in texto
 
 
 def test_la_salida_que_va_siempre_no_quita_sitio_a_los_paquetes():
