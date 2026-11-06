@@ -109,20 +109,6 @@ def _edad(actividad: str, maxima: bool = False) -> int | None:
     return (registro.max_age if maxima else registro.min_age) if registro else None
 
 
-def _si_la_web_admite_manana(now: datetime, lang: str) -> str:
-    """Panel fijo (6-nov): dos clientes de cinco recibían cuentas falsas con el corte de las 4:30 («closed yesterday», «sí puedes el martes por la
-    noche»). La fecha ya llegaba; la cuenta la hace el código."""
-    from src.domain.valores import hora  # lazy
-
-    h, m = (int(x) for x in hora("cierre_reservas").split(":"))
-    if now < now.replace(hour=h + 12, minute=m, second=0, microsecond=0):
-        return (f"La web admite reservas para mañana hasta hoy a las {h}:{m:02d} p. m." if lang == "es" else
-                f"The website takes bookings for tomorrow until today at {h}:{m:02d} p.m.")
-    pasado = (now + timedelta(days=2)).strftime("%Y-%m-%d")
-    return (f"La web ya no admite reservas para mañana; admite desde el {pasado}." if lang == "es" else
-            f"The website no longer takes bookings for tomorrow; it takes them from {pasado}.")
-
-
 def _build_extra_context(state: ConversationState) -> str | None:
     """Build a compact natural-language summary of the current state to help RAG.
 
@@ -157,7 +143,6 @@ def _build_extra_context(state: ConversationState) -> str | None:
     else:
         parts.append(f"Current date and time: {now.strftime('%A %Y-%m-%d %H:%M')} (Cartagena/Colombia time; "
                      f"tomorrow is {manana.strftime('%A %Y-%m-%d')}).")
-    parts.append(_si_la_web_admite_manana(now, state.language))
 
     # Idioma actual de la conversación
     if state.language == "es":

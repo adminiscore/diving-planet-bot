@@ -337,13 +337,3 @@ def test_sin_dias_ni_inmersiones_el_plan_es_recomendado_y_no_se_toca():
     st = _estado(language="en", location="island", hotel="cocoliso", is_colombian=False, detected_activity="certified_diving")
     respuesta = f"Book here: {ENLACE_DE_UN_DIA}"
     assert compositor._sin_enlaces_de_reserva(st, respuesta) == respuesta
-
-
-def test_la_cuenta_del_corte_la_hace_el_codigo():
-    from datetime import datetime
-
-    from src.agents.rutas.contexto_rag import _si_la_web_admite_manana as corte
-
-    assert "hasta hoy a las 4:30" in corte(datetime(2026, 11, 5, 16, 29), "es")
-    assert "ya no admite" in corte(datetime(2026, 11, 5, 16, 30), "es") and "2026-11-07" in corte(datetime(2026, 11, 5, 16, 30), "es")
-    assert "no longer" in corte(datetime(2026, 11, 5, 20, 0), "en")
