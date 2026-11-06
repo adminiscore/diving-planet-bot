@@ -18,6 +18,11 @@ class Plan:
     asesor_cierra_el_precio: bool = False  # el paquete, sin hacer su nocturna
 
 
+def paquetes_de(dias: int | None) -> list[int]:
+    """Las inmersiones de los paquetes de esos días (varios), de menor a mayor. Del catálogo."""
+    return sorted(n for n, (d, _) in dom.dive_packages().items() if d == dias) if dias and dias > 1 else []
+
+
 def plan_de_buceo(*, inmersiones: int | None = None, dias: int | None = None, sin_nocturna: bool = False, salidas_sueltas: int | None = None,
                   origen: str | None = None, refresher_solo: bool = False) -> Plan:
     """`inmersiones`: la cifra que eligió el cliente, que manda. `dias`: los días de buceo que quiere. `sin_nocturna`: la rechaza o quiere solo mañanas.
@@ -29,7 +34,7 @@ def plan_de_buceo(*, inmersiones: int | None = None, dias: int | None = None, si
         return Plan(inmersiones)
     if dias and refresher_solo:
         dias -= 1
-    paquetes = sorted(n for n, (d, _) in dom.dive_packages().items() if d == dias) if dias and dias > 1 else []
+    paquetes = paquetes_de(dias)
     if not paquetes:
         return Plan(SALIDA_DE_UN_DIA)
     if len(paquetes) == 1:

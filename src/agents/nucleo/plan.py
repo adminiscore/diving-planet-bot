@@ -7,12 +7,10 @@ Movido tal cual desde `conversational_core.py`, que lo re-exporta. Ver `src/agen
 
 from __future__ import annotations
 
-from src.agents.conversational_core import (
-    _DAYS_TO_DIVES,
-    _DIVES_TO_BASE_PLAN,
-)
+from src.agents.conversational_core import _DIVES_TO_BASE_PLAN
 from src.domain import activities as dom
 from src.flows import cart_render
+from src.flows.plan_de_buceo import paquetes_de
 from src.flows.state import ConversationState
 
 
@@ -93,15 +91,6 @@ def _plan_is_single_day(state: ConversationState) -> bool:
     return bool(services) and not any(sid in not_single for sid in services)
 
 
-def _otro_paquete_de_esos_dias(dias: int | None) -> int | None:
-    """Las inmersiones del paquete mayor de esa duración, si hay más de uno (2 días: 4 y 5). Del catálogo. Con un día no aplica: el plan de un día es
-    el recomendado de siempre (`_DAYS_TO_DIVES` solo tiene los de varios días)."""
-    if dias not in _DAYS_TO_DIVES:
-        return None
-    tamanos = [n for n, (d, _) in dom.dive_packages().items() if d == dias]
-    return max(tamanos) if len(tamanos) > 1 else None
-
-
 def _recommended_plan_intro(state: ConversationState) -> str:
     """Recomendación del plan (determinista, del catálogo) antepuesta a la
     pregunta de seguridad — mismo criterio que v0.20.27: al certificado que ya
@@ -112,14 +101,15 @@ def _recommended_plan_intro(state: ConversationState) -> str:
     lang = state.language
     if getattr(state, "sin_nocturna", False) or getattr(state, "salidas_sueltas", None):
         return ""  # Lo pidió así: la tabla ya decide, y la tarjeta lo dice
-    if state.detected_cert_dives is None and (mayor := _otro_paquete_de_esos_dias(state.detected_cert_days)):
+    paquetes = paquetes_de(state.detected_cert_days)
+    if state.detected_cert_dives is None and len(paquetes) > 1:
         # CALN-39: solo dijo los días, y hay más de un paquete: se propone el pequeño y se le dice qué más hay.
-        menor = _DAYS_TO_DIVES[state.detected_cert_days]
+        menor, mayor = paquetes[0], paquetes[-1]
         return (f"Para esos días te propongo el paquete de *{menor} inmersiones*. Si prefieres más, hay de *{mayor}* con una nocturna, o "
                 "salidas sueltas de un día; dímelo.\n\n" if lang == "es" else
                 f"For those days I suggest the *{menor}-dive* package. If you'd like more, there is a *{mayor}-dive* one with a night dive, or "
                 "separate one-day trips; just tell me.\n\n")
-    if state.detected_cert_dives is not None or state.detected_cert_days in _DAYS_TO_DIVES:
+    if state.detected_cert_dives is not None or paquetes:
         return ""
     if lang == "es":
         # Sparring s29: «paquete multi-día de 3 o más» debajo del «Paquete de 3 inmersiones (1 día…)».

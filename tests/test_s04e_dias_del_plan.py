@@ -114,3 +114,15 @@ def test_con_un_dia_no_revienta():
     st.location = "cartagena"
     assert "2 inmersiones en 1 día" in core._recommended_plan_intro(st)
     assert core._resolve_cert_plan(st) == "2_dives_1_day"
+
+
+@pytest.mark.parametrize(("senales", "dives", "queda"), [
+    ({"affirms_activity": False}, 5, None),  # «el paquete de 5 no nos sirve», «llevo 5 inmersiones»
+    ({"affirms_activity": True, "salidas_sueltas": True}, 5, None),  # 6929: «dos salidas; el de 5 no es lo que pedí»
+    ({"affirms_activity": True}, 5, 5),
+    ({}, 5, 5),  # Jev calla: vale la cifra
+])
+def test_la_cifra_de_un_mensaje_que_no_elige_no_es_el_plan(senales, dives, queda):
+    st = ConversationState(conversation_id="c43", language="es")
+    _plan_dicho(st, senales, cert_dives=dives)
+    assert st.detected_cert_dives == queda

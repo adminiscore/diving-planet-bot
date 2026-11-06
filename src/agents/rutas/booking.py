@@ -132,7 +132,13 @@ def _poner_el_plan_dicho(state: ConversationState, intent) -> None:
     tiene que decir que el mensaje elige y no pregunta. Sonda de 15 mensajes × 2: elige 0,75-0,96; contar la experiencia («llevo 5 inmersiones», que el
     regex lee como un plan) como mucho 0,60; preguntar, 0,98 en la otra señal. «Vamos con el de 5» (0,47) sigue sin cambiarlo. Si los días ya no casan
     con las inmersiones, se olvida lo otro, y el carrito se rehace."""
-    from src.agents.jev_router import ASKS_QUESTION, ELIGE_SEGURO, SIN_NOCTURNA  # lazy
+    from src.agents.jev_router import (  # lazy
+        AFFIRMS_ACTIVITY,
+        ASKS_QUESTION,
+        ELIGE_SEGURO,
+        SALIDAS_SUELTAS,
+        SIN_NOCTURNA,
+    )
     from src.domain import activities as dom  # lazy
     from src.observability import marca_regex  # lazy
 
@@ -145,7 +151,11 @@ def _poner_el_plan_dicho(state: ConversationState, intent) -> None:
     def dias_de(dives: int | None) -> int | None:
         return (dom.dive_packages().get(dives) or (None, None))[0]
 
-    dives = getattr(intent, "cert_dives", None)
+    # La cifra la lee el regex, y un mensaje que la rechaza o cuenta la experiencia no elige ese plan: conv 6929, «dos salidas; el de 5 no es lo que
+    # pedí» → paquete de 5. Sonda de 11 mensajes × 2: rechazar 0,11-0,13 y «llevo 5» 0,36, frente a elegir 0,49-0,96. Si Jev calla, vale la cifra.
+    dives = None if senales.get(SALIDAS_SUELTAS) else getattr(intent, "cert_dives", None)
+    if dives and not state.detected_cert_dives and senales.get(AFFIRMS_ACTIVITY) is False:
+        dives = None
     if dives and dives != state.detected_cert_dives and (not state.detected_cert_dives or cambia):
         state.detected_cert_dives = dives
         if dives != 2:
