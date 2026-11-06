@@ -16,7 +16,6 @@ import pytest
 from src.agents import conversational_core as core
 from src.agents.nucleo import extraction as core_extraction
 from src.agents.nucleo import routing as core_routing
-from src.agents.nucleo import slotfill_close as core_close
 from src.agents.supervisor import route_message
 from src.flows.state import ConversationState
 
@@ -58,7 +57,6 @@ async def _send(state, message, verify=None):
                       new=AsyncMock(side_effect=lambda *a, **k: (dict(verify or {}), {}))), \
          patch.object(core, "verify_fields", create=True, new=AsyncMock(return_value=verify or {})), \
          patch.object(core_routing, "detect_special_signals", new=_senales), patch.object(core_extraction, "detect_special_signals", new=_senales), \
-         patch.object(core_close, "_acuse_por_codigo", new=lambda *a, **k: ""), \
          patch.object(core_extraction, "resolve_slot_answer", new=AsyncMock(return_value={})):
         return await route_message(state, message)
 

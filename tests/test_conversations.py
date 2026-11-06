@@ -360,18 +360,17 @@ async def test_escalation_note_includes_language(extractor_dice):
 
 
 @pytest.mark.asyncio
-async def test_sin_dato_lo_escribe_el_escritor_con_la_pregunta_pendiente(monkeypatch, extractor_dice):
-    # lat-9 paso 2 (decisión de Gadea del 26-oct: «el escritor»): un mensaje que no contesta la pregunta pendiente ni da
-    # ningún dato ya no recibe la misma pregunta por plantilla (antes: «1 palabra, sin "?" → sin RAG»): lo escribe el
-    # escritor, que cierra con esa pregunta; aquí se mira el enrutado.
+async def test_sin_dato_va_la_pregunta_sin_llamar_al_escritor(monkeypatch, extractor_dice):
+    # CALN-43 (decisión de Gadea, 6-nov): un mensaje que no contesta la pregunta pendiente, no da ningún dato y no pregunta
+    # nada recibe la pregunta del código, sin llamar al escritor (lat-9 paso 2 lo llamaba; no salió en 471 turnos de los
+    # paneles) y sin «¡Perfecto!» delante.
     extractor_dice({})  # ex-9b paso 3: sin él, al 2.º turno se pasa a un asesor
     state = make_state()
     await route_message(state, "zzz")  # saludo y menú de actividades: la pregunta pendiente es la actividad
     with patch("src.agents.supervisor.rag_answer", new_callable=AsyncMock, return_value=RAG_MOCK) as mock_rag:
         reply = await route_message(state, "si")
-    mock_rag.assert_called_once()
-    assert "te animas" in mock_rag.call_args.kwargs["pregunta_final"]
-    assert not reply.startswith("¡Perfecto!")
+    mock_rag.assert_not_called()
+    assert "anima" in reply.lower() and not reply.startswith("¡Perfecto!")
 
 
 

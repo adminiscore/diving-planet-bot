@@ -1,13 +1,11 @@
 """Mini 0.53, en los dos lados: la misma pregunta una 3.ª vez (grave por criterio de Álvaro, #2716) por caminos que el freno de la
 0.52 no cubría: sin nada más que decir, con «pago», y dentro de la tarjeta repetida."""
-from unittest.mock import AsyncMock, patch
-
-import pytest
+from unittest.mock import patch
 
 from src.agents import conversational_core as core
 from src.agents.compositor import componer
-from src.agents.nucleo import extractor, slotfill_close
 from src.agents.intent_detector import DetectedIntent
+from src.agents.nucleo import extractor, slotfill_close
 from src.flows.state import ConversationState
 
 PREGUNTA = "¿Desde dónde saldrías? Puedes salir *desde Cartagena* o, si ya estás *en las islas*, coordinamos la recogida."
@@ -106,17 +104,6 @@ def test_la_nota_sin_preguntar_deja_el_aviso():
     with patch.object(slotfill_close.cart_render, "refresher_price_text", return_value="475.000 COP"):
         texto = slotfill_close._nota_seguridad(_colombiano(2), preguntar=False)
     assert "refresher" in texto and "?" not in texto
-
-
-@pytest.mark.asyncio
-async def test_el_escritor_contesta_y_cierra_con_lo_que_sigue():
-    estado = _colombiano(2)
-    estado.core_pending_slot = core.SLOT_SAFETY
-    estado._pregunta_del_escritor = "algo"
-    sigue = slotfill_close._tras_la_tarjeta_ya_vista(estado)
-    with patch.object(slotfill_close, "_rag_answer", AsyncMock(return_value="¡Anotado, el 21 y el 22!")):
-        texto = await slotfill_close._sin_dato(estado, "El 21 y 22", core.SLOT_SAFETY, sigue)
-    assert texto == f"¡Anotado, el 21 y el 22!\n\n{sigue}"
 
 
 def test_preguntar_como_reservar_cuenta_como_pedir_el_enlace():

@@ -253,19 +253,6 @@ def test_quien_hace_que_va_antes_que_el_origen():
     assert core.next_missing_slot(st, saltar={core.SLOT_COMPANION_ACTIVITY}) == core.SLOT_LOCATION
 
 
-def test_sin_contestar_el_origen_no_hay_acuse():
-    """«Voy con una amiga que no está certificada» a la pregunta del origen: la de ella sale delante, pero el origen
-    sigue sin contestar y no toca «¡Perfecto!» (banco g18 y g24)."""
-    from src.agents import conversational_core as core
-    from src.agents.nucleo import slotfill_close
-
-    st = _grupo(detected_activity="certified_diving", is_certified=True, needs_companion_activity=True,
-                core_pending_slot=core.SLOT_COMPANION_ACTIVITY)
-    assert slotfill_close._acuse_por_codigo(st, core.SLOT_LOCATION) == ""
-    st.location = "cartagena"
-    assert slotfill_close._acuse_por_codigo(st, core.SLOT_LOCATION) != ""
-
-
 @pytest.mark.parametrize("reparto, queda", [
     # conserva a quien ya eligió y da actividad a quien faltaba: completa, aunque empiece por «No wait»
     ({"certified_diving": 1, "minicourse": 1}, {"minicourse": 1, "certified_diving": 1}),

@@ -97,7 +97,6 @@ def conversacion(monkeypatch, extractor_dice):
     monkeypatch.setattr(core_extraction, "detect_special_signals", _senales)
     monkeypatch.setattr(core_extraction, "resolve_slot_answer", AsyncMock(return_value={}))
     monkeypatch.setattr("src.agents.nucleo.notas.extract_notes", AsyncMock(return_value=[]))
-    monkeypatch.setattr(core_close, "_acuse_por_codigo", lambda *a, **k: "")
 
     async def _senales(message, **_k):
         return {}

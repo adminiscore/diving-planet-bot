@@ -134,8 +134,6 @@ def _collect() -> dict[str, str]:
     add("info/rag.precios_por_codigo.en", info.RAG_PRECIOS_POR_CODIGO["en"])
     add("info/rag.con_hechos.es", info.RAG_CON_HECHOS_ES)
     add("info/rag.con_hechos.en", info.RAG_CON_HECHOS_EN)
-    add("info/rag.solo_hechos.es", info.RAG_SOLO_HECHOS_ES)
-    add("info/rag.solo_hechos.en", info.RAG_SOLO_HECHOS_EN)
     add("memory/seguridad.notas.es", memory.MEMORIA_SEGURA_NOTAS_ES)
     add("memory/seguridad.notas.en", memory.MEMORIA_SEGURA_NOTAS_EN)
     add("memory/seguridad.resumen.es", memory.MEMORIA_SEGURA_RESUMEN_ES)
@@ -160,7 +158,7 @@ def _collect() -> dict[str, str]:
     for lang in LANGS:
         add(f"info/reglas_del_escritor.{lang}", info.reglas_del_escritor(lang))
         # lat-9 paso 2 (26-oct): la pregunta de la reserva que escribe el escritor.
-        add(f"info/pregunta_final.{lang}", info.pregunta_final("¿Desde dónde saldrías?", lang))
+        add(f"info/sin_preguntas.{lang}", info.sin_preguntas(lang))
     add("info/rag_abre_con_la_respuesta.es", info.RAG_ABRE_CON_LA_RESPUESTA_ES)  # gen-2 (20-oct)
     add("info/rag_abre_con_la_respuesta.en", info.RAG_ABRE_CON_LA_RESPUESTA_EN)
     add("info/rag_sin_genero.es", info.RAG_SIN_GENERO_ES)  # gen-12 (21-oct)
