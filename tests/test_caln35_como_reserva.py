@@ -319,12 +319,18 @@ def test_la_pregunta_ya_contestada_no_se_queda_en_medio():
 ENLACE_DE_UN_DIA = "https://book.divingplanet.org/book/fun-dives-already-on-island/19?language=en"
 
 
-def test_el_paquete_sin_enlace_no_recibe_el_enlace_de_otro_plan():
-    """Panel fijo: propone el paquete de 4, que reserva un asesor, y el escritor da el enlace de la salida de un día."""
+def test_el_paquete_sin_precio_cerrado_no_lleva_enlace_de_buceo():
+    """P5: 3 días sin nocturna: el precio lo cierra un asesor."""
+    st = _estado(language="en", location="island", hotel="cocoliso", is_colombian=False, detected_cert_days=3, sin_nocturna=True, detected_activity="certified_diving")
+    limpia = compositor._sin_enlaces_de_reserva(st, f"The package.\n\nBook the divers here: {ENLACE_DE_UN_DIA}\n\nAnything else?")
+    assert "fun-dives" not in limpia and "Anything else?" in limpia
+
+
+def test_dos_dias_con_el_enlace_que_pidio_no_se_toca():
+    """s04j: el refresher un día y las salidas otro: pidió el enlace de las salidas, con 2 días en el estado."""
     st = _estado(language="en", location="island", hotel="cocoliso", is_colombian=False, detected_cert_days=2, detected_activity="certified_diving")
-    respuesta = f"The package is 204 USD.\n\nBook the divers here: {ENLACE_DE_UN_DIA}\n\nAnything else?"
-    limpia = compositor._sin_enlaces_de_reserva(st, respuesta)
-    assert "fun-dives" not in limpia and "204 USD" in limpia and "Anything else?" in limpia
+    respuesta = f"Book here: {ENLACE_DE_UN_DIA}"
+    assert compositor._sin_enlaces_de_reserva(st, respuesta) == respuesta
 
 
 def test_con_un_plan_con_enlace_no_se_toca():
