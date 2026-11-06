@@ -61,6 +61,7 @@ Las doce normas, con su porqué, están en el documento.
 
 ### ▶️ RETOMAR AQUÍ — 6-nov, ~05:50 (Gadea con Claude, de noche; Álvaro y Gonzalo sin señales desde las 02:35 y las 00:50): 0.61.0 SUBE A PRE
 
+**Tandas, últimas cuatro:** 5 (0.58), 2 (0.59), 2 (0.60) y 5 de 10 (0.61, cargada a propósito): 35 %, sin tendencia clara; panel plano desde la 0.59.
 **Decisión que espera a Gadea:** la propuesta de tablas de Álvaro (Coral #3627; inventario y preguntas P2-P11 en #3629; P1 ya decidida). Es lo siguiente del grupo 2, y Claude la recomienda: esta noche ninguna idea probada ha bajado los ciegos del panel.
 **Norma de medida:** 3 tiradas del panel por lado (`docs/robustness/caln/panel-graves.json`): con 2 se tomó una decisión equivocada. Ojo: la mini y las B con `--codigo-local` se comportan igual que A (Álvaro, ×5 por modo).
 **Ramas:** `feature/juez-c059-alvaro` y `feature/s05f-alvaro`, ya integradas sus medidas; sin integrar: `feature/caln8-3b-alvaro` y `feature/jev-contexto-final-alvaro` (medidas, sin ganancia), `feature/acepta-pase-alvaro` (el pase, falta sin todo el contexto), `feature/caln30b-gonzalo` (en medida).

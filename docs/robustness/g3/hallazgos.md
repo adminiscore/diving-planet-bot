@@ -1286,3 +1286,18 @@ Criterio de Álvaro (#2716). 10 clientes nuevos y educados (conv 6953-6962). Los
 **Medios:** vuelve a preguntar lo ya dicho (6954, 6956, 6957, 6962: 4 de 10); dice que el refresher no se reserva por el enlace del minicurso y lo da debajo (6955).
 
 **Lectura:** últimas tres tandas: 5 de 10 (s05e, 0.58), 2 de 10 (s05f, 0.59, Álvaro) y 2 de 10 (0.60). Es buena señal, pero son 10 clientes por tanda y con temas distintos: el panel fijo empata entre 0.59 y 0.60. La meta sigue siendo 2 de 60.
+
+## CALN-S06B-01..10 · 21.ª tanda de sparring contra PRE 0.61.0 (6-nov, `charla_pre`)
+
+Criterio de Álvaro (#2716). 10 clientes nuevos y educados (conv 6963-6972). Temas fijados por un subagente, sin ver el código, con encargo de cargar lo tocado: varios días sin precisar el paquete, cambios de plan y aceptar el asesor dentro de una frase larga. **Juez Opus a ciegas, una pasada: 5 de 10 con grave. Sin leer aún uno a uno; solo 6964 leído.**
+
+**Graves según el juez:**
+1. **6964:** los enlaces no salen porque falta el hotel (regla de Gadea), el bot pregunta el hotel tarde y luego dice que el paquete de 7 no tiene enlace, y sí lo tiene. Acaba con el asesor, que el cliente pidió. El escritor generaliza «los planes sin enlace», que entró como dato en la 0.59.
+2. **6966:** promete el descuento de grupo en Bubble Makers, que no lo tiene. Además ofrece el minicurso a un niño de 9.
+3. **6967:** manda a reservar el refresher para mañana con la web ya cerrada: el corte de las 4:30, otra vez.
+4. **6969:** anuncia el precio del acompañante «a continuación» y debajo va el del paquete de 4.
+5. **6970:** fija la moneda de un grupo de 8 por un solo residente; «residente» sin cédula.
+
+**Medios:** Rescue desde las islas sin aclarar que sale de Cartagena (6971, como visto-6916); repreguntas (6964, 6969, 6971).
+
+**Lectura:** las últimas cuatro tandas: 5 (0.58), 2 (0.59), 2 (0.60) y 5 de 10 (0.61; esta cargaba a propósito lo más difícil). **14 de 40, un 35 %: sigue en el mismo rango**, sin tendencia clara. Con el panel plano, apoya CALN-43 (tablas): el plan, la moneda y el corte siguen saliendo con otra cara.
