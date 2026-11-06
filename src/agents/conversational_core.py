@@ -298,12 +298,6 @@ def next_missing_slot(state: ConversationState, saltar: frozenset[str] | set[str
     return None
 
 
-def _es_la_ultima_pregunta(state: ConversationState) -> bool:
-    """La nacionalidad es la última pregunta salvo que haya otra aplazada aún sin contestar (EX-FLUJO-1)."""
-    if not state.preguntas_aplazadas:
-        return True
-    return next_missing_slot(state, saltar=frozenset({SLOT_NATIONALITY})) in (None, SLOT_NATIONALITY)
-
 
 _NAME_STOPWORDS = frozenset({
     "certificado", "certificada", "certificados", "certificadas", "buzo", "buza",

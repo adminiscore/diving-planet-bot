@@ -59,10 +59,12 @@ def _tarjeta_sin_seguridad(state: ConversationState, nxt: str | None, prev_pendi
     respuesta de seguridad? Sí cuando es lo ÚNICO que falta y el cliente no la contestó en este mensaje (se la hicimos
     en el anterior). pareja-certificados-cop-descuento-almuerzo (3/3): la pareja preguntaba por un "bono" y por el
     almuerzo, el bot repetía "¿más de 2 años?" y la tarjeta con el precio no salía nunca. El aplazamiento de EX-FLUJO-1
-    no servía: siendo la última pregunta, el resumen la volvía a hacer en el mismo turno."""
+    no servía: siendo la última pregunta, el resumen la volvía a hacer en el mismo turno. CALN-43 P11: también si ya salió 2 veces,
+    aunque no fuera la del turno anterior (la tarjeta sale con el aviso, sin la pregunta)."""
+    hechas = state.preguntas_hechas
     return bool(
-        nxt == SLOT_SAFETY and prev_pending == SLOT_SAFETY
-        and next_missing_slot(state, saltar=frozenset({SLOT_SAFETY})) is None
+        nxt == SLOT_SAFETY and (prev_pending == SLOT_SAFETY or SLOT_SAFETY in que_preguntar.agotadas(hechas))
+        and next_missing_slot(state, saltar=frozenset({SLOT_SAFETY}) | que_preguntar.se_sigue_sin(hechas)) is None
     )
 
 
@@ -95,25 +97,12 @@ def _tras_la_tarjeta_ya_vista(state: ConversationState) -> str:
             else "Whenever you're ready, book with the link above: you choose the date and the number of people there. 🌊")
 
 
-def _siguiente_pregunta(state: ConversationState, prev_pending: str | None) -> str | None:
-    """EX-FLUJO-1 (decisión de Gadea, 14-oct): si el cliente no contestó la
-    pregunta del turno anterior (sigue faltando ese dato), no se repite: se aplaza y se pregunta otra cosa; las
-    aplazadas vuelven justo antes del resumen, cuando no falta nada más. Ronda atencion-B2: "¿Ha pasado más de 2 años
-    desde la última inmersión?" salía tres turnos seguidos mientras el cliente daba fechas y su regreso."""
-    nxt = next_missing_slot(state)
-    if nxt is None:
-        return nxt
-    # Ronda flujo1-B2: aplazar a la PRIMERA pregunta sin contestar reordenaba casi todas las conversaciones ("Última
-    # cosa… ¿sois colombianos?" demasiado pronto; el acuse tomaba la respuesta a una aplazada por la de la pendiente).
-    # El problema era el bucle: se pregunta como mucho dos veces seguidas y a la tercera se aplaza.
-    state.veces_sin_respuesta = state.veces_sin_respuesta + 1 if nxt == prev_pending else 0
-    if (nxt == prev_pending and state.veces_sin_respuesta >= 2 and nxt in _SLOTS_APLAZABLES
-            and nxt not in state.preguntas_aplazadas):
-        state.preguntas_aplazadas.append(nxt)
-        logger.info(f"[CORE][APLAZA] el cliente no contestó {nxt!r} dos veces: se pregunta antes del resumen")
-    # CALN-43 P11 (decisión de Gadea, 6-nov): la que ya salió 2 veces tampoco vuelve si falta otro dato; si no falta otro, la frena el
-    # compositor, que pone en su lugar lo que dice `que_preguntar`.
-    otro = next_missing_slot(state, saltar=set(state.preguntas_aplazadas) | que_preguntar.agotadas(state.preguntas_hechas))
+def _siguiente_pregunta(state: ConversationState, nxt: str) -> str:
+    """CALN-43 P11 (decisión de Gadea, 6-nov; sustituye al aplazamiento de EX-FLUJO-1): la pregunta del turno la elige la tabla
+    (`que_preguntar`). `nxt`: lo primero que falta. La que ya salió 2 veces no vuelve: se pregunta otro dato que falte. Si no falta otro,
+    `nxt` es de las que paran la reserva (el origen, la actividad…) y queda pendiente: el compositor pone en su lugar lo que dice la tabla.
+    Las que no la paran ya las saltó el flujo antes de llegar aquí (`que_preguntar.se_sigue_sin`)."""
+    otro = next_missing_slot(state, saltar=que_preguntar.agotadas(state.preguntas_hechas))
     return otro if otro is not None else nxt
 
 
@@ -472,7 +461,7 @@ async def _sin_dato(state: ConversationState, message: str, prev_pending: str, p
     # Antes de mirar si la pregunta cambió: «Gracias, pero al final no vamos a reservar» con el origen pendiente recibía «¡Perfecto!»
     # y la de la actividad.
     se_despide = bool((getattr(state, "_senales_router", None) or {}).get(SE_DESPIDE))
-    sin_contestar = state.core_pending_slot == prev_pending or prev_pending in (state.preguntas_aplazadas or [])
+    sin_contestar = state.core_pending_slot == prev_pending or prev_pending in que_preguntar.agotadas(state.preguntas_hechas)
     if not se_despide and (not getattr(state, "_pregunta_del_escritor", None) or not sin_contestar):
         return None
     state._pregunta_del_escritor = None if se_despide else pregunta
@@ -620,7 +609,8 @@ async def _slotfill_close_phase(
         response = ask_slot(state, SLOT_COMPANION_QTY, reasking=True)
         state.step = Step.FREE_TEXT
     else:
-        nxt = next_missing_slot(state)
+        # CALN-43 P11: las agotadas que no paran la reserva se saltan; si no falta nada más, se cierra con lo que hay.
+        nxt = next_missing_slot(state, saltar=que_preguntar.se_sigue_sin(state.preguntas_hechas))
         if nxt is None and (despedida := await _si_se_despide(state, message, prev_pending)):
             # s05a (crucero, 2 de 9): «Never mind then, thanks» sin pregunta pendiente recibía la tarjeta entera con su enlace.
             state.history.append({"role": "assistant", "content": despedida})
@@ -659,7 +649,7 @@ async def _slotfill_close_phase(
             # _finalize_tree_response — aquí el equivalente).
             supervisor._maybe_build_pending_note(state)
         else:
-            nxt = _siguiente_pregunta(state, prev_pending)
+            nxt = _siguiente_pregunta(state, nxt)
             response = ask_slot(state, nxt, reasking=(nxt == prev_pending))
             state.step = Step.FREE_TEXT
 

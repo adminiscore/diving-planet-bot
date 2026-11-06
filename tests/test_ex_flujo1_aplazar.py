@@ -1,6 +1,9 @@
-"""EX-FLUJO-1 (decisión de Gadea, 14-oct, opción 2): si el cliente no contesta
-una pregunta de la reserva, no se repite en el turno siguiente; se aplaza y vuelve justo antes del resumen."""
+"""EX-FLUJO-1 (decisión de Gadea, 14-oct, opción 2): si el cliente no contesta una pregunta de la reserva, se pregunta otra cosa.
+CALN-43 P11 (decisión de Gadea, 6-nov) la sustituye: la que ya salió 2 veces no vuelve nunca, tampoco «antes del resumen»; se sigue con
+lo que hay (`src/flows/que_preguntar.py`)."""
 from src.agents import conversational_core as core
+from src.agents.nucleo import slotfill_close
+from src.flows import que_preguntar
 from src.flows.state import ConversationState
 
 
@@ -14,44 +17,62 @@ def _estado(**kw) -> ConversationState:
     return st
 
 
-def test_sin_contestar_se_pregunta_otra_cosa_y_vuelve_al_final():
+def test_a_la_tercera_se_pregunta_otra_cosa_y_no_vuelve():
     st = _estado(detected_group_size=2)  # faltan: última inmersión (safety) y nacionalidad
     assert core.next_missing_slot(st) == core.SLOT_SAFETY
-    # El bot preguntó la última inmersión y el cliente habló de otra cosa: se repite una vez (como hoy)…
-    assert core._siguiente_pregunta(st, prev_pending=core.SLOT_SAFETY) == core.SLOT_SAFETY
-    assert st.preguntas_aplazadas == []
-    # …y si tampoco la contesta, no se repite una tercera: se aplaza.
-    assert core._siguiente_pregunta(st, prev_pending=core.SLOT_SAFETY) == core.SLOT_NATIONALITY
-    assert st.preguntas_aplazadas == [core.SLOT_SAFETY]
-    # Contesta la nacionalidad: ya no falta nada más -> vuelve la aplazada, justo antes del resumen.
+    # Salió una vez y el cliente habló de otra cosa: se repite una vez…
+    st.preguntas_hechas = {core.SLOT_SAFETY: 1}
+    assert core._siguiente_pregunta(st, core.SLOT_SAFETY) == core.SLOT_SAFETY
+    # …y con 2, no se repite una tercera: se pregunta otra cosa.
+    st.preguntas_hechas = {core.SLOT_SAFETY: 2}
+    assert core._siguiente_pregunta(st, core.SLOT_SAFETY) == core.SLOT_NATIONALITY
+    # Contesta la nacionalidad: ya no falta nada más que la seguridad, agotada: la tarjeta sale con el aviso y sin la pregunta, aunque
+    # la del turno anterior fuera la nacionalidad (antes volvía «justo antes del resumen»: la 3.ª vez).
     st.is_colombian = False
-    assert core._siguiente_pregunta(st, prev_pending=core.SLOT_NATIONALITY) == core.SLOT_SAFETY
+    assert slotfill_close._tarjeta_sin_seguridad(st, core.SLOT_SAFETY, prev_pending=core.SLOT_NATIONALITY)
 
 
-def test_contestada_no_se_aplaza():
+def test_antes_de_dos_veces_se_pregunta_lo_primero_que_falta():
     st = _estado(detected_group_size=2)
-    assert core._siguiente_pregunta(st, prev_pending=core.SLOT_QTY) == core.SLOT_SAFETY
-    assert st.preguntas_aplazadas == []
+    assert core._siguiente_pregunta(st, core.SLOT_SAFETY) == core.SLOT_SAFETY
 
 
-def test_la_actividad_no_se_aplaza():
-    """La actividad condiciona todo lo demás: si no la contesta, se sigue preguntando."""
+def test_la_actividad_agotada_no_se_salta_y_queda_pendiente():
+    """La actividad condiciona todo lo demás: no se salta. Queda pendiente y el compositor no la vuelve a poner (test_que_preguntar, a03)."""
     st = ConversationState(conversation_id="flujo1", language="es")
-    assert core._siguiente_pregunta(st, prev_pending=core.SLOT_ACTIVITY) == core.SLOT_ACTIVITY
-    assert st.preguntas_aplazadas == []
+    st.preguntas_hechas = {core.SLOT_ACTIVITY: 2}
+    assert core._siguiente_pregunta(st, core.SLOT_ACTIVITY) == core.SLOT_ACTIVITY
+    assert core.SLOT_ACTIVITY not in que_preguntar.se_sigue_sin(st.preguntas_hechas)
 
 
-def test_si_es_la_unica_que_falta_se_pregunta():
+def test_si_solo_falta_la_seguridad_sale_la_tarjeta_con_el_aviso():
     st = _estado(detected_group_size=2, is_colombian=False)  # solo falta la última inmersión
-    for _ in range(3):
-        assert core._siguiente_pregunta(st, prev_pending=core.SLOT_SAFETY) == core.SLOT_SAFETY
+    assert not slotfill_close._tarjeta_sin_seguridad(st, core.SLOT_SAFETY, prev_pending=None)  # aún no se ha preguntado
+    assert slotfill_close._tarjeta_sin_seguridad(st, core.SLOT_SAFETY, prev_pending=core.SLOT_SAFETY)
+    st.preguntas_hechas = {core.SLOT_SAFETY: 2}
+    assert slotfill_close._tarjeta_sin_seguridad(st, core.SLOT_SAFETY, prev_pending=None)
 
 
-def test_ultima_cosa_solo_si_es_la_ultima():
+def test_sin_el_numero_agotado_se_cierra_por_persona():
+    st = _estado(is_colombian=False, last_dive_over_2_years=False)  # solo falta cuántos son
+    assert core.next_missing_slot(st) == core.SLOT_QTY
+    st.preguntas_hechas = {core.SLOT_QTY: 2}
+    assert core.next_missing_slot(st, saltar=que_preguntar.se_sigue_sin(st.preguntas_hechas)) is None  # se cierra con lo que hay
+    from src.flows.cart_render import linea_de_precio
+
+    assert linea_de_precio("178 USD", 1, "es") == "💰 *178 USD* por persona"  # sin el número: por persona
+
+
+def test_el_origen_agotado_no_se_salta():
     st = _estado(detected_group_size=2)
-    st.preguntas_aplazadas = [core.SLOT_SAFETY]  # la última inmersión, aplazada y sin contestar
-    assert "Última cosa" not in core.ask_slot(st, core.SLOT_NATIONALITY)
-    st.last_dive_over_2_years = False
+    st.location = None
+    st.preguntas_hechas = {core.SLOT_LOCATION: 2}
+    assert core.next_missing_slot(st, saltar=que_preguntar.se_sigue_sin(st.preguntas_hechas)) == core.SLOT_LOCATION
+
+
+def test_la_nacionalidad_es_siempre_la_ultima():
+    st = _estado(detected_group_size=2)
+    st.preguntas_hechas = {core.SLOT_SAFETY: 2}  # la última inmersión, agotada: ya no vuelve detrás
     assert "Última cosa" in core.ask_slot(st, core.SLOT_NATIONALITY)
 
 

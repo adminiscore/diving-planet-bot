@@ -110,13 +110,79 @@ def test_la_agotada_cede_el_turno_a_otro_dato_que_falta():
     assert _siguiente_pregunta(estado, core.SLOT_QTY) == core.SLOT_NATIONALITY
 
 
-def test_si_no_falta_otro_la_devuelve_el_flujo_y_la_frena_el_compositor():
+def test_si_no_falta_otro_y_no_para_la_reserva_se_cierra_con_lo_que_hay():
     estado = _sin_el_numero(is_colombian=False)
     estado.preguntas_hechas = {core.SLOT_QTY: 2}
-    assert _siguiente_pregunta(estado, core.SLOT_QTY) == core.SLOT_QTY
+    assert core.next_missing_slot(estado, saltar=qp.se_sigue_sin(estado.preguntas_hechas)) is None  # la tarjeta, por persona
+
+
+@pytest.mark.parametrize("slot", sorted(qp.SE_SIGUE_SIN_ELLA))
+def test_las_que_no_paran_la_reserva_son_huecos_que_el_flujo_sabe_saltar(slot):
+    from src.agents.conversational_core import _SLOTS_APLAZABLES
+
+    assert slot in _SLOTS_APLAZABLES and slot != core.SLOT_LOCATION and slot != core.SLOT_SAFETY
 
 
 def test_antes_de_dos_veces_el_flujo_no_cambia():
     estado = _sin_el_numero()
     estado.preguntas_hechas = {core.SLOT_QTY: 1}
     assert _siguiente_pregunta(estado, None) == core.SLOT_QTY
+
+
+# ─── Todas las combinaciones (CALN-43: cientos de casos, sin IA) ───
+
+import itertools  # noqa: E402
+
+from src.agents.nucleo import slotfill_close  # noqa: E402
+
+_DATOS = {  # lo que falta si está a None
+    "location": "cartagena", "detected_group_size": 2, "last_dive_over_2_years": False, "is_colombian": False,
+}
+_PREGUNTA_DE = {"location": core.SLOT_LOCATION, "detected_group_size": core.SLOT_QTY,
+                "last_dive_over_2_years": core.SLOT_SAFETY, "is_colombian": core.SLOT_NATIONALITY}
+_COMBINACIONES = list(itertools.product(itertools.product([True, False], repeat=4), itertools.product(range(4), repeat=4)))
+
+
+def _caso(sabidos, veces):
+    st = ConversationState(conversation_id="caln43-tabla", language="es", detected_activity="certified_diving", is_certified=True)
+    for (campo, valor), sabido in zip(_DATOS.items(), sabidos):
+        setattr(st, campo, valor if sabido else None)
+    st.preguntas_hechas = {slot: n for slot, n in zip(_PREGUNTA_DE.values(), veces) if n}
+    return st
+
+
+def _lo_que_hace_el_turno(st, prev_pending):
+    """Lo que decide `_slotfill_close_phase` (sin el hotel, el acompañante ni la despedida): cerrar, la tarjeta con el aviso de seguridad,
+    o una pregunta."""
+    nxt = core.next_missing_slot(st, saltar=qp.se_sigue_sin(st.preguntas_hechas))
+    if nxt is None:
+        return "cierra", None
+    if slotfill_close._tarjeta_sin_seguridad(st, nxt, prev_pending):
+        return "tarjeta", None
+    return "pregunta", slotfill_close._siguiente_pregunta(st, nxt)
+
+
+def test_son_cientos_de_casos():
+    assert len(_COMBINACIONES) == 4096
+
+
+@pytest.mark.parametrize("prev_pending", [None, core.SLOT_SAFETY])
+def test_en_ningun_caso_sale_una_pregunta_por_3a_vez(prev_pending):
+    for sabidos, veces in _COMBINACIONES:
+        st = _caso(sabidos, veces)
+        que, slot = _lo_que_hace_el_turno(st, prev_pending)
+        faltan = {_PREGUNTA_DE[c] for c, sabido in zip(_DATOS, sabidos) if not sabido}
+        hechas = st.preguntas_hechas
+        if que == "cierra":
+            # Solo se cierra si lo que falta se puede saltar (ya salió 2 veces) o no falta nada.
+            assert faltan <= qp.se_sigue_sin(hechas), (sabidos, veces)
+        elif que == "tarjeta":
+            assert faltan - qp.se_sigue_sin(hechas) == {core.SLOT_SAFETY}, (sabidos, veces)
+        else:
+            assert slot in faltan, (sabidos, veces)
+            assert slot not in qp.se_sigue_sin(hechas), (sabidos, veces)  # nunca una que se salta
+            if not qp.se_puede_preguntar(hechas.get(slot, 0)):
+                # Ya salió 2 veces: solo si no queda otra que preguntar, y es de las que paran la reserva. El compositor no la pone.
+                assert all(not qp.se_puede_preguntar(hechas.get(s, 0)) for s in faltan), (sabidos, veces)
+                assert slot not in qp.SE_SIGUE_SIN_ELLA, (sabidos, veces)
+                assert qp.que_hacer(slot, hechas[slot], hay_respuesta=True) == qp.SIN_ELLA

@@ -74,7 +74,8 @@ def test_un_parrafo_identico_a_otro_sale():
 @pytest.mark.asyncio
 async def test_sin_dato_tambien_cuando_la_pregunta_de_antes_se_aplazo(monkeypatch):
     """regateo-grupo-6 t5 (caln2-B): «¿cómo reservamos?» con el origen aplazado; la pendiente ya es la seguridad y el
-    escritor no contestaba (solo salía la pregunta de seguridad, sin los enlaces)."""
+    escritor no contestaba (solo salía la pregunta de seguridad, sin los enlaces). CALN-43 P11: «aplazado» es ahora «ya salió
+    2 veces» (`preguntas_hechas`)."""
     from src.agents.nucleo import slotfill_close
     from src.flows.state import ConversationState
 
@@ -83,10 +84,10 @@ async def test_sin_dato_tambien_cuando_la_pregunta_de_antes_se_aplazo(monkeypatc
 
     monkeypatch.setattr(slotfill_close, "_rag_answer", escritor)
     st = ConversationState(conversation_id="caln6", language="es")
-    st._pregunta_del_escritor, st.core_pending_slot, st.preguntas_aplazadas = "¿Desde dónde saldrías?", "safety", ["location"]
+    st._pregunta_del_escritor, st.core_pending_slot, st.preguntas_hechas = "¿Desde dónde saldrías?", "safety", {"location": 2}
     respuesta = await slotfill_close._sin_dato(st, "¿cómo reservamos?", "location", SEGURIDAD)
     assert respuesta.startswith("Se reserva por la web") and respuesta.endswith(SEGURIDAD)
-    st.preguntas_aplazadas = []  # la contestó: la pregunta cambia porque ya hay dato, no es un turno sin dato
+    st.preguntas_hechas = {"location": 1}  # la contestó: la pregunta cambia porque ya hay dato, no es un turno sin dato
     assert await slotfill_close._sin_dato(st, "desde cartagena", "location", SEGURIDAD) is None
 
 
