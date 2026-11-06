@@ -6,14 +6,11 @@ escapó (arq-7b: qué incluye, la recogida, el alojamiento), los avisos van al f
 la ronda caln1-B, 16 respuestas decían lo mismo dos veces y 17 llevaban dos preguntas.
 
 Paso 1: la pregunta de la reserva va UNA vez y al FINAL. `ask_slot` apunta en el turno cada pregunta que formula
-(`_preguntas_del_turno`); aquí se quitan sus copias de la respuesta, estén donde estén (un párrafo entero o una frase con
-«?» dentro de otro), y se pone la de la pregunta pendiente al final. Si la respuesta no la llevaba (una tarjeta, un
-pase), no se toca.
+(`_preguntas_del_turno`); aquí se quitan sus copias de la respuesta y se pone la de la pregunta pendiente al final, si la
+tabla dice que puede salir (`src/flows/que_preguntar.py`). Si la respuesta no la llevaba (una tarjeta, un pase), no se toca.
 
-Paso 2: UNA pregunta como mucho. Si lo que queda ya pregunta algo (el escritor cierra con su pregunta, la nota de la
-tarjeta pregunta), la de la reserva no se pone y queda pendiente para el turno siguiente: la regla de u3-4 y CAL-C3b
-(`_answer_replaces_the_booking_question`), que solo valía en algunos caminos. Y las frases de la pregunta final (la
-explicación que la acompaña) no se repiten en el cuerpo.
+CALN-43 (decisión de Gadea, 6-nov): en un turno de la reserva el escritor no pregunta, así que las copias son textos nuestros,
+tal cual, y la nuestra va siempre (antes, si el escritor ya preguntaba otra cosa, la de la reserva esperaba al turno siguiente).
 """
 from __future__ import annotations
 
@@ -29,8 +26,6 @@ logger = logging.getLogger("uvicorn.error")
 _PARRAFO = "\n\n"
 # Una frase que acaba en «?» (con el cierre de negrita, cursiva o paréntesis), dentro de una línea.
 _PREGUNTA_RE = re.compile(r"[^.!?\n]*\?+[*_)\]]*")
-# Una frase entera (acaba en «.», «!» o «?»), dentro de una línea.
-_FRASE_RE = re.compile(r"[^.!?\n]+[.!?]+[*_)\]]*")
 # Un párrafo que acaba preguntando: su última línea acaba en «?» (con la negrita o un emoji detrás).
 _ACABA_PREGUNTANDO_RE = re.compile(r"\?[*_)\]]*\s*[\U0001F000-\U0001FAFF☀-➿]?\s*$")
 # El saludo de Coral del primer turno (`conversational_core._greeting`) y el «¡Hola!» con que el escritor empieza.
@@ -200,68 +195,16 @@ def _con_el_freno_del_origen(state, respuesta: str) -> str:
     return _sin_la_pregunta(state, sin)
 
 
-def _es_la_misma(a: str, b: str) -> bool:
-    """Dos textos que dicen lo mismo: las mismas cifras y casi las mismas palabras (sobre el más largo)."""
-    if re.findall(r"\d[\d.,]*", a) != re.findall(r"\d[\d.,]*", b):
-        return False
-    pa, pb = _palabras(a), _palabras(b)
-    return bool(pa and pb) and len(pa & pb) / max(len(pa), len(pb)) >= 0.8
-
-
-def _frase_sin_la_pregunta(frase: str, preguntas: list[str]) -> str | None:
-    """La frase del escritor que acaba en la pregunta de la reserva, con algo delante: «Para este plan hay que dormir en las islas:
-    ¿Desde dónde saldrías?» (tanda s05a, a quien acaba de decir «desde Cartagena»). Queda lo de delante, con punto. None si no es el caso."""
-    entera = frase.rstrip()
-    for pregunta in preguntas:
-        if len(entera) > len(pregunta) and entera.casefold().endswith(pregunta.casefold()):
-            delante = entera[:-len(pregunta)].rstrip().rstrip(":,;—-").rstrip()
-            return f"{delante}." if delante else ""
-    return None
-
-
-def _sin_las_preguntas(respuesta: str, preguntas: list[str]) -> tuple[bool, str]:
-    """(si había alguna, la respuesta sin ellas): fuera los párrafos que son un párrafo de una pregunta del turno y, dentro
-    de los demás, las frases con «?» que son la frase con «?» de una pregunta."""
-    partes_de_preguntas = [p.strip() for q in preguntas for p in q.split(_PARRAFO) if p.strip()]
-    frases_de_preguntas = [f.strip() for q in preguntas for f in _PREGUNTA_RE.findall(q)]
-    quitada, quedan = False, []
-    for parrafo in respuesta.split(_PARRAFO):
-        if parrafo.strip() and any(_es_la_misma(parrafo.strip(), p) for p in partes_de_preguntas):
-            quitada = True
-            continue
-        antes = parrafo
-        for frase in _PREGUNTA_RE.findall(parrafo):
-            if any(_es_la_misma(frase.strip(), q) for q in frases_de_preguntas):
-                parrafo = parrafo.replace(frase, "", 1)
-            elif (sin_ella := _frase_sin_la_pregunta(frase, frases_de_preguntas)) is not None:
-                parrafo = parrafo.replace(frase, sin_ella, 1)
-        if parrafo != antes:
-            quitada = True
-            parrafo = re.sub(r"[ \t]{2,}", " ", parrafo).strip()
-        if parrafo.strip():
-            quedan.append(parrafo)
-    return quitada, _PARRAFO.join(quedan)
-
-
-def _sin_las_frases_de(cuerpo: str, pregunta: str) -> str:
-    """El cuerpo sin las frases de la pregunta que va al final, dichas ya en el cuerpo: «¡Perfecto, serían 2 personas
-    para el minicurso! Puedes salir desde Cartagena… o, si ya estás en las islas…» y debajo «¿Desde dónde saldrías?
-    Puedes salir desde Cartagena…» (4 de las 7 respuestas que repiten en caln2-B). Solo frases largas: «¡Perfecto!» no
-    es la pregunta."""
-    frases = [f.strip() for f in _FRASE_RE.findall(pregunta) if len(_palabras(f)) >= 6]
-    if not frases:
-        return cuerpo
-    quedan = []
-    for parrafo in cuerpo.split(_PARRAFO):
-        antes = parrafo
-        for frase in _FRASE_RE.findall(parrafo):
-            if any(_es_la_misma(frase.strip(), f) for f in frases):
-                parrafo = parrafo.replace(frase, "", 1)
-        if parrafo != antes:
-            parrafo = re.sub(r"[ \t]{2,}", " ", parrafo).strip()
-        if parrafo.strip():
-            quedan.append(parrafo)
-    return _PARRAFO.join(quedan)
+def _sin_estos_textos(respuesta: str, textos: list[str]) -> tuple[bool, str]:
+    """(si había alguno, la respuesta sin ellos). Las preguntas del turno son textos nuestros (`ask_slot`), y desde CALN-43 el
+    escritor no las escribe: se buscan tal cual, no parecidas (antes, `_sin_las_preguntas` y `_sin_las_frases_de` buscaban las que
+    el escritor redactaba a su manera)."""
+    cuerpo = respuesta
+    for texto in textos:
+        cuerpo = cuerpo.replace(texto.strip(), "")
+    if cuerpo == respuesta:
+        return False, respuesta
+    return True, _PARRAFO.join(p.strip() for p in re.split(r"\n\s*\n", cuerpo) if p.strip())
 
 
 def _ya_pregunta(cuerpo: str) -> bool:
@@ -375,30 +318,21 @@ def _componer(state, respuesta: str, *, pase: bool = False, escribio: bool | Non
     respuesta = _sin_enlaces_repetidos(respuesta)
     if not pase:
         respuesta = _con_el_freno_del_origen(state, respuesta)
-    preguntas = getattr(state, "_preguntas_del_turno", None) or []
+    preguntas = [(slot, texto) for slot, texto in (getattr(state, "_preguntas_del_turno", None) or []) if texto]
     pendiente = state.core_pending_slot
-    final = next((texto for slot, texto in reversed(preguntas) if slot == pendiente and texto), None)
+    final = next((texto for slot, texto in reversed(preguntas) if slot == pendiente), None)
     if final is None and not pase:
-        # Mini 0.58 (semana-santa, 2 de 3): «Quiero quedarme en las islas» y el escritor cerraba con la pregunta del origen fijada al
-        # empezar el turno. Tiene dos frases y debajo va la pieza, así que nadie la reconocía como final, y se quedaba. Ya contestada, fuera.
-        ya_contestadas = [texto for slot, texto in preguntas if texto and pendiente and slot != pendiente]
-        return _sin_las_preguntas(respuesta, ya_contestadas)[1] if ya_contestadas else respuesta
-    quitada, cuerpo = _sin_las_preguntas(respuesta, [texto for _, texto in preguntas if texto])
+        # Mini 0.58 (semana-santa): una pregunta del turno ya contestada no se queda; sin pendiente, no se toca nada.
+        viejas = [texto for slot, texto in preguntas if pendiente and slot != pendiente]
+        return _sin_estos_textos(respuesta, viejas)[1] if viejas else respuesta
+    quitada, cuerpo = _sin_estos_textos(respuesta, [texto for _, texto in preguntas])
     if not quitada:
-        return respuesta
+        return respuesta  # no la llevaba (una tarjeta, un pase): no se toca
     logger.info(f"[CORE][CALN6] compositor: {len(respuesta)} → {len(cuerpo)} caracteres sin las preguntas del turno "
                 f"({[slot for slot, _ in preguntas]}), pendiente {pendiente!r}, pase {pase}")
-    # La explicación de una pregunta del turno que ya no es la pendiente (acaba de contestarla) tampoco se queda.
-    for _, texto in preguntas:
-        if texto and texto != final:
-            cuerpo = _sin_las_frases_de(cuerpo, texto)
-    if pase or final is None:
-        return cuerpo
-    if _ya_pregunta(cuerpo):
-        logger.info(f"[CORE][CALN6] compositor: la respuesta ya pregunta; {pendiente!r} queda para el turno siguiente")
-        _aplazar(state)
-        return cuerpo
-    cuerpo = _sin_las_frases_de(cuerpo, final)
+    if pase:
+        return cuerpo  # en un pase sigue una persona
+    # CALN-43 (decisión de Gadea, 6-nov): en la reserva la nuestra va siempre, aunque el escritor pregunte otra cosa (no debe).
     accion = que_preguntar.que_hacer(pendiente, _veces_preguntada(state, pendiente),
                                      hay_respuesta=len(_palabras(cuerpo)) >= _PALABRAS_DE_UNA_RESPUESTA)
     if accion == que_preguntar.PREGUNTAR:
