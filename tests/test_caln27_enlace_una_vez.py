@@ -39,9 +39,9 @@ def test_el_mismo_plan_en_otro_idioma_tambien_es_el_mismo_enlace():
     assert _sin_enlaces_repetidos(f"Reserva aquí: {otra}\n\n{TARJETA}") == TARJETA
 
 
-def test_un_enlace_de_otro_plan_no_se_toca():
-    entrada = f"Si prefieres un día: {DOS}\n\n{TARJETA}"
-    assert _sin_enlaces_repetidos(entrada) == entrada
+def test_con_tarjeta_el_enlace_de_otro_plan_se_va():
+    """CALN-43: el plan lo decide la tabla y el enlace lo pone la tarjeta (antes arbitraba CALN-24)."""
+    assert _sin_enlaces_repetidos(f"Si prefieres un día: {DOS}\n\n{TARJETA}") == TARJETA
 
 
 def test_sin_tarjeta_no_se_toca():
