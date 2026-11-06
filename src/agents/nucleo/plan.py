@@ -110,6 +110,8 @@ def _recommended_plan_intro(state: ConversationState) -> str:
     inmersiones o días, el plan es suyo y no hay nada que recomendar, tampoco si son las 2 de siempre («I'd do the 2
     dives» recibía «I recommend the 2 dives in 1 day plan» debajo de sus enlaces)."""
     lang = state.language
+    if getattr(state, "sin_nocturna", False) or getattr(state, "salidas_sueltas", None):
+        return ""  # Lo pidió así: la tabla ya decide, y la tarjeta lo dice
     if state.detected_cert_dives is None and (mayor := _otro_paquete_de_esos_dias(state.detected_cert_days)):
         # CALN-39: solo dijo los días, y hay más de un paquete: se propone el pequeño y se le dice qué más hay.
         menor = _DAYS_TO_DIVES[state.detected_cert_days]
@@ -129,16 +131,16 @@ def _recommended_plan_intro(state: ConversationState) -> str:
             "me.)\n\n")
 
 
+def plan_del_estado(state: ConversationState):
+    """La tabla del plan, con lo que dice el estado. Con un grupo no se sabe quién hace el refresher (tanda s05f, conv 6947, va una persona)."""
+    from src.flows.plan_de_buceo import plan_de_buceo  # lazy
+
+    return plan_de_buceo(inmersiones=state.detected_cert_dives, dias=state.detected_cert_days, sin_nocturna=getattr(state, "sin_nocturna", False),
+                         salidas_sueltas=getattr(state, "salidas_sueltas", None), origen=state.location,
+                         refresher_solo=bool(state.refresher_interested) and (state.detected_group_size or 1) == 1)
+
+
 def _resolve_cert_plan(state: ConversationState) -> str | None:
-    """Plan de buceo certificado desde los conteos detectados (sin consumirlos),
-    o el recomendado por defecto. Determinista, del catálogo."""
-    dives = state.detected_cert_dives
-    dias = state.detected_cert_days
-    if dias and state.refresher_interested and (state.detected_group_size or 1) == 1:
-        # CALN-39 (tanda s05f, conv 6947): el refresher ocupa su propio día. Quien quería bucear dos días hace el refresher y uno de buceo; recibía
-        # el paquete de dos días. Con un grupo no se sabe quién lo hace, y sigue igual.
-        dias -= 1
-    if dives is None and dias in _DAYS_TO_DIVES:
-        dives = _DAYS_TO_DIVES[dias]
-    base = _DIVES_TO_BASE_PLAN.get(dives or 2, "2_dives_1_day")
+    """Plan de buceo certificado desde lo que ha dicho (sin consumirlo), o el recomendado por defecto. Lo decide la tabla (`flows/plan_de_buceo.py`)."""
+    base = _DIVES_TO_BASE_PLAN.get(plan_del_estado(state).inmersiones, "2_dives_1_day")
     return cart_render.service_for_location(base, state)

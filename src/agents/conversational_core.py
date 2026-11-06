@@ -781,8 +781,14 @@ def _cart_item(state: ConversationState, activity: str, qty: int) -> dict:
     registered = dom.by_id(activity)
     item_type = (registered.cart_type if registered else None) or "course"
     plan = None
+    extra: dict = {}
     if item_type == "cert":
         plan = _resolve_cert_plan(state)
+        del_plan = plan_del_estado(state)  # CALN-43
+        if del_plan.veces > 1:
+            extra["veces"] = del_plan.veces
+        if del_plan.asesor_cierra_el_precio:
+            extra["asesor_cierra_el_precio"] = True
     elif item_type == "course":
         plan = state.detected_service_id if activity == state.detected_activity else dom.base_service_id(activity)
         if plan:
@@ -792,7 +798,7 @@ def _cart_item(state: ConversationState, activity: str, qty: int) -> dict:
         # ítem salía con el servicio del minicurso y su enlace («Dive Mini Course» dos veces, una para el niño de 9).
         plan = cart_render.service_for_location(dom.base_service_id(activity), state)
     return {"type": item_type, "qty": qty, "plan": plan,
-            "label": cart_render.cart_label_for(item_type, plan, state.language)}
+            "label": cart_render.cart_label_for(item_type, plan, state.language), **extra}
 
 
 # ─── El bucle por turno ───
@@ -1372,6 +1378,7 @@ from src.agents.nucleo.plan import (  # noqa: E402, F401
     _pregunta_origen,
     _recommended_plan_intro,
     _resolve_cert_plan,
+    plan_del_estado,
 )
 from src.agents.nucleo.reparto import (  # noqa: E402, F401
     _apply_cert_or_course,

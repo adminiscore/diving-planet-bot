@@ -339,6 +339,12 @@ def _cart_booking_blocks(state: ConversationState) -> list[dict]:
         url = None if _is_contact_only_service(svc_id) else (
             _resolve_service_booking_url(svc, state) or enlace_en_su_idioma(svc.get("web_url"), state.language))
         add(svc, qty, label, url, kind=("course" if it == "course" else "day"))
+        if item.get("veces", 1) > 1:  # CALN-43, P3
+            blocks[-1]["note"] = (f"_Son {item['veces']} salidas de un día: se reserva una por día._" if lang == "es"
+                                  else f"_That's {item['veces']} one-day trips: book one per day._")
+        if item.get("asesor_cierra_el_precio"):  # CALN-43, P5
+            blocks[-1].update(usd=None, cop=None, url=None, note=("_Sin la nocturna: el precio te lo cierra un asesor._" if lang == "es"
+                                                                  else "_Without the night dive: an advisor will confirm the price._"))
     return blocks
 
 

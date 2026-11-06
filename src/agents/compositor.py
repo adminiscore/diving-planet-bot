@@ -77,12 +77,13 @@ def _sin_enlaces_repetidos(respuesta: str) -> str:
 def _enlaces_de_otro_plan_de_buceo(state, respuesta: str) -> set[str]:
     """CALN-39 (panel fijo, 6-nov): el plan del cliente es un paquete sin enlace, que reserva un asesor, y el escritor le daba el de la salida de un
     día («Book the divers here»), y reservaba otra cosa. Solo si dijo días o inmersiones: sin eso, el plan es una recomendación y puede cambiarlo."""
-    from src.agents.conversational_core import _resolve_cert_plan  # lazy
+    from src.agents.conversational_core import _resolve_cert_plan, plan_del_estado  # lazy
     from src.domain import activities as dom  # lazy
     from src.flows.catalog import RAW_SERVICES  # lazy
 
-    if not (getattr(state, "detected_cert_days", None) or getattr(state, "detected_cert_dives", None)) or (
-            RAW_SERVICES.get(_resolve_cert_plan(state)) or {}).get("booking_url"):
+    if not (getattr(state, "detected_cert_days", None) or getattr(state, "detected_cert_dives", None)):
+        return set()
+    if (RAW_SERVICES.get(_resolve_cert_plan(state)) or {}).get("booking_url") and not plan_del_estado(state).asesor_cierra_el_precio:
         return set()
     de_buceo = {enlace.group(0) for sid, s in RAW_SERVICES.items() if dom.activity_for_service(sid) == dom.activity_for_service("2_dives_1_day")
                 and (enlace := _ENLACE_DE_RESERVA_RE.search(s.get("booking_url") or ""))}

@@ -303,6 +303,7 @@ def _poner_duracion(intent, state: ConversationState, datos: dict, message: str 
         # Lo de antes (2 días, el paquete) ya no vale: la tarjeta es la salida de un día.
         from src.flows.catalog import MULTI_DAY_SERVICES  # lazy
 
+        state.salidas_sueltas = dias_de_buceo_de(datos, state) or state.detected_cert_days or 2
         intent.cert_days = None
         state.detected_cert_days = state.detected_cert_dives = None
         if state.selected_service in MULTI_DAY_SERVICES:

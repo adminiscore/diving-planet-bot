@@ -943,6 +943,17 @@ _SALIDAS_SUELTAS_Q = {
         "say how many days they want to dive without saying that they want separate one-day trips."
     ),
 }
+# CALN-43 (P2, P4 y P5 de la tabla del plan). Sonda de 20 mensajes × 2: 0,97-0,98 quien no la quiere o quiere solo mañanas; como mucho 0,67 el resto
+# («¿a qué hora sale por la mañana?»).
+SIN_NOCTURNA = "sin_nocturna"
+SIN_NOCTURNA_MIN = 0.85
+_SIN_NOCTURNA_Q = {
+    "type": "noul",
+    "instructions": (
+        "The customer does not want a night dive: they say so, or want to dive only by day or only in the mornings. It is FALSE if they do not mention "
+        "it, ask whether a plan includes one or what it is, want one, or 'night' or 'morning' refers to their stay, arrival or the time of something else."
+    ),
+}
 SE_DESPIDE = "se_despide"
 SE_DESPIDE_MIN = 0.7
 _SE_DESPIDE_Q = {
@@ -1110,6 +1121,7 @@ _DEL_TURNO = (
     _DelTurno(QUIERE_CURSO, _QUIERE_CURSO_Q, _si(QUIERE_CURSO_MIN)),
     _DelTurno(SIN_HOTEL, _SIN_HOTEL_Q, _si(SIN_HOTEL_MIN)),
     _DelTurno(SALIDAS_SUELTAS, _SALIDAS_SUELTAS_Q, _si(SALIDAS_SUELTAS_MIN)),
+    _DelTurno(SIN_NOCTURNA, _SIN_NOCTURNA_Q, _si(SIN_NOCTURNA_MIN)),
     _DelTurno(ACEPTA_EL_PASE, _ACEPTA_EL_PASE_Q, _si(ACEPTA_EL_PASE_MIN)),
     _DelTurno(VIAJA_SOLO, _VIAJA_SOLO_Q, _si(VIAJA_SOLO_MIN)),
     _DelTurno(HABLA_DE_SI, _HABLA_DE_SI_Q, _si(HABLA_DE_SI_MIN)),

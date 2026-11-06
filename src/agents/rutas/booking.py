@@ -132,12 +132,15 @@ def _poner_el_plan_dicho(state: ConversationState, intent) -> None:
     tiene que decir que el mensaje elige y no pregunta. Sonda de 15 mensajes × 2: elige 0,75-0,96; contar la experiencia («llevo 5 inmersiones», que el
     regex lee como un plan) como mucho 0,60; preguntar, 0,98 en la otra señal. «Vamos con el de 5» (0,47) sigue sin cambiarlo. Si los días ya no casan
     con las inmersiones, se olvida lo otro, y el carrito se rehace."""
-    from src.agents.jev_router import ASKS_QUESTION, ELIGE_SEGURO  # lazy
+    from src.agents.jev_router import ASKS_QUESTION, ELIGE_SEGURO, SIN_NOCTURNA  # lazy
     from src.domain import activities as dom  # lazy
     from src.observability import marca_regex  # lazy
 
     senales = getattr(state, "_senales_router", None) or {}
     cambia = bool(senales.get(ELIGE_SEGURO)) and not senales.get(ASKS_QUESTION)
+    if senales.get(SIN_NOCTURNA):
+        state.sin_nocturna = True
+        state.mixed_cart = []
 
     def dias_de(dives: int | None) -> int | None:
         return (dom.dive_packages().get(dives) or (None, None))[0]
@@ -145,6 +148,8 @@ def _poner_el_plan_dicho(state: ConversationState, intent) -> None:
     dives = getattr(intent, "cert_dives", None)
     if dives and dives != state.detected_cert_dives and (not state.detected_cert_dives or cambia):
         state.detected_cert_dives = dives
+        if dives != 2:
+            state.salidas_sueltas = None
         if state.detected_cert_days and dias_de(dives) != state.detected_cert_days:
             state.detected_cert_days = None
         state.mixed_cart = []
@@ -153,6 +158,7 @@ def _poner_el_plan_dicho(state: ConversationState, intent) -> None:
     dias = getattr(intent, "cert_days", None)
     if dias and dias != state.detected_cert_days and (not state.detected_cert_days or cambia):
         state.detected_cert_days = dias
+        state.salidas_sueltas = None
         if state.detected_cert_dives and dias_de(state.detected_cert_dives) != dias:
             state.detected_cert_dives = None
         state.mixed_cart = []
@@ -504,6 +510,7 @@ def _apply_detected_intent(intent, state: ConversationState, message: str | None
         # se rehace con él (como `_elegir_el_paquete_propuesto`).
         if intent.cert_dives != state.detected_cert_dives:
             state.detected_cert_dives = intent.cert_dives
+            state.sin_nocturna, state.salidas_sueltas = False, None
             state.mixed_cart = []
             logger.info(f"[INTENT] Night-dive package: {intent.cert_dives} dives")
     else:

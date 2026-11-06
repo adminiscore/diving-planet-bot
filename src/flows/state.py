@@ -165,6 +165,9 @@ class ConversationState:
     # ex-9b paso 6 (flag `duracion_por_extractor`): `detected_duration` sale de los días que el cliente dijo que quiere
     # BUCEAR (manda sobre la estancia: decisión de Gadea, 19-oct); False = de su estancia o del regex.
     duracion_de_buceo: bool = False
+    # CALN-43: lo que entra en la tabla del plan (`flows/plan_de_buceo.py`): no quiere nocturna, y cuántas salidas de un día pidió.
+    sin_nocturna: bool = False
+    salidas_sueltas: int | None = None
     # ex-9b paso 6 (flag `notas_rag_desde_estado`): el cliente dijo que OTRA persona del grupo no está certificada, o que
     # sí lo está pero lleva tiempo sin bucear (extractor, con cita). Los leen las notas de reglas del RAG.
     acompanante_sin_certificar: bool = False
