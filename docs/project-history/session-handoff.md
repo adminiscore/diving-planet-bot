@@ -59,7 +59,13 @@ integrar la rama del otro y suite en verde, porque en PRE gana el último; (3) *
 despliegue reinicia el contenedor y mata la medida del otro (avisar en el registro de Plan Coral con la hora de fin).
 Las doce normas, con su porqué, están en el documento.
 
-### ▶️ RETOMAR AQUÍ — 5-nov, ~22:45 (Gadea con Claude; Álvaro conectado): 0.59.0 SUBE A PRE; panel fijo en marcha
+### ▶️ RETOMAR AQUÍ — 6-nov, ~04:15 (Gadea con Claude, de noche; Álvaro y Gonzalo sin señales desde las 02:35 y las 00:50): 0.60.0 SUBE A PRE
+
+**Decisión que espera a Gadea:** la propuesta de tablas de Álvaro (Coral #3627; inventario y preguntas P2-P11 en #3629; P1 ya decidida). Es lo siguiente del grupo 2, y Claude la recomienda: esta noche ninguna idea probada ha bajado los ciegos del panel.
+**Norma de medida:** 3 tiradas del panel por lado (`docs/robustness/caln/panel-graves.json`): con 2 se tomó una decisión equivocada. Ojo: la mini y las B con `--codigo-local` se comportan igual que A (Álvaro, ×5 por modo).
+**Ramas:** `feature/juez-c059-alvaro` y `feature/s05f-alvaro`, ya integradas sus medidas; sin integrar: `feature/caln8-3b-alvaro` y `feature/jev-contexto-final-alvaro` (medidas, sin ganancia), `feature/acepta-pase-alvaro` (el pase, falta sin todo el contexto), `feature/caln30b-gonzalo` (en medida).
+
+### Relevo anterior — 5-nov, ~22:45 (Gadea con Claude; Álvaro conectado): 0.59.0 SUBE A PRE; panel fijo en marcha
 
 **Normas nuevas de Gadea:** el panel fijo decide (`docs/robustness/caln/panel-graves.json`; `reproducir_juez_pre --banco ... --reps 1 --codigo-local`, y `juez_claude --panel F --nombre N`; al menos 2 tiradas por lado). De los ciegos no sale ningún caso para los bancos. Subidas sin tope, si cumplen las condiciones. Alternar errores concretos y mejoras de fondo. Escritor: Luna o DeepSeek Flash. Con solo los días se propone el paquete de 4, aunque lo reserve un asesor (Gadea, 5-nov).
 **Siguiente:** CALN-39: paso 1 sin confirmar en dpb-c84 (`_DAYS_TO_DIVES` y la propuesta en `_recommended_plan_intro`), y `banco-caln39.json`, al que le falta el turno de la nacionalidad. Falla de verdad el plan rechazado («forget the package» y tarjeta del de 5). Integrar `feature/caln8-huecos-alvaro` (a7f944ee). Después CALN-42 y CALN-4.

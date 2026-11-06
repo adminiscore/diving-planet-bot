@@ -1,6 +1,26 @@
 History
 =======
 
+0.60.0 - (2026-11-06, SUBE A PRE: el plan que no pidió, por causa; huecos fuera del núcleo. Empata en el panel: sube por lo decidido, no por una mejora medida)
+---------------------
+* **Qué sube** (sobre 0.59.0):
+  * **Con solo los días, el paquete pequeño (decisión de Gadea, 5-nov):** 2 días → 4 inmersiones, y se le dice que hay de 5 con nocturna y salidas sueltas. Antes, el más grande. El de 4 no tiene enlace y lo reserva un asesor.
+  * **El plan que elige ahora manda sobre la primera cifra**, que se quedaba para siempre. Hace falta Jev seguro de que elige y no pregunta (`elige_seguro`, ≥ 0,7): contar la experiencia («llevo 5 inmersiones») no lo cambia. «Vamos con el de 5» (0,47) tampoco, de momento.
+  * **El refresher ocupa uno de los días que quería bucear**, solo si va una persona (conv 6947).
+  * **El paquete sin enlace no recibe el enlace de otro plan** (`compositor`). **El descuento de grupo se recuerda al reservar:** un aviso más en `avisos.json`.
+  * **`huecos`, de Álvaro:** 571 líneas, sin cambios, a `nucleo/huecos.py`.
+* **Panel fijo (40 clientes; clientes con grave, Opus a ciegas):** 0.59: 15, 19 y 21 (media 18,3); ciegos 12, 11 y 14. 0.60 con la línea del corte: 18, 21 y 15; ciegos 12, 12 y 10. **0.60 final: 17; ciegos 12.** Empate. Entre tiradas del mismo código hay ±3 clientes: hacen falta 3 por lado.
+* **Mini** (43 visibles): 0.60 con la línea del corte, 28 fallos; 0.59, 27 y 28.
+* **Bancos:** graves ×1 53/54; `banco-caln35` ×1 21/22; `banco-caln39` ×1 10/10; vuelo ×5: 14/15. Suite 3457.
+* **Medido y fuera:**
+  * **DeepSeek Flash de escritor (CALN-42):** panel 24 y 21, frente a 18 y 21 de Luna; las mismas clases de graves. El escritor sigue siendo Luna.
+  * **Jev lee el final del mensaje del bot** (969b2274, Álvaro), sobre la 0.59: panel 19 y 20; repreguntas 14 y 15, frente a 11 y 11. Arregla el pase aceptado (4 de 4) y no conviene entero.
+  * **El escritor recibe la lectura del turno** ((3b) y (3b'), Álvaro): mini 34 y 31, y 32 y 27, frente a 28 y 27. No se distingue.
+  * **La cuenta del corte de las 4:30 por código:** no arregla sus dos clientes y el vuelo baja de 5/5 a 2/5 en un caso.
+  * Una pregunta más a Jev no mueve las otras: 2440 respuestas, media 0,0065 con y sin ella.
+* **Tanda s05f del segundo autor contra la 0.59 (Álvaro):** 2 de 10 con grave. **Tasa acumulada, con lectura:** ver hallazgos.
+* **Sigue abierto:** **propuesta de Álvaro, pendiente de Gadea (#3627, #3629): tablas de plan, enlace y preguntas en una sola función, probadas sin IA.** De los 16 graves: 7 de decisión, 4 de lectura, 3 mixtos y 2 de lenguaje. Las familias de los ciegos: 3.ª vez, plan o enlace, corte de las 4:30, descuento de grupo. El pase aceptado que no se hace. El alias «Coralina» dentro de «Casa Brisa Coralina». `s04i-belgas`.
+
 0.59.0 - (2026-11-05, SUBE A PRE: lo decidido, como datos en la base; fuera el código de la respuesta adelantada; panel fijo de graves)
 ---------------------
 * **Decisión de Gadea (noche), para salir del bucle:** panel fijo de clientes (CALN-41), que decide si una versión mejora; las subidas que hagan falta, si cumplen las condiciones; alternar errores concretos y mejoras de fondo; escritor: Luna o, como mucho, DeepSeek Flash (CALN-42).
