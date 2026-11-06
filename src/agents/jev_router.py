@@ -1285,6 +1285,16 @@ _CONTEXTO_TURNOS = 2
 _CONTEXTO_CARACTERES = 400
 
 
+def _recorte_para_jev(mensaje: dict) -> str:
+    """Lo que Jev lee de un mensaje anterior: del cliente, el principio; del asistente, el principio y el final, donde está su pregunta (Álvaro, #3574).
+    Solo con el principio, la oferta del asesor al final de un mensaje largo no se veía y «Yes, please» no la aceptaba; solo con el final, las
+    repreguntas subían en el panel (14 y 15, frente a 11 y 11)."""
+    texto = str(mensaje["content"])
+    if mensaje.get("role") == "user" or len(texto) <= _CONTEXTO_CARACTERES:
+        return texto[:_CONTEXTO_CARACTERES]
+    return f"{texto[:_CONTEXTO_CARACTERES // 2]} … {texto[-_CONTEXTO_CARACTERES // 2:]}"
+
+
 def _estado_para_jev(message: str, history: list[dict] | None = None) -> str:
     """Lo que Jev lee: el contexto fijo, los últimos turnos (solo con el flag) y el mensaje de este turno."""
     sin_contexto = f"{_CONTEXT}\n\nCustomer message: {message}"
@@ -1294,8 +1304,7 @@ def _estado_para_jev(message: str, history: list[dict] | None = None) -> str:
     if not ultimos:
         return sin_contexto
     lineas = "\n".join(
-        f"{'Customer' if h.get('role') == 'user' else 'Assistant'}: {str(h['content'])[:_CONTEXTO_CARACTERES]}"
-        for h in ultimos)
+        f"{'Customer' if h.get('role') == 'user' else 'Assistant'}: {_recorte_para_jev(h)}" for h in ultimos)
     return (f"{_CONTEXT}\n\nHow the conversation ended, only so you can tell what the customer is referring to:\n"
             f"{lineas}\n\nEvery question below is about THIS last message of the customer, not about the lines "
             f"above.\n\nCustomer message: {message}")

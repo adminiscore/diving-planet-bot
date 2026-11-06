@@ -63,3 +63,12 @@ def test_la_oferta_del_cierre_en_pesos_la_sigue_el_cierre():
     assert nucleo_setup._es_la_oferta_del_cierre(st)
     st._senales_router = {ACEPTA_EL_PASE: True}
     assert _quiere_reservar_o_pagar(st, "Sí, por favor. ¿Y el anticipo es del 50 %?")
+
+
+def test_jev_ve_el_principio_y_el_final_del_mensaje_del_bot():
+    from src.agents import jev_router as j
+
+    largo = "Hola, esto es el principio. " + "x" * 900 + " ¿Quieres que te pase con un asesor?"
+    recorte = j._recorte_para_jev({"role": "assistant", "content": largo})
+    assert recorte.startswith("Hola, esto") and recorte.endswith("con un asesor?") and len(recorte) < 420
+    assert j._recorte_para_jev({"role": "user", "content": largo}) == largo[:400]

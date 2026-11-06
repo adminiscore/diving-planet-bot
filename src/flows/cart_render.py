@@ -319,6 +319,11 @@ def _cart_booking_blocks(state: ConversationState) -> list[dict]:
             add(beg, qty, beg_name, beg_url)
             continue
         if it == "companion":
+            # Tanda s06a (6960): «el de 5 vendría en la lancha»: no paga (`babies_onboard`), y salía la tarjeta de acompañante, a 80 USD.
+            snorkel_desde = (dom.by_id("snorkel").min_age if dom.by_id("snorkel") else None) or 0
+            qty -= sum(1 for edad in state.detected_ages or [] if isinstance(edad, int) and edad < snorkel_desde)
+            if qty <= 0:
+                continue
             blocks.append({
                 "label": _cart_label_for(it, None, lang), "qty": qty,
                 "usd": COMPANION_PRICE.get("usd_online"), "cop": COMPANION_PRICE.get("cop_online"), "url": None,

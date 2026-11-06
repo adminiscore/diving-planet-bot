@@ -1274,3 +1274,15 @@ Criterio de Álvaro (#2716). 10 clientes nuevos y educados (conv 6943-6952). Los
 - Snorkel (6948 t1): lo que incluye, dos veces en el mismo mensaje.
 
 **Lectura:** 2 de 10, frente a 5 de 10 en s05e contra la 0.58. Los graves de s05e, refresher el mismo día, vuelo y planes sin enlace, no salen aquí. Los dos que quedan son la tarjeta con un plan viejo (CALN-39) y la regla del alojamiento cuando el cliente acepta el pase. Son 10 clientes y otro autor: dice poco de la tasa, pero es del segundo autor, como pide la meta.
+
+## CALN-S06A-01..10 · 20.ª tanda de sparring contra PRE 0.60.0 (6-nov, `charla_pre`)
+
+Criterio de Álvaro (#2716). 10 clientes nuevos y educados (conv 6953-6962). Los temas los fijó un subagente antes de ver respuestas, sin ver el código. **Juez Opus a ciegas, una pasada: 2 de 10 con grave**, los dos confirmados leyendo el texto.
+
+**Graves:**
+1. **Familia argentina** (6960, t2): el niño de 5 va en la lancha y no paga; la respuesta lo dice, y debajo la tarjeta de acompañante a 80 USD. Solo se corrige cuando el cliente lo señala. Arreglado en `cart_render`; caso en `banco-graves`.
+2. **Andrés** (6955, t2): el jueves a las 22:13 da por bueno el refresher del viernes, cuando la web ya no admite el día siguiente. Abierto: es el corte de las 4:30, y darle la cuenta hecha al escritor empeoró el vuelo.
+
+**Medios:** vuelve a preguntar lo ya dicho (6954, 6956, 6957, 6962: 4 de 10); dice que el refresher no se reserva por el enlace del minicurso y lo da debajo (6955).
+
+**Lectura:** últimas tres tandas: 5 de 10 (s05e, 0.58), 2 de 10 (s05f, 0.59, Álvaro) y 2 de 10 (0.60). Es buena señal, pero son 10 clientes por tanda y con temas distintos: el panel fijo empata entre 0.59 y 0.60. La meta sigue siendo 2 de 60.

@@ -76,3 +76,12 @@ def test_con_un_plan_elegido_no_se_fuerza():
     st.detected_service_id = "7_dives_3_days"
     planes = _planes(st)
     assert len(planes) <= hechos._OTROS_POR_ORIGEN
+
+
+def test_s06a_el_nino_que_no_paga_no_lleva_tarjeta_de_acompanante():
+    from src.flows import cart_render
+
+    st = _familia_con_hijos([5, 9, 12], [{"type": "snorkel", "qty": 4, "plan": None, "label": "x"}, {"type": "companion", "qty": 1, "plan": None, "label": "x"}])
+    assert [b["label"] for b in cart_render.cart_booking_blocks(st) if "compa" in b["label"].lower()] == []
+    st = _familia_con_hijos([5, 9, 12], [{"type": "companion", "qty": 2, "plan": None, "label": "x"}])  # y un adulto, que sí paga
+    assert [b["qty"] for b in cart_render.cart_booking_blocks(st)] == [1]
