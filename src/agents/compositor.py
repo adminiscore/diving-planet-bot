@@ -51,9 +51,10 @@ _VECES_MAX = 2
 _PALABRAS_DE_UNA_RESPUESTA = 5
 
 
-# CALN-27 (un dato, un solo dueño): el enlace de reserva lo pone la tarjeta. Si el escritor da el mismo, sobra el suyo: en 16 de 50
-# charlas de sparring salía el enlace o el pago dos veces. Se compara exacto, sin leer el sentido, y solo se toca lo de antes de la
-# 1.ª tarjeta (dos tarjetas pueden llevar el mismo enlace, como el minicurso y los Bubble Makers).
+# CALN-27 y CALN-43 (un dato, un solo dueño): si hay tarjeta con enlace, los enlaces de reserva los pone ella. Antes solo se quitaba el mismo enlace
+# (en 16 de 50 charlas salía dos veces), y CALN-24 arbitraba si el escritor daba el de otro plan. Ahora el escritor recibe el plan de la tabla, y lo que
+# no sea de la tarjeta se va; se queda el refresher, que lo pone el código con su «✅». Solo se toca lo de antes de la 1.ª tarjeta (dos tarjetas pueden
+# llevar el mismo enlace, como el minicurso y los Bubble Makers).
 _ENLACE_DE_RESERVA_RE = re.compile(r"https://book\.divingplanet\.org/book/[\w\-]+/\d+")
 _ENLACE_CON_IDIOMA_RE = re.compile(_ENLACE_DE_RESERVA_RE.pattern + r"(?:\?[\w=&\-]*)?(?:#[\w\-]*)?")  # «…#rvrd-1» es parte del enlace
 _TARJETA_RE = re.compile(r"(?m)^🤿 \*")
@@ -61,16 +62,17 @@ _FIN_DE_FRASE_RE = re.compile(r"(?<=[.!?:])\s+")
 
 
 def _sin_enlaces_repetidos(respuesta: str) -> str:
-    """Quita de lo que escribe el escritor la frase del enlace que ya sale más abajo."""
+    """Quita de lo que escribe el escritor los enlaces de reserva, si la tarjeta de abajo lleva los suyos."""
     tarjeta = _TARJETA_RE.search(respuesta)
     if not tarjeta:
         return respuesta
     cuerpo, resto = respuesta[:tarjeta.start()], respuesta[tarjeta.start():]
-    de_la_tarjeta = set(_ENLACE_DE_RESERVA_RE.findall(resto))
-    if not de_la_tarjeta & set(_ENLACE_DE_RESERVA_RE.findall(cuerpo)):
+    del_codigo = {e for p in cuerpo.split(_PARRAFO) if p.startswith("✅") for e in _ENLACE_DE_RESERVA_RE.findall(p)}
+    suyos = set(_ENLACE_DE_RESERVA_RE.findall(cuerpo)) - del_codigo
+    if not suyos or not _ENLACE_DE_RESERVA_RE.search(resto):
         return respuesta
-    limpio = _sin_estos_enlaces(cuerpo, de_la_tarjeta)
-    logger.info("[CORE][CALN27] compositor: el enlace del escritor ya sale en la tarjeta: fuera el suyo")
+    limpio = _sin_estos_enlaces(cuerpo, suyos)
+    logger.info("[CORE][CALN27] compositor: la tarjeta lleva el enlace: fuera el del escritor")
     return f"{limpio}{_PARRAFO}{resto}" if limpio else resto
 
 
