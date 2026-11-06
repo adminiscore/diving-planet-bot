@@ -10,7 +10,7 @@ import logging
 import re
 
 from src.agents.intent_detector import DetectedIntent
-from src.agents.lead_summary import build_lead_summary
+from src.agents.lead_summary import build_lead_summary, pasar_a_persona
 from src.domain import activities as dom
 from src.flows import cart_render, grupo
 from src.flows.como_reserva import hotel_conocido
@@ -199,9 +199,7 @@ def _maybe_build_pending_note(state: ConversationState) -> None:
     """Build the lead note after a tree call, either via a real escalation or
     a silent note (e.g. a booking link was sent directly, no handoff needed)."""
     if state.step == Step.ESCALATE and not state.pending_note:
-        reason = state.pending_escalation_reason or "derivado por el árbol de opciones"
-        state.pending_escalation_reason = reason
-        state.pending_note = build_lead_summary(state, escalation_reason=reason)
+        pasar_a_persona(state, state.pending_escalation_reason or "derivado por el árbol de opciones", sin_botones=False)
     elif state.pending_lead_note_reason and not state.pending_note:
         state.pending_note = build_lead_summary(state, escalation_reason=state.pending_lead_note_reason)
         state.pending_lead_note_reason = None

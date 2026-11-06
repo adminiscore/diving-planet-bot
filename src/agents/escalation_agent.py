@@ -193,9 +193,9 @@ async def escalation_node(state: BotState) -> dict:
         _needs_staff_handoff,
         _reply_language,
         _shared_turn_handler,
-        build_lead_summary,
         detect_pii,
         detect_sensitive_escalation,
+        pasar_a_persona,
         pase_pedido_o_aceptado,
         privacy_block_message,
         regex_decide,
@@ -211,8 +211,7 @@ async def escalation_node(state: BotState) -> dict:
 
     # 1 · PII (pre-núcleo). Igual que la cascada: NO toca historial ni quick_replies.
     if detect_pii(message):
-        conv.step = Step.ESCALATE
-        conv.pending_escalation_reason = "datos sensibles detectados"
+        pasar_a_persona(conv, "datos sensibles detectados", con_nota=False, sin_botones=False)
         logger.warning("[NODE:escalation] PII detectado -> bloqueo de privacidad")
         return {"reply": privacy_block_message(conv.language)}
 
@@ -237,10 +236,7 @@ async def escalation_node(state: BotState) -> dict:
         # Antes de marcar el pase: con el paso en ESCALATE el RAG creía que ya estaba hecho ("el asesor ya tiene tu
         # caso") justo encima de "te paso ahora".
         antes = await _lo_contestable(conv, message, reason, sensitive_lang)
-        conv.step = Step.ESCALATE
-        conv.quick_replies = []
-        conv.pending_escalation_reason = reason
-        conv.pending_note = build_lead_summary(conv, escalation_reason=reason)
+        pasar_a_persona(conv, reason)
         logger.info(f"[NODE:escalation] sensible (keyword) reason={reason}")
         return {"reply": f"{antes}\n\n{response}" if antes else response}
 
@@ -250,10 +246,7 @@ async def escalation_node(state: BotState) -> dict:
         if found:
             reason, response = found
             antes = await _lo_contestable(conv, message, reason, sensitive_lang)  # antes del pase (ver arriba)
-            conv.step = Step.ESCALATE
-            conv.quick_replies = []
-            conv.pending_escalation_reason = reason
-            conv.pending_note = build_lead_summary(conv, escalation_reason=reason)
+            pasar_a_persona(conv, reason)
             logger.info(f"[NODE:escalation] sensible (señal LLM) reason={reason}")
             return {"reply": f"{antes}\n\n{response}" if antes else response}
 

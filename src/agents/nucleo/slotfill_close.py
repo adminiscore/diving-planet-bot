@@ -273,7 +273,7 @@ def _finalize(state: ConversationState, *, pasar_al_asesor: bool = True, ofrecer
     del catálogo), con gating colombiano: colombiano → asesor coordina el pago
     en COP (100% online o 50/50), sin link directo. 28-oct (decisión de Gadea): si aún no quiere reservar ni pagar
     (`pasar_al_asesor=False`), ve el precio y se le OFRECE el asesor (`ofrecer`: no si el turno ya pregunta otra cosa)."""
-    from src.agents.lead_summary import build_lead_summary
+    from src.agents.lead_summary import pasar_a_persona
 
     lang = state.language
     state.core_pending_slot = None
@@ -306,14 +306,10 @@ def _finalize(state: ConversationState, *, pasar_al_asesor: bool = True, ofrecer
     if state.is_colombian:
         # Gating colombiano: SIN link de reserva directa — el asesor coordina el
         # pago en COP (100% online o 50/50). Resumen determinista del catálogo.
-        state.step = Step.ESCALATE
-        state.quick_replies = []
-        reason = "núcleo conversacional - cliente colombiano, pago en COP con asesor"
-        state.pending_escalation_reason = reason
         summary = _colombian_summary_lines(state)
         ya_la_vio = state.mixed_last_summary == summary
         state.mixed_last_summary = summary
-        state.pending_note = build_lead_summary(state, escalation_reason=reason)
+        pasar_a_persona(state, "núcleo conversacional - cliente colombiano, pago en COP con asesor")
         # gen-4 (21-oct, decisión de Gadea, #862): el colombiano pasa a un asesor, sin "confirmar disponibilidad" (siempre
         # hay: decisión del negocio) y en el número del cliente ("Como son…" se decía también a quien va solo), sin
         # género supuesto.
@@ -363,7 +359,7 @@ _PASE_DE_LA_RECOGIDA = {
 def _recogida_por_confirmar(state: ConversationState, refresher_note: str, pasar_al_asesor: bool, ofrecer: bool) -> str:
     """Decisión de Gadea (5-nov): se aloja fuera de nuestras listas; ve el precio, sin enlace, y el asesor le confirma la recogida antes
     de reservar y pagar. Como el cierre en pesos: si aún no quiere reservar, se le ofrece el asesor."""
-    from src.agents.lead_summary import build_lead_summary
+    from src.agents.lead_summary import pasar_a_persona
 
     lang = "es" if state.language == "es" else "en"
     summary = _resumen_sin_enlace(state)
@@ -374,10 +370,7 @@ def _recogida_por_confirmar(state: ConversationState, refresher_note: str, pasar
         state.pending_lead_note_reason = "núcleo conversacional - alojamiento fuera de la lista: se le ofrece el asesor"
         oferta = _OFERTA_DEL_ASESOR["es_uno" if lang == "es" else "en"]
         return f"{refresher_note}{summary}\n\n{_RECOGIDA_POR_CONFIRMAR[lang]}" + (f"\n\n{oferta}" if ofrecer else "")
-    state.step = Step.ESCALATE
-    reason = "núcleo conversacional - alojamiento fuera de la lista: confirmar la recogida antes de reservar"
-    state.pending_escalation_reason = reason
-    state.pending_note = build_lead_summary(state, escalation_reason=reason)
+    pasar_a_persona(state, "núcleo conversacional - alojamiento fuera de la lista: confirmar la recogida antes de reservar")
     if ya_la_vio:
         return _PASE_DE_LA_RECOGIDA[lang]
     return f"{refresher_note}{summary}\n\n{_RECOGIDA_POR_CONFIRMAR[lang]} {_PASE_DE_LA_RECOGIDA[lang]}"

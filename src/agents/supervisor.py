@@ -20,7 +20,7 @@ from src.agents.escalation import (
     detect_sensitive_escalation,
     sensitive_response_for,
 )
-from src.agents.lead_summary import build_lead_summary
+from src.agents.lead_summary import pasar_a_persona
 from src.agents.rag_agent import (  # noqa: F401 — el núcleo llama a `supervisor.rag_answer`
     is_fallback_answer,
     rag_answer,
@@ -309,10 +309,7 @@ def _respuesta_fallo_tecnico(state: ConversationState, codigo: int | None, motiv
     if state.pending_escalation_reason and "FALLO TÉCNICO" not in state.pending_escalation_reason:
         # El turno ya pasaba a un asesor por otra cosa ("LINK ROTO"…): ese motivo se conserva y se añade el técnico.
         reason = f"{state.pending_escalation_reason} | {reason}"
-    state.step = Step.ESCALATE
-    state.quick_replies = []
-    state.pending_escalation_reason = reason
-    state.pending_note = build_lead_summary(state, escalation_reason=reason)
+    pasar_a_persona(state, reason)
     logger.error(f"[ALERTA][FALLO TÉCNICO] {reason}: pase a un asesor")
     return _FALLO_TECNICO_ES if state.language == "es" else _FALLO_TECNICO_EN
 
@@ -403,10 +400,7 @@ async def _shared_turn_handler(
         sensitive_escalation_early = None  # arq-1i: el clima en general lo contesta el redactor de hechos
     if sensitive_escalation_early:
         reason, response = sensitive_escalation_early
-        state.step = Step.ESCALATE
-        state.quick_replies = []
-        state.pending_escalation_reason = reason
-        state.pending_note = build_lead_summary(state, escalation_reason=reason)
+        pasar_a_persona(state, reason)
         logger.info(f"[SUPERVISOR] Sensitive escalation triggered (early) reason={reason}")
         return response
 
@@ -414,10 +408,7 @@ async def _shared_turn_handler(
         found = sensitive_response_for(routing_signals["sensitive_topic"], sensitive_lang)
         if found and not clima_general_al_redactor(found[0], routing_signals):
             reason, response = found
-            state.step = Step.ESCALATE
-            state.quick_replies = []
-            state.pending_escalation_reason = reason
-            state.pending_note = build_lead_summary(state, escalation_reason=reason)
+            pasar_a_persona(state, reason)
             logger.info(f"[SUPERVISOR] Sensitive escalation triggered (LLM signal, early) reason={reason}")
             return response
 
@@ -616,10 +607,7 @@ def pase_pedido_o_aceptado(state: ConversationState, message: str, routing_signa
     if not (acepta or pide):
         return None
     reason = "aceptó la oferta del bot de hablar con un asesor" if acepta else "solicitó asesor"
-    state.step = Step.ESCALATE
-    state.quick_replies = []
-    state.pending_escalation_reason = reason
-    state.pending_note = build_lead_summary(state, escalation_reason=reason)
+    pasar_a_persona(state, reason)
     logger.info(f"[SUPERVISOR] pase a una persona: {reason}")
     return MESSAGES["escalate"][state.language]
 

@@ -8,9 +8,9 @@ s4-2 (19-oct): movido tal cual desde `supervisor.py`, que lo re-exporta. Ver `sr
 import logging
 import re
 
-from src.agents.lead_summary import build_lead_summary
+from src.agents.lead_summary import pasar_a_persona
 from src.domain.politicas import politicas
-from src.flows.state import ConversationState, Step
+from src.flows.state import ConversationState
 
 logger = logging.getLogger("uvicorn.error")
 
@@ -134,10 +134,7 @@ def private_group_event_reply(state: ConversationState) -> str:
     asesor" pero no marcaba el pase; solo llegaba a una persona si el cliente contestaba "sí/ok" justo después. Se
     marca como cualquier otro pase (motivo + resumen para el asesor); `channels/chatwoot` lo ejecuta al enviar."""
     reason = "grupo privado o evento de empresa: cotización a medida"
-    state.step = Step.ESCALATE
-    state.quick_replies = []
-    state.pending_escalation_reason = reason
-    state.pending_note = build_lead_summary(state, escalation_reason=reason)
+    pasar_a_persona(state, reason)
     logger.info("[SUPERVISOR] grupo privado / empresa -> pase a un asesor")
     return _private_group_event_answer(state.language)
 

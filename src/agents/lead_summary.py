@@ -147,3 +147,20 @@ def build_lead_summary(state: ConversationState, escalation_reason: str = "") ->
     lines.append(f"🔴 Estado: lead activo — {reason_label}")
 
     return "\n".join(lines)
+
+
+def pasar_a_persona(state: ConversationState, motivo: str, *, con_nota: bool = True, sin_botones: bool = True) -> None:
+    """El pase a una persona, en un solo sitio (6-nov, decisión de Gadea #3664: «el pase en una función»). Marca el paso
+    ESCALATE, el motivo que `channels/chatwoot` ejecuta al enviar y la nota para el asesor; sin botones. Antes eran 14
+    copias de estas líneas en 9 ficheros. `test_pase_en_una_funcion` falla si se vuelve a marcar el pase fuera de aquí.
+
+    `con_nota=False`: los datos sensibles, que no llevan nota (no se copia lo que el cliente escribió); la del árbol se
+    hace después en `rutas/booking`. `sin_botones=False`: el bloqueo de privacidad, que no toca los botones."""
+    from src.flows.state import Step  # lazy: state importa de aquí
+
+    state.step = Step.ESCALATE
+    if sin_botones:
+        state.quick_replies = []
+    state.pending_escalation_reason = motivo
+    if con_nota:
+        state.pending_note = build_lead_summary(state, escalation_reason=motivo)

@@ -7,10 +7,10 @@ s4-2 (19-oct): movido tal cual desde `supervisor.py`, que lo re-exporta. Ver `sr
 import logging
 import re
 
-from src.agents.lead_summary import build_lead_summary
+from src.agents.lead_summary import pasar_a_persona
 from src.agents.supervisor import _infer_language
 from src.domain.politicas import politicas
-from src.flows.state import ConversationState, Step
+from src.flows.state import ConversationState
 from src.utils.text import strip_accents as _strip_accents
 
 logger = logging.getLogger("uvicorn.error")
@@ -244,10 +244,7 @@ _PASE_POR_CAMBIO = {
 
 def _pase_por_cambio_de_reserva(state: ConversationState, policy_text: str, kind: str, lang: str) -> str:
     reason, que_es, que_en = _PASE_POR_CAMBIO[kind]
-    state.step = Step.ESCALATE
-    state.quick_replies = []
-    state.pending_escalation_reason = reason
-    state.pending_note = build_lead_summary(state, escalation_reason=reason)
+    pasar_a_persona(state, reason)
     logger.info(f"[SUPERVISOR] {kind} de una reserva hecha -> pase a un asesor")
     if lang == "es":
         pase = (f"Te paso ahora con un asesor de Diving Planet para gestionar {que_es}; enseguida se pone en contacto "

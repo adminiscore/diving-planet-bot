@@ -8,9 +8,9 @@ s4-2 (19-oct): movido tal cual desde `supervisor.py`, que lo re-exporta. Ver `sr
 import logging
 import re
 
-from src.agents.lead_summary import build_lead_summary
+from src.agents.lead_summary import pasar_a_persona
 from src.agents.supervisor import _infer_language
-from src.flows.state import ConversationState, Step
+from src.flows.state import ConversationState
 
 logger = logging.getLogger("uvicorn.error")
 
@@ -132,10 +132,7 @@ def _broken_link_escalation_response(state: ConversationState, message: str) -> 
     Compartida entre el fast-path por keyword y el respaldo LLM
     (`broken_link_complaint`), para no duplicar el copy ni el efecto de estado."""
     reason = "🚨 LINK ROTO reportado por el cliente — revisar URLs"
-    state.step = Step.ESCALATE
-    state.quick_replies = []
-    state.pending_escalation_reason = reason
-    state.pending_note = build_lead_summary(state, escalation_reason=reason)
+    pasar_a_persona(state, reason)
     logger.warning(f"[SUPERVISOR] Broken-link complaint detected msg={message[:80]!r}")
     if _reply_language(state, message) == "es":
         return (
@@ -177,10 +174,7 @@ def _needs_staff_handoff(state: ConversationState, message: str, routing_signals
     if routing_signals.get("needs_staff") is not True:
         return None
     reason = "post-venta o empresa: lo revisa una persona (reserva/pago ya hechos, agencia, documentos)"
-    state.step = Step.ESCALATE
-    state.quick_replies = []
-    state.pending_escalation_reason = reason
-    state.pending_note = build_lead_summary(state, escalation_reason=reason)
+    pasar_a_persona(state, reason)
     logger.info("[SUPERVISOR] needs_staff (Jev) -> pase a una persona")
     if _reply_language(state, message) == "es":
         return (

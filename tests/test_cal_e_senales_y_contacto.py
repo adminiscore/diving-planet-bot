@@ -20,7 +20,6 @@ import pytest
 
 from src.agents import jev_router as jr
 from src.agents import supervisor as sv
-from src.agents.rutas import deflection as sup_deflection
 
 # ---------------------------------------------------------------- E1: el contacto pasa a una persona
 
@@ -31,7 +30,7 @@ def test_la_peticion_de_contacto_pasa_a_un_asesor(monkeypatch):
     no dice): ya no hay número que afirmar."""
     from src.flows.state import ConversationState, Step
 
-    monkeypatch.setattr(sup_deflection, "build_lead_summary", lambda state, escalation_reason=None: "resumen")
+    monkeypatch.setattr("src.agents.lead_summary.build_lead_summary", lambda state, escalation_reason=None: "resumen")
     st = ConversationState(conversation_id="t")
     es = sv._contacto_pasa_a_persona(st, "es")
     assert "asesor" in es

@@ -7,8 +7,8 @@ s4-2 (19-oct): movido tal cual desde `supervisor.py`, que lo re-exporta. Ver `sr
 import logging
 import re
 
-from src.agents.lead_summary import build_lead_summary
-from src.flows.state import ConversationState, Step
+from src.agents.lead_summary import pasar_a_persona
+from src.flows.state import ConversationState
 from src.utils.text import strip_accents as _strip_accents
 
 logger = logging.getLogger("uvicorn.error")
@@ -104,10 +104,7 @@ def _contacto_pasa_a_persona(state: ConversationState, lang: str) -> str:
     Antes (17-sep) se daba el WhatsApp oficial de la base, y el texto le añadía "(solo mensajes, no llamadas)", que la
     base no dice: el juez lo marcaba como invención (cal-03). Ahora no hay número que afirmar."""
     razon = "el cliente pide un número o contacto directo: lo atiende una persona"
-    state.step = Step.ESCALATE
-    state.quick_replies = []
-    state.pending_escalation_reason = razon
-    state.pending_note = build_lead_summary(state, escalation_reason=razon)
+    pasar_a_persona(state, razon)
     logger.info("[SUPERVISOR] petición de contacto -> pase a una persona (decisión de Gadea 16-oct)")
     if lang == "es":
         return (

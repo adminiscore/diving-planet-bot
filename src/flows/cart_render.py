@@ -357,8 +357,9 @@ def _goto_mixed_final_summary(state: ConversationState) -> str:
     state.quick_replies = []
     state.pending_lead_note_reason = "grupo mixto - resumen por actividad + links de reserva enviados"
     if not msgs:
-        state.step = Step.ESCALATE
-        state.pending_escalation_reason = "grupo mixto - cierre de reserva sin link directo"
+        from src.agents.lead_summary import pasar_a_persona  # lazy: agents importa de flows
+
+        pasar_a_persona(state, "grupo mixto - cierre de reserva sin link directo", con_nota=False)  # la nota, en rutas/booking
         return (
             "¡Perfecto! Te paso con un asesor para cerrar los detalles de tu reserva. 🌊"
             if lang == "es"
