@@ -33,9 +33,11 @@ from src.flows.catalog import (
 from src.flows.como_reserva import (
     ASESOR,
     HOTEL_PRIMERO,
+    POR_EL_ASESOR,
     RECOGIDA_POR_CONFIRMAR,
     como_reserva,
     hotel_conocido,
+    por_que_el_asesor,
 )
 from src.flows.state import ConversationState
 from src.utils import money
@@ -305,11 +307,14 @@ def _hechos_por_actividad(state: ConversationState, intenciones: list[str], acti
         # el pago, así que no se repite en `como_reservar`.
         if "enlace" in pedidas or "pago" in pedidas or "disponibilidad" in pedidas:
             forma = como_reserva(state)
-            if forma in (ASESOR, RECOGIDA_POR_CONFIRMAR):
-                # Decisión de Gadea (21-oct): el cierre de un colombiano lo coordina un asesor (pago en COP), sin enlace.
+            if forma in POR_EL_ASESOR:
+                # Decisión de Gadea (21-oct): el cierre de un colombiano lo coordina un asesor (pago en COP), sin enlace. CALN-43 P9 y
+                # P10: también el grupo de 5 o más (el descuento) y el que tiene una parte sin enlace, con el porqué.
                 bloque["enlace"] = {"asesor": True}
                 if forma == RECOGIDA_POR_CONFIRMAR:
                     bloque["hotel_primero"] = _politica("hotel_before_booking", lang)
+                elif por_que := por_que_el_asesor(forma, lang):
+                    bloque["por_el_asesor"] = por_que
             elif forma == HOTEL_PRIMERO:
                 bloque["hotel_primero"] = _politica("hotel_before_booking", lang)  # CALN-35 (decisión de Gadea, 5-nov)
             else:
