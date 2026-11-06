@@ -488,22 +488,23 @@ async def test_reask_does_not_repeat_plan_recommendation(monkeypatch, extractor_
 
 @pytest.mark.asyncio
 async def test_mixed_allocation_builds_multi_item_cart(extractor_dice):
-    """"somos 5, 3 certificados y 2 quieren snorkel" → carrito con 2 ítems,
-    sin perder a nadie (bug histórico del árbol, por construcción aquí)."""
+    """"somos 4, 3 certificados y 1 quiere snorkel" → carrito con 2 ítems,
+    sin perder a nadie (bug histórico del árbol, por construcción aquí). Con 4: a 5 o más los cierra un asesor por el
+    descuento de grupo (CALN-43 P9, `tests/test_caln43_grupos.py`)."""
     extractor_dice({
-        "somos 5, 3 buceamos certificados y 2 hacen snorkel, desde cartagena":
-            {**BUZO, **CARTAGENA, "group_size": 5, "group_allocation": {"certified_diving": 3, "snorkel": 2}},
+        "somos 4, 3 buceamos certificados y 1 hace snorkel, desde cartagena":
+            {**BUZO, **CARTAGENA, "group_size": 4, "group_allocation": {"certified_diving": 3, "snorkel": 1}},
         "no somos colombianos": {"is_colombian": False},
     })
     state = make_state("es")
-    await route_message(state, "somos 5, 3 buceamos certificados y 2 hacen snorkel, desde cartagena")
+    await route_message(state, "somos 4, 3 buceamos certificados y 1 hace snorkel, desde cartagena")
     # El subgrupo cert existe → la pregunta de seguridad aplica
     assert state.core_pending_slot == core.SLOT_SAFETY
     await route_message(state, "no")
     resp = await route_message(state, "no somos colombianos")
     types = {it["type"]: it["qty"] for it in state.mixed_cart}
     assert types.get("cert") == 3
-    assert types.get("snorkel") == 2
+    assert types.get("snorkel") == 1
     assert resp.count("divingplanet.org") >= 2  # un link por actividad
 
 

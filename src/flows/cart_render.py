@@ -275,12 +275,13 @@ def _cart_booking_blocks(state: ConversationState) -> list[dict]:
     lang = state.language
     blocks: list[dict] = []
 
-    def add(svc: dict, qty: int, label: str, url: str | None, note: str | None = None, kind: str = "day"):
+    def add(svc: dict, qty: int, label: str, url: str | None, note: str | None = None, kind: str = "day", actividad: str | None = None):
+        # `actividad`: la del registro (CALN-43, P9: quién cuenta para el descuento de grupo, `como_reserva`).
         blocks.append({
             "label": label, "qty": qty,
             "usd": svc.get("price_usd"), "cop": svc.get("price_cop"), "url": url,
             "note": note, "kind": kind, "incluye": svc.get(f"included_{lang}") or [],
-            "detalles_por_asesor": svc.get("detalles_por_asesor", False),
+            "detalles_por_asesor": svc.get("detalles_por_asesor", False), "actividad": actividad,
         })
 
     for item in state.mixed_cart:
@@ -300,7 +301,7 @@ def _cart_booking_blocks(state: ConversationState) -> list[dict]:
             if u8 > 0 or e10 > 0:
                 adult = max(0, qty - u8 - e10)
                 if adult > 0:
-                    add(beg, adult, beg_name, beg_url)
+                    add(beg, adult, beg_name, beg_url, actividad="minicourse")
                 if u8 > 0:
                     snk = SERVICES.get(_service_for_location("snorkeling", state)) or {}
                     nm = (snk.get(f"name_{lang}") or "Snorkel") + (" [menores de 8]" if lang == "es" else " [under 8]")
@@ -309,14 +310,15 @@ def _cart_booking_blocks(state: ConversationState) -> list[dict]:
                         if lang == "es"
                         else "_Under 8 cannot dive; they snorkel instead (from age 6)._"
                     )
-                    add(snk, u8, nm, _resolve_service_booking_url(snk, state), u8_note)
+                    add(snk, u8, nm, _resolve_service_booking_url(snk, state), u8_note, actividad="snorkel")
                 if e10 > 0:
                     # Sparring s04m: era el minicurso con otra etiqueta (183 USD y su enlace), y Bubble Makers tiene su
                     # servicio y su precio (168 USD) y lo cierra un asesor, como con el plan elegido (s04b).
                     bub = SERVICES.get(_service_for_location("bubble_makers", state)) or {}
-                    add(bub, e10, bub.get(f"name_{lang}") or "Bubble Makers", _resolve_service_booking_url(bub, state))
+                    add(bub, e10, bub.get(f"name_{lang}") or "Bubble Makers", _resolve_service_booking_url(bub, state),
+                        actividad="bubble_makers")
                 continue
-            add(beg, qty, beg_name, beg_url)
+            add(beg, qty, beg_name, beg_url, actividad="minicourse")
             continue
         if it == "companion":
             # Tanda s06a (6960): «el de 5 vendría en la lancha»: no paga (`babies_onboard`), y salía la tarjeta de acompañante, a 80 USD.
@@ -328,7 +330,7 @@ def _cart_booking_blocks(state: ConversationState) -> list[dict]:
                 "label": _cart_label_for(it, None, lang), "qty": qty,
                 "usd": COMPANION_PRICE.get("usd_online"), "cop": COMPANION_PRICE.get("cop_online"), "url": None,
                 "note": None, "kind": "day",
-                "incluye": COMPANION_INCLUDES[lang]["island" if state.location == "island" else "cartagena"],
+                "incluye": COMPANION_INCLUDES[lang]["island" if state.location == "island" else "cartagena"], "actividad": "companion",
             })
             continue
         svc_id = _cart_service_id(it, item.get("plan"), state)
@@ -338,7 +340,8 @@ def _cart_booking_blocks(state: ConversationState) -> list[dict]:
         # reservar, como decidió el negocio el 20-jul (abajo, `direct` solo con book.divingplanet.org).
         url = None if _is_contact_only_service(svc_id) else (
             _resolve_service_booking_url(svc, state) or enlace_en_su_idioma(svc.get("web_url"), state.language))
-        add(svc, qty, label, url, kind=("course" if it == "course" else "day"))
+        de_la_ficha = dom.activity_for_service(svc_id) if svc_id else None
+        add(svc, qty, label, url, kind=("course" if it == "course" else "day"), actividad=de_la_ficha.id if de_la_ficha else None)
         if item.get("veces", 1) > 1:  # CALN-43, P3
             blocks[-1]["note"] = (f"_Son {item['veces']} salidas de un día: se reserva una por día._" if lang == "es"
                                   else f"_That's {item['veces']} one-day trips: book one per day._")

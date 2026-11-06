@@ -39,11 +39,14 @@ from src.flows import cart_render, grupo, que_preguntar
 from src.flows.catalog import politica_breve
 from src.flows.como_reserva import (
     ENLACE,
+    GRUPO,
     HOTEL_PRIMERO,
+    PARTE_SIN_ENLACE,
     RECOGIDA_POR_CONFIRMAR,
     clave_de_idioma_y_grupo,
     como_reserva,
     cuando_tenga_el_hotel,
+    por_que_el_asesor,
 )
 from src.flows.state import ConversationState, Step
 from src.utils import money
@@ -288,8 +291,11 @@ def _finalize(state: ConversationState, *, pasar_al_asesor: bool = True, ofrecer
                 f"You pay in Colombian pesos (COP): {politica_breve('payment_colombian', 'en')}."
                 + (f"\n\n{_OFERTA_DEL_ASESOR['en']}" if ofrecer else ""))
 
-    if como_reserva(state) == RECOGIDA_POR_CONFIRMAR:
+    forma = como_reserva(state)
+    if forma == RECOGIDA_POR_CONFIRMAR:
         return _recogida_por_confirmar(state, refresher_note, pasar_al_asesor, ofrecer)
+    if forma in (GRUPO, PARTE_SIN_ENLACE):
+        return _grupo_por_el_asesor(state, forma, refresher_note, pasar_al_asesor, ofrecer)
 
     if state.is_colombian:
         # Gating colombiano: SIN link de reserva directa — el asesor coordina el
@@ -362,6 +368,41 @@ def _recogida_por_confirmar(state: ConversationState, refresher_note: str, pasar
     if ya_la_vio:
         return _PASE_DE_LA_RECOGIDA[lang]
     return f"{refresher_note}{summary}\n\n{_RECOGIDA_POR_CONFIRMAR[lang]} {_PASE_DE_LA_RECOGIDA[lang]}"
+
+
+_PASE_DEL_GRUPO = {
+    "es": "Les paso con un asesor; enseguida se pone en contacto con ustedes. 🌊",
+    "en": "I'll connect you with an advisor — they'll be in touch shortly. 🌊",
+}
+_MOTIVO_DEL_GRUPO = {
+    GRUPO: "grupo de 5 o más: el descuento de grupo se pide antes de pagar",
+    PARTE_SIN_ENLACE: "grupo con una parte del plan sin enlace: todo por el asesor",
+}
+
+
+def _grupo_por_el_asesor(state: ConversationState, forma: str, refresher_note: str, pasar_al_asesor: bool, ofrecer: bool) -> str:
+    """CALN-43 P9 y P10 (decisiones de Gadea, 6-nov): el grupo de 5 o más (para no perder el descuento de grupo) y el que tiene una parte
+    del plan sin enlace reservan con un asesor. Como el cierre en pesos: si pide reservar o pagar, pasa directo; si solo cotiza, ve el precio
+    sin enlaces y el porqué, y se le ofrece el asesor con nuestro texto (`_OFERTA_DEL_ASESOR`, para que su «sí» se reconozca)."""
+    from src.agents.lead_summary import build_lead_summary
+
+    lang = "es" if state.language == "es" else "en"
+    summary = _resumen_sin_enlace(state)
+    ya_la_vio = state.mixed_last_summary == summary
+    state.mixed_last_summary = summary
+    state.quick_replies = []
+    por_que = por_que_el_asesor(forma, lang)
+    if not pasar_al_asesor:
+        state.pending_lead_note_reason = f"núcleo conversacional - {_MOTIVO_DEL_GRUPO[forma]}: se le ofrece el asesor"
+        oferta = _OFERTA_DEL_ASESOR["es_grupo" if lang == "es" else "en"]
+        return f"{refresher_note}{summary}\n\n{por_que}" + (f"\n\n{oferta}" if ofrecer else "")
+    state.step = Step.ESCALATE
+    reason = f"núcleo conversacional - {_MOTIVO_DEL_GRUPO[forma]}"
+    state.pending_escalation_reason = reason
+    state.pending_note = build_lead_summary(state, escalation_reason=reason)
+    if ya_la_vio:
+        return _PASE_DEL_GRUPO[lang]
+    return f"{refresher_note}{summary}\n\n{por_que} {_PASE_DEL_GRUPO[lang]}"
 
 
 def _colombian_summary_lines(state: ConversationState) -> str:
