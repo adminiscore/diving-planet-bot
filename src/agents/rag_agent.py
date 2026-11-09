@@ -51,8 +51,14 @@ def _load_brand_tone_cached() -> dict:
     return _BRAND_TONE_CACHE
 
 
-def _build_tone_section(lang: str) -> str:
-    """Compose the Style/Tone bullets dynamically from brand_tone.json.
+def _pide_cerrar_preguntando(linea: str) -> bool:
+    """La línea del tono que pide cerrar con una pregunta («Cerrar con una pregunta útil…», «End with a useful question…»)."""
+    return any(palabra in linea.lower() for palabra in ("pregunta", "question"))
+
+
+def _build_tone_section(lang: str, sin_preguntas: bool = False) -> str:
+    """Compose the Style/Tone bullets dynamically from brand_tone.json. `sin_preguntas` (CALN-43, bloque 0,5 del Plan Gadea): en
+    un turno de la reserva la pregunta la pone el código, así que el tono no pide cerrar con una pregunta.
 
     Falls back to a minimal hard-coded set if the file is missing or malformed.
     """
@@ -76,7 +82,8 @@ def _build_tone_section(lang: str) -> str:
 
     ws_lang = (tone.get("whatsapp_style") or {}).get(lang) or {}
     for shape in ws_lang.get("message_shape", []):
-        bullets.append(f"- {shape}")
+        if not (sin_preguntas and _pide_cerrar_preguntando(shape)):
+            bullets.append(f"- {shape}")
 
     human = ws_lang.get("human_touches", [])
     if human:
@@ -88,17 +95,12 @@ def _build_tone_section(lang: str) -> str:
 
     if not bullets:
         # Defensive fallback if brand_tone.json is empty or unreadable.
-        if lang == "es":
-            return (
-                "- Cercano, confiable, profesional pero amigable.\n"
-                "- Usa frases cortas y naturales.\n"
-                "- Cierra con una pregunta util o un siguiente paso claro."
-            )
-        return (
-            "- Approachable, trustworthy, professional but friendly.\n"
-            "- Use short, natural sentences.\n"
-            "- End with a useful question or clear next step."
-        )
+        bullets = (["- Cercano, confiable, profesional pero amigable.", "- Usa frases cortas y naturales.",
+                    "- Cierra con una pregunta util o un siguiente paso claro."] if lang == "es" else
+                   ["- Approachable, trustworthy, professional but friendly.", "- Use short, natural sentences.",
+                    "- End with a useful question or clear next step."])
+        if sin_preguntas:
+            bullets = [b for b in bullets if not _pide_cerrar_preguntando(b)]
 
     return "\n".join(bullets)
 
@@ -130,8 +132,12 @@ def is_fallback_answer(text: str | None) -> bool:
     return bool(text) and (FALLBACK_ES in text or FALLBACK_EN in text)
 
 
-def build_system_prompt(lang: str, query: str | None = None) -> str:
+def build_system_prompt(lang: str, query: str | None = None, sin_preguntas: bool = False) -> str:
     """Compose the full system prompt: intro + dynamic tone + body + las reglas de cualquier escritor.
+
+    `sin_preguntas` (CALN-43, bloque 0,5 del Plan Gadea): en un turno de la reserva la pregunta la pone el código, así que fuera las dos
+    órdenes de preguntar: «cerrar con una pregunta» del tono y «preguntar lo que falta». Son dos prompts fijos por idioma: el prefijo
+    sigue siendo cacheable.
 
     ``query`` ya no se usa: alimentaba el few-shot de los chats antiguos de WhatsApp
     (conversations.json), retirado en g-7 paso 4 (2026-09-24). Se deja en la firma para
@@ -154,18 +160,20 @@ def build_system_prompt(lang: str, query: str | None = None) -> str:
         prompt = (
             f"{RAG_INTRO_ES}\n\n"
             f"{RAG_SECURITY_ES}\n"
-            f"Estilo y tono:\n{_build_tone_section('es')}\n\n"
+            f"Estilo y tono:\n{_build_tone_section('es', sin_preguntas)}\n\n"
             f"{RAG_BODY_ES}"
         )
     else:
         prompt = (
             f"{RAG_INTRO_EN}\n\n"
             f"{RAG_SECURITY_EN}\n"
-            f"Style and tone:\n{_build_tone_section('en')}\n\n"
+            f"Style and tone:\n{_build_tone_section('en', sin_preguntas)}\n\n"
             f"{RAG_BODY_EN}"
         )
     # Solo del RAG: nombrar los varios planes que encajan (busca en todo el catálogo) y preguntar lo que falta.
     varios = RAG_VARIOS_PLANES_ES if lang == "es" else RAG_VARIOS_PLANES_EN
+    if sin_preguntas:
+        return f"{prompt}\n\n{reglas_del_escritor(lang)}\n\n{varios}"
     pregunta = RAG_PREGUNTA_LO_QUE_FALTA_ES if lang == "es" else RAG_PREGUNTA_LO_QUE_FALTA_EN
     return f"{prompt}\n\n{reglas_del_escritor(lang)}\n\n{varios}\n\n{pregunta}"
 
@@ -880,7 +888,7 @@ async def rag_answer(
         answers a factual question from its own world knowledge (e.g. inventing
         a list of fish species). The judge is the only thing standing between
         that and the customer."""
-        system_prompt = build_system_prompt(lang, query=condensed_query)
+        system_prompt = build_system_prompt(lang, query=condensed_query, sin_preguntas=sin_preguntas)
         if catalog_prefix:
             system_prompt = f"{system_prompt}\n\n{catalog_prefix}"
         if sin_precio:

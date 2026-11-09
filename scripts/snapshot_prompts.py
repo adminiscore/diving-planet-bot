@@ -190,6 +190,7 @@ def _collect() -> dict[str, str]:
     add("info/rag.body.en", info.RAG_BODY_EN)
     for lang in LANGS:
         add(f"info/rag.system.assembled.{lang}", rag_agent.build_system_prompt(lang))
+        add(f"info/rag.system.assembled.sin_preguntas.{lang}", rag_agent.build_system_prompt(lang, sin_preguntas=True))
 
     return out
 

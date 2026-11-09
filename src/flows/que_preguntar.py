@@ -11,6 +11,8 @@ cuenta y lo aplica el compositor (`src/agents/compositor.py`), por donde pasan t
 """
 from __future__ import annotations
 
+import re
+
 VECES_MAX = 2  # cuántas veces puede salir la misma pregunta en una conversación
 
 PREGUNTAR = "preguntar"  # sale la pregunta (y se cuenta)
@@ -61,3 +63,13 @@ def se_sigue_sin(hechas: dict | None) -> set[str]:
 
 def recordatorio(lang: str | None) -> str:
     return RECORDATORIO["es" if lang == "es" else "en"]
+
+
+_ENLACE_RE = re.compile(r"https?://\S+")
+
+
+def trae_pregunta(texto: str | None) -> bool:
+    """¿El texto pregunta algo? (un «?» fuera de los enlaces, que llevan «?language=es»). Para el contador del bloque 0,5 del Plan Gadea:
+    en un turno de la reserva el escritor no debe preguntar; si lo hace, se apunta (`escritor_pregunta` en [TURN_METRICS]). El borrado de
+    sus copias en el compositor sigue activo y se quitará cuando esto marque cero en un panel y una tanda («primero cubre, luego borra»)."""
+    return bool(texto) and "?" in _ENLACE_RE.sub("", texto)

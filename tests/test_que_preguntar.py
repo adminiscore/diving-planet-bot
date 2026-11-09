@@ -209,3 +209,51 @@ def test_la_lista_de_las_preguntas_del_origen_es_una_sola():
     assert all(texto in lista for texto in op._preguntas_fijas_del_origen())
     assert all(texto in lista for por_idioma in core._CONFIRMA_ORIGEN.values() for texto in por_idioma.values())
     assert all("?" not in resto for resto in lista.values())  # lo que queda en su lugar no pregunta
+
+
+# ─── Bloque 0,5 del Plan Gadea: el tono sin «cerrar con una pregunta» en la reserva, y el contador ───
+
+@pytest.mark.parametrize("lang", ["es", "en"])
+def test_en_la_reserva_el_escritor_no_recibe_las_ordenes_de_preguntar(lang):
+    from src.agents import rag_agent
+    from src.prompts import info
+
+    siempre, reserva = rag_agent.build_system_prompt(lang), rag_agent.build_system_prompt(lang, sin_preguntas=True)
+    cerrar = "Cerrar con una pregunta útil" if lang == "es" else "End with a useful question"
+    falta = info.RAG_PREGUNTA_LO_QUE_FALTA_ES if lang == "es" else info.RAG_PREGUNTA_LO_QUE_FALTA_EN
+    assert cerrar in siempre and falta in siempre  # fuera de la reserva, como siempre
+    assert cerrar not in reserva and falta not in reserva
+    linea = next(fila for fila in siempre.splitlines() if fila.startswith("- ") and cerrar in fila)
+    assert siempre.replace(f"\n{linea}", "").replace(f"\n\n{falta}", "") == reserva  # solo cambian esas dos líneas
+
+
+@pytest.mark.parametrize(("texto", "pregunta"), [
+    ("Incluye el almuerzo.", False),
+    ("Reserva aquí: https://book.divingplanet.org/book/salidas-de-buceo/1?language=es", False),  # el «?» del enlace no cuenta
+    ("Incluye el almuerzo. ¿Quieres que te pase con un asesor?", True),
+    ("Lunch is included. Would you like the link?", True),
+    (None, False), ("", False),
+])
+def test_trae_pregunta(texto, pregunta):
+    assert qp.trae_pregunta(texto) is pregunta
+
+
+@pytest.mark.parametrize(("entradas", "texto", "cuenta"), [
+    ({"sin_preguntas": True}, "Incluye el almuerzo. ¿Te paso con un asesor?", True),
+    ({"sin_preguntas": True}, "Incluye el almuerzo.", False),
+    ({}, "Incluye el almuerzo. ¿Te paso con un asesor?", False),  # fuera de la reserva puede preguntar
+])
+def test_el_contador_apunta_cuando_el_escritor_pregunta_en_la_reserva(monkeypatch, entradas, texto, cuenta):
+    import src.observability as obs
+
+    apuntado = {}
+    monkeypatch.setattr(obs, "note_turn", lambda **k: apuntado.update(k))
+    core.contar_si_el_escritor_pregunta(entradas, texto)
+    assert apuntado.get("escritor_pregunta", False) is cuenta
+
+
+def test_el_contador_sale_en_las_metricas_del_turno():
+    from src.observability import turn_metrics_line
+
+    linea = turn_metrics_line("c", {"escritor_pregunta": True}, "2026-11-09T21:00:00Z", 1.0)
+    assert '"escritor_pregunta": true' in linea

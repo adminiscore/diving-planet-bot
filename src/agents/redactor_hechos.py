@@ -348,6 +348,7 @@ async def _con_el_escritor(state: ConversationState, message: str, history: list
         # CALN-3 paso 3 «A»: el escritor no escribe importes; los pone el código debajo y no se le exigen.
         entradas.update(precios_por_codigo=True, hechos_bloques=(bloques, [i for i in intenciones if i != "precio"]))
     answer = await supervisor.rag_answer(message, **entradas)
+    core.contar_si_el_escritor_pregunta(entradas, answer)  # bloque 0,5 del Plan Gadea: ¿pregunta el escritor en la reserva?
     if not answer or is_fallback_answer(answer):
         note_turn(hechos_por_codigo="fallo")
         return None

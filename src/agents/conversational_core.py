@@ -933,6 +933,7 @@ async def _rag_answer(
     if sin_precio:  # G3-07a: solo se pasa cuando hace falta (la llamada de siempre no cambia)
         entradas["sin_precio"] = True
     answer = await supervisor.rag_answer(rag_query or message, **entradas)
+    contar_si_el_escritor_pregunta(entradas, answer)
     if sin_precio and answer:
         # CALN-3 paso 3 «A» (r01): con la tarjeta no va la pieza de precios, pero sí lo que dicen los hechos del
         # descuento de grupo (aplica, o no aplica a un curso PADI); el escritor ya no habla de él (RAG_SIN_PRECIO).
@@ -1001,6 +1002,18 @@ def marcar_turno_de_la_reserva(state: ConversationState) -> None:
     La pregunta la decide la tabla (`src/flows/que_preguntar.py`) después de leer el mensaje y la pone el código, una vez y al final. Sin
     la reserva en marcha (ni el idioma ni el pase), el escritor contesta como siempre."""
     state._turno_de_la_reserva = bool(state.core_pending_slot) and state.step == Step.FREE_TEXT
+
+
+def contar_si_el_escritor_pregunta(entradas: dict, answer: str | None) -> None:
+    """Bloque 0,5 del Plan Gadea («primero cubre, luego borra, y contando»): en un turno de la reserva el escritor no debe preguntar.
+    Si su texto trae una pregunta, se apunta en la traza y en [TURN_METRICS] (`escritor_pregunta`). El borrado de sus copias en el
+    compositor sigue activo hasta que esto marque cero en un panel y una tanda."""
+    from src.flows.que_preguntar import trae_pregunta  # lazy
+    from src.observability import note_turn  # lazy
+
+    if entradas.get("sin_preguntas") and not _is_rag_fallback(answer) and trae_pregunta(answer):
+        note_turn(escritor_pregunta=True)
+        logger.info("[CORE][CALN43] el escritor preguntó en un turno de la reserva (el compositor quita las copias de las nuestras)")
 
 
 # s4-27 (7-oct, Gonzalo; flag `rag_plan_nombrado`): "¿el precio de las 2 inmersiones? desde ese hotel" (cliente ya en
