@@ -27,6 +27,15 @@ import asyncio, json, time
 from src.agents import supervisor
 from src.flows.state import ConversationState
 from src.state_store import deserialize_state, serialize_state
+# Bloque 0 (10-nov): reloj fijo, como en reproducir_juez_pre: la hora del bot solo se lee en contexto_rag y se sustituye ahí.
+from datetime import datetime as _dt
+import src.agents.rutas.contexto_rag as _ctx
+_FIJO = _dt.fromisoformat(RELOJ) if RELOJ else None
+class _Reloj(_dt):
+    @classmethod
+    def now(cls, tz=None):
+        return _dt.now(tz) if _FIJO is None else (_FIJO.astimezone(tz) if tz else _FIJO)
+_ctx.datetime = _Reloj
 import logging
 _TRAZA = []
 class _Traza(logging.Handler):
@@ -91,13 +100,23 @@ def _git(*args: str) -> str:
     return subprocess.run(["git", *args], cwd=ROOT, capture_output=True, text=True).stdout.strip()
 
 
-def _nueva(nombre: str) -> None:
+def _reloj_de(nombre: str) -> str | None:
+    f = CHARLAS / f"{nombre}.reloj"
+    return f.read_text(encoding="utf-8").strip() if f.exists() else None
+
+
+def _nueva(nombre: str, reloj: str | None = None) -> None:
     CHARLAS.mkdir(parents=True, exist_ok=True)
     f = _fichero(nombre)
     if f.exists():
         raise SystemExit(f"ya existe {f}")
     f.write_text("", encoding="utf-8")
-    print(f"charla {nombre} -> {f} (rama {_git('rev-parse', '--abbrev-ref', 'HEAD')}, {_git('rev-parse', '--short', 'HEAD')})")
+    if reloj:  # la hora fija de toda la charla (bloque 0): la misma regla que el panel
+        from scripts.reproducir_juez_pre import relojes_de
+
+        (CHARLAS / f"{nombre}.reloj").write_text(relojes_de([nombre], reloj)[nombre], encoding="utf-8")
+    print(f"charla {nombre} -> {f} (rama {_git('rev-parse', '--abbrev-ref', 'HEAD')}, {_git('rev-parse', '--short', 'HEAD')})"
+          + (f"; reloj {_reloj_de(nombre)}" if reloj else ""))
 
 
 def _di(nombre: str, mensaje: str, entorno: dict[str, str] | None = None, espia: bool = False) -> None:
@@ -106,13 +125,14 @@ def _di(nombre: str, mensaje: str, entorno: dict[str, str] | None = None, espia:
     filas = _filas(nombre)
     estado = filas[-1]["guardado"] if filas else None
     remoto = _REMOTO.replace("ESPIA_CODIGO\n", _ESPIA if espia else "")
-    script = (f"CONV = {('charla-rama-' + nombre)!r}\nMENSAJE = {mensaje!r}\nESTADO = {estado!r}\n{remoto}")
+    reloj = _reloj_de(nombre)
+    script = (f"CONV = {('charla-rama-' + nombre)!r}\nMENSAJE = {mensaje!r}\nESTADO = {estado!r}\nRELOJ = {reloj!r}\n{remoto}")
     r = pre_ssh(docker_python(entorno or {}, codigo_local=subir_codigo_local()), input_text=script, timeout=300)
     salida = next((json.loads(ln) for ln in (r.stdout or "").splitlines() if ln.startswith("{")), None)
     if salida is None:
         raise SystemExit("el turno no devolvió nada; stderr de PRE:\n" + (r.stderr or "")[-2000:])
     fila = {"at": datetime.now(UTC).isoformat(timespec="seconds"), "turno": len(filas) + 1,
-            "commit": _git("rev-parse", "--short", "HEAD"), "msg": mensaje, **salida}
+            "commit": _git("rev-parse", "--short", "HEAD"), "msg": mensaje, "reloj": reloj, **salida}
     with _fichero(nombre).open("a", encoding="utf-8") as g:
         g.write(json.dumps(fila, ensure_ascii=False) + "\n")
     print(f"BOT ({salida['segundos']} s):\n{salida['reply']}\n\nESTADO: {json.dumps(salida['estado'], ensure_ascii=False)}")
@@ -130,6 +150,8 @@ def main() -> None:
     for accion in ("nueva", "di", "ver"):
         p = sub.add_parser(accion)
         p.add_argument("--nombre", required=True)
+        if accion == "nueva":
+            p.add_argument("--reloj", help="hora fija de toda la charla: alterno (por el nombre), antes, despues o ISO con zona")
         if accion == "di":
             p.add_argument("mensaje")
             p.add_argument("--env", action="append", default=[], metavar="CLAVE=VALOR",
@@ -139,7 +161,7 @@ def main() -> None:
                            help="las búsquedas del RAG y las fichas que llegan al escritor, en la traza ([ESPIA])")
     args = ap.parse_args()
     if args.accion == "nueva":
-        _nueva(args.nombre)
+        _nueva(args.nombre, args.reloj)
     elif args.accion == "di":
         _di(args.nombre, args.mensaje, dict(e.split("=", 1) for e in args.env), args.espia)
     else:

@@ -272,7 +272,10 @@ def juzgar_ronda(args) -> int:
 def _clientes_de_las_charlas(charlas: str) -> list[tuple[dict, list[dict]]]:
     tareas = []
     for conv in charlas.split(","):
-        filas = [json.loads(ln) for ln in (CHARLAS / f"{conv.strip()}.jsonl").read_text(encoding="utf-8").splitlines() if ln.strip()]
+        fichero = CHARLAS / f"{conv.strip()}.jsonl"
+        if not fichero.exists():  # bloque 0 (10-nov): las charlas contra una rama (`scripts.charla_rama`), con su reloj
+            fichero = CHARLAS.parent / "charlas-rama" / f"{conv.strip()}.jsonl"
+        filas = [json.loads(ln) for ln in fichero.read_text(encoding="utf-8").splitlines() if ln.strip()]
         records = [{**f, "turn": f["turno"], "tag": conv.strip()} for f in filas]
         tareas.append(({"id": conv.strip(), "category": "sparring", "criteria": [CRITERIO_GRAVES]}, records))
     return tareas

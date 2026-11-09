@@ -53,6 +53,30 @@ def test_la_hora_del_bot_solo_se_lee_en_contexto_rag():
     assert lecturas == ["src/agents/rutas/contexto_rag.py"]
 
 
+def test_una_charla_contra_una_rama_guarda_su_reloj(tmp_path, monkeypatch):
+    from scripts import charla_rama
+
+    monkeypatch.setattr(charla_rama, "CHARLAS", tmp_path)
+    monkeypatch.setattr(charla_rama, "_git", lambda *a: "x")
+    charla_rama._nueva("b0-prueba", "despues")
+    assert charla_rama._reloj_de("b0-prueba") == RELOJ_DESPUES
+    charla_rama._nueva("b0-sin-reloj")
+    assert charla_rama._reloj_de("b0-sin-reloj") is None
+
+
+def test_el_juez_encuentra_las_charlas_contra_una_rama_y_su_hora(tmp_path, monkeypatch):
+    from scripts import juez_claude
+
+    (tmp_path / "charlas").mkdir()
+    (tmp_path / "charlas-rama").mkdir()
+    fila = {"turno": 1, "msg": "precio para mañana?", "reply": "Para mañana ya cerró la reserva.", "reloj": RELOJ_DESPUES}
+    (tmp_path / "charlas-rama" / "b0-x.jsonl").write_text(json.dumps(fila, ensure_ascii=False) + "\n", encoding="utf-8")
+    monkeypatch.setattr(juez_claude, "CHARLAS", tmp_path / "charlas")
+    [(dialogo, records)] = juez_claude._clientes_de_las_charlas("b0-x")
+    assert dialogo["id"] == "b0-x" and records[0]["turn"] == 1
+    assert "20:30" in hora_de_la_charla(records)
+
+
 def _juicio(tmp: Path, nombre: str, graves: set[str], huella: str | None = "h1") -> Path:
     ids = ["visto-1", "visto-2", "visto-3", "visto-4", "visto-5"]
     datos = {"huella_referencia": huella, "dialogues": [
