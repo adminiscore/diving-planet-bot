@@ -60,12 +60,11 @@ Borrador del Claude de Álvaro, 9-nov-2026, a partir del Plan Gadea («Por qué 
 ## 4. Quién lleva qué · cada uno su línea · tope 2 líneas por persona
 
 - **Gadea:** el plan y la vara (bloque 0); la referencia del juez. *(Por confirmar.)*
-- **Álvaro:** el bloque 0,5, integrado en `feature/bloque05-alvaro` 2e77937a (el pase de Gonzalo, qué preguntar sin el paso 4, con el tono
-  sin «cerrar con una pregunta» y el contador `escritor_pregunta`, y P9/P10 con `pasar_a_persona`). Suite 3597; src −13 netas frente a
-  5ee94c7b. Falta medirlo con saldo. La memoria, hecha: falta que `feature/memoria-equipo-alvaro` entre en `feature/caln34-gadea`.
+- **Álvaro:** el 0,5 (#3701). Integrado en `feature/bloque05-alvaro` (2e77937a, aceptado) y medido (38606c51: panel 24,5 → 16,7). Falta
+  «el enlace solo con el origen conocido» (mío, #3701 b) y la tanda. Memoria: falta que `feature/memoria-equipo-alvaro` entre en caln34.
 - **Gonzalo:** 0,5, el pase en una función (`feature/pase-gonzalo` 5ff32b8b).
-- **Bloqueo:** OpenAI, sin saldo en PRE desde el 9-nov ~22:00 (429 credit_balance_exhausted): fallan Luna y las búsquedas. OpenRouter,
-  recargado el 9-nov (~9,8 $). Sin los dos no corren las tandas ni el panel; los bancos de código, sí.
+- **Gonzalo:** el 2a (#3701 c); si no se conecta, queda libre para el primero que acabe, en orden.
+- **Saldo (10-nov 00:30):** OpenAI recargado el 9-nov (22:57); OpenRouter, ~7,5 $ libres. Un panel ×3 por lado cuesta ~1,5 $ de OpenRouter.
 
 ## 5. Lecciones: lo que no funcionó · cualquiera añade · tope 12 líneas, una por lección
 
@@ -82,7 +81,8 @@ Borrador del Claude de Álvaro, 9-nov-2026, a partir del Plan Gadea («Por qué 
 
 | Fecha | Versión | Bloque | Graves por vuelta | Líneas de src | Llamadas de IA por turno | Respuesta: caracteres · con pregunta |
 |---|---|---|---|---|---|---|
-| 6-nov | PRE 0.61 | antes del plan | 21, 25 y 21 (referencia del 6-nov) | 27.145 | ~4,1 | 703 · 77 % |
+| 10-nov | `bloque05-alvaro` 2e77937a | 0,5, sin cerrar | 16,7 (A, antes del 0,5: 24,5; 6 juicios por lado) | 27.165 (−13) | 4,20 | 679 · 74 % |
+
 
 
 
