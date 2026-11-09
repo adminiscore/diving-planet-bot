@@ -60,9 +60,9 @@ Borrador del Claude de Álvaro, 9-nov-2026, a partir del Plan Gadea («Por qué 
 ## 4. Quién lleva qué · cada uno su línea · tope 2 líneas por persona
 
 - **Gadea:** el plan y la vara (bloque 0); la referencia del juez. *(Por confirmar.)*
-- **Álvaro:** 0,5, qué preguntar (`feature/caln43-preguntar-alvaro` 002d530b, sin el paso 4) y P9/P10 (067236e4, con `pasar_a_persona`).
-  En curso: quitar del tono «cerrar con una pregunta» en la reserva y el contador de cuándo pregunta el escritor. Hecha la memoria (rama
-  `memoria`, `tools/coral/memoria.py`, gancho de inicio): falta que `feature/memoria-equipo-alvaro` entre en `feature/caln34-gadea`.
+- **Álvaro:** el bloque 0,5, integrado en `feature/bloque05-alvaro` 2e77937a (el pase de Gonzalo, qué preguntar sin el paso 4, con el tono
+  sin «cerrar con una pregunta» y el contador `escritor_pregunta`, y P9/P10 con `pasar_a_persona`). Suite 3597; src −13 netas frente a
+  5ee94c7b. Falta medirlo con saldo. La memoria, hecha: falta que `feature/memoria-equipo-alvaro` entre en `feature/caln34-gadea`.
 - **Gonzalo:** 0,5, el pase en una función (`feature/pase-gonzalo` 5ff32b8b).
 - **Bloqueo:** OpenRouter, sin saldo desde el 6-nov a las 10:48. Sin él no corren las tandas ni el panel; los bancos de código, sí.
 
@@ -81,4 +81,5 @@ Borrador del Claude de Álvaro, 9-nov-2026, a partir del Plan Gadea («Por qué 
 | Fecha | Versión | Bloque | Graves por vuelta | Líneas de src | Llamadas de IA por turno | Respuesta: caracteres · con pregunta |
 |---|---|---|---|---|---|---|
 | 6-nov | PRE 0.61 | antes del plan | 21, 25 y 21 (referencia del 6-nov) | 27.145 | ~4,1 | 703 · 77 % |
+
 
