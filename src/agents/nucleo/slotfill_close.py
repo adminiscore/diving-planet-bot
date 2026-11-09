@@ -384,7 +384,7 @@ def _grupo_por_el_asesor(state: ConversationState, forma: str, refresher_note: s
     """CALN-43 P9 y P10 (decisiones de Gadea, 6-nov): el grupo de 5 o más (para no perder el descuento de grupo) y el que tiene una parte
     del plan sin enlace reservan con un asesor. Como el cierre en pesos: si pide reservar o pagar, pasa directo; si solo cotiza, ve el precio
     sin enlaces y el porqué, y se le ofrece el asesor con nuestro texto (`_OFERTA_DEL_ASESOR`, para que su «sí» se reconozca)."""
-    from src.agents.lead_summary import build_lead_summary
+    from src.agents.lead_summary import pasar_a_persona
 
     lang = "es" if state.language == "es" else "en"
     summary = _resumen_sin_enlace(state)
@@ -396,10 +396,7 @@ def _grupo_por_el_asesor(state: ConversationState, forma: str, refresher_note: s
         state.pending_lead_note_reason = f"núcleo conversacional - {_MOTIVO_DEL_GRUPO[forma]}: se le ofrece el asesor"
         oferta = _OFERTA_DEL_ASESOR["es_grupo" if lang == "es" else "en"]
         return f"{refresher_note}{summary}\n\n{por_que}" + (f"\n\n{oferta}" if ofrecer else "")
-    state.step = Step.ESCALATE
-    reason = f"núcleo conversacional - {_MOTIVO_DEL_GRUPO[forma]}"
-    state.pending_escalation_reason = reason
-    state.pending_note = build_lead_summary(state, escalation_reason=reason)
+    pasar_a_persona(state, f"núcleo conversacional - {_MOTIVO_DEL_GRUPO[forma]}")
     if ya_la_vio:
         return _PASE_DEL_GRUPO[lang]
     return f"{refresher_note}{summary}\n\n{por_que} {_PASE_DEL_GRUPO[lang]}"
