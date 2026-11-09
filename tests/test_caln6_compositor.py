@@ -83,14 +83,22 @@ def _con_botones(pendiente, *preguntas, sugerida=None, al_empezar=None):
     return turno
 
 
-def test_si_el_escritor_pregunta_otra_cosa_la_de_la_reserva_va_igual():
-    """CALN-43 (decisión de Gadea, 6-nov): en un turno de la reserva el escritor no pregunta (`sin_preguntas`), y si lo hace, la
-    nuestra va igual, al final y con sus botones. Antes esperaba al turno siguiente (edad-minima-open-water t1, caln2-B)."""
+def test_si_el_escritor_ya_pregunta_la_de_la_reserva_espera():
+    """edad-minima-open-water t1 (caln2-B): la pregunta del escritor, el bloque de lo que hace falta y la oferta de gen-8
+    detrás. Va UNA: la del escritor; la de la reserva queda pendiente, sin sus botones ni la recomendación que el
+    cliente no vio (un «sí» a «¿te cuento más?» no elige el Open Water)."""
     escritor = ("La edad mínima para el curso Open Water es de 10 años. ¿Quieres que te cuente algo más sobre el curso?"
                 "\n\nTambién necesitas:\n• Traje de baño")
     turno = _con_botones("activity", ("activity", OFERTA_OW), sugerida="padi_open_water")
-    assert componer(turno, f"{OFERTA_OW}\n\n{escritor}") == f"{escritor}\n\n{OFERTA_OW}"
-    assert turno.quick_replies and turno.suggested_activity == "padi_open_water"
+    assert componer(turno, f"{escritor}\n\n{OFERTA_OW}") == escritor
+    assert turno.core_pending_slot == "activity" and turno.quick_replies == [] and turno.suggested_activity is None
+
+
+def test_la_oferta_de_asesor_del_escritor_no_la_tapa_otra_pregunta():
+    """curso-open-water-transporte-y-regreso-otro-dia t2 (caln2-B), la regla de u3-4 en todos los caminos."""
+    oferta = "If you'd like, I can help you book it: *Open Water course*. Shall we? 🌊"
+    escritor = "A team advisor would need to confirm the arrangements. Would you like me to connect you with one?"
+    assert componer(_con_botones("activity", ("activity", oferta)), f"{escritor}\n\n{oferta}") == escritor
 
 
 def test_la_recomendacion_de_un_turno_anterior_se_queda():
@@ -104,6 +112,17 @@ def test_sin_otra_pregunta_la_de_la_reserva_sigue_con_sus_botones():
     assert componer(turno, f"La edad mínima es de 10 años.\n\n{OFERTA_OW}\n\n{LISTAS}") == (
         f"La edad mínima es de 10 años.\n\n{LISTAS}\n\n{OFERTA_OW}")
     assert turno.quick_replies and turno.suggested_activity == "padi_open_water"
+
+
+@pytest.mark.parametrize("dicho", [
+    "¡Perfecto, serían 2 personas para el minicurso de buceo para principiantes!",  # minicurso-precio-colombianos-…
+    "¡Entendido! Entonces son 5 personas: 4 buzos certificados y 1 persona que haría el minicurso.",  # grupo-recompuesto
+])
+def test_la_explicacion_de_la_pregunta_no_se_repite(dicho):
+    """caln2-B: el escritor dice la explicación del origen con la pregunta debajo, que la vuelve a decir."""
+    explicacion = ORIGEN.split("? ", 1)[1]
+    r = f"{dicho} {explicacion}\n\n{ORIGEN}"
+    assert componer(_turno("location", ("location", ORIGEN)), r) == f"{dicho}\n\n{ORIGEN}"
 
 
 @pytest.mark.parametrize("dijo,recomienda", [({}, True), ({"detected_cert_dives": 2}, False),

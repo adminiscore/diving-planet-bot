@@ -249,6 +249,14 @@ def test_varias_actividades_que_suman_los_ya_contados_son_ellos():
     assert extractor._suma_a_un_grupo_sin_actividad(estado, {"minicourse": 4}, None) == "nuevos"  # una sola: decide Jev
 
 
+def test_la_pregunta_ya_contestada_tambien_con_otra_mayuscula():
+    from src.agents.compositor import _frase_sin_la_pregunta
+
+    assert _frase_sin_la_pregunta("Para este plan de dos días, ¿desde dónde saldrías?", ["¿Desde dónde saldrías?"]) == "Para este plan de dos días."
+    assert _frase_sin_la_pregunta("¿Desde dónde saldrías?", ["¿Desde dónde saldrías?"]) is None  # entera: la quita el paso de antes
+    assert _frase_sin_la_pregunta("¿Quieres el enlace?", ["¿Desde dónde saldrías?"]) is None
+
+
 def test_el_curso_sin_plan_desde_las_islas_da_el_de_cartagena_y_lo_dice():
     from src.flows import hechos
 
