@@ -90,6 +90,7 @@ def publicar(fichero: Path, que: str = "memoria", mensaje: str = "", cwd: Path =
 
 
 def main(argv: list[str]) -> int:
+    sys.stdout.reconfigure(encoding="utf-8")  # en Windows, con la salida a un fichero, «−» o «→» rompían el cp1252
     if not argv or argv[0] not in ("ver", "publicar"):
         print(__doc__)
         return 2
