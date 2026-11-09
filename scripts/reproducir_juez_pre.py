@@ -34,6 +34,17 @@ from src.agents import rag_agent, supervisor
 from src.config import settings
 from src.flows.state import ConversationState
 DIALOGOS, REPS = json.loads(DIALOGOS_JSON), N_REPS
+# Bloque 0 (10-nov): reloj fijo por diálogo. La hora del bot solo se lee en contexto_rag (`datetime.now`); se sustituye ahí,
+# sin tocar src. Sin reloj (None) va la hora real, como antes.
+RELOJES = json.loads(RELOJES_JSON)
+from datetime import datetime as _dt
+import src.agents.rutas.contexto_rag as _ctx
+_RELOJ = [None]
+class _Reloj(_dt):
+    @classmethod
+    def now(cls, tz=None):
+        return _dt.now(tz) if _RELOJ[0] is None else (_RELOJ[0].astimezone(tz) if tz else _RELOJ[0])
+_ctx.datetime = _Reloj
 for _f in FLAGS:  # "no:X" APAGA X solo en este proceso (17-oct: medir con PRE en la rama de otro)
     setattr(settings, _f.removeprefix("no:"), not _f.startswith("no:"))
 juicios = []
@@ -88,6 +99,7 @@ _CAMPOS = ("location", "detected_location", "core_pending_slot", "pregunta_preci
 async def main():
     for dialogo, turnos, rep in [(d, ts, r) for d, ts in DIALOGOS for r in range(REPS)]:
         st = ConversationState(conversation_id=f"repro-juez-{dialogo}-{rep}")
+        _RELOJ[0] = _dt.fromisoformat(RELOJES[dialogo]) if RELOJES.get(dialogo) else None
         for i, msg in enumerate(turnos, 1):
             juicios.clear()
             rags.clear()
@@ -102,11 +114,34 @@ async def main():
             print(json.dumps({"dialogo": dialogo, "rep": rep, "turn": i, "msg": msg, "reply": reply,
                               "rag": list(rags), "juicios": list(juicios),
                               "segundos": round(time.perf_counter() - t0, 2), "estado": estado,
-                              "traza": list(_TRAZA), "metricas": list(_METRICAS)},
+                              "traza": list(_TRAZA), "metricas": list(_METRICAS), "reloj": RELOJES.get(dialogo)},
                              ensure_ascii=False, default=str), flush=True)
 
 asyncio.run(main())
 '''
+
+
+# Bloque 0 (10-nov): dos horas fijas de un jueves, antes y después del cierre de las 4:30 p. m. para el día siguiente. Un jueves,
+# para que «next Friday» sea mañana (decisión de Gadea del 9-nov) y se vea si el bot sabe que ya cerró.
+RELOJ_ANTES = "2026-11-12T10:30:00-05:00"
+RELOJ_DESPUES = "2026-11-12T20:30:00-05:00"
+
+
+def relojes_de(ids: list[str], modo: str | None) -> dict[str, str | None]:
+    """La hora fija de cada diálogo. `alterno` reparte por el id (el mismo diálogo cae siempre en la misma hora, en cualquier
+    rama y tirada); `antes`/`despues` ponen una sola; una fecha ISO con zona, esa; sin modo, la hora real."""
+    if not modo:
+        return {}
+    if modo == "alterno":
+        import hashlib
+
+        return {i: (RELOJ_ANTES, RELOJ_DESPUES)[int(hashlib.sha1(i.encode()).hexdigest(), 16) % 2] for i in ids}
+    fijo = {"antes": RELOJ_ANTES, "despues": RELOJ_DESPUES}.get(modo, modo)
+    from datetime import datetime
+
+    if datetime.fromisoformat(fijo).tzinfo is None:
+        raise SystemExit(f"--reloj {modo!r}: la fecha necesita su zona, p. ej. 2026-11-12T10:30:00-05:00")
+    return {i: fijo for i in ids}
 
 
 def turnos(dialogo: str) -> list[str]:
@@ -139,6 +174,8 @@ def main() -> int:
     ap.add_argument("--hasta", type=int, help="solo los N primeros turnos (para repetir mucho un turno concreto)")
     ap.add_argument("--codigo-local", action="store_true",
                     help="corre con el código LOCAL (sin desplegar) copiado dentro de dp-pre-bot; PRE no cambia")
+    ap.add_argument("--reloj", help="hora fija del bot: alterno (la mitad a las 10:30 y la otra a las 20:30 de un jueves, por "
+                                    "el id), antes, despues o una fecha ISO con zona; sin esto, la hora real")
     args = ap.parse_args()
 
     if args.banco:
@@ -161,8 +198,9 @@ def main() -> int:
 
     from scripts.pre_access import docker_python, pre_ssh, subir_codigo_local
 
+    relojes = relojes_de([d for d, _ in dialogos], args.reloj)
     script = (f"DIALOGOS_JSON = {json.dumps(dialogos, ensure_ascii=False)!r}\nN_REPS = {args.reps}\n"
-              f"FLAGS = {args.flag!r}\n{_REMOTO}")
+              f"FLAGS = {args.flag!r}\nRELOJES_JSON = {json.dumps(relojes)!r}\n{_REMOTO}")
     codigo = subir_codigo_local() if args.codigo_local else None
     entorno = dict(e.split("=", 1) for e in args.env)
     r = pre_ssh(docker_python(entorno, codigo_local=codigo), input_text=script, timeout=max(600, 60 * total))
