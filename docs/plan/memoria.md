@@ -59,7 +59,7 @@ secciones 1 a 3 por el Claude de Gadea, con su OK, el 10-nov.
 
 - **Gadea:** el bloque 0 (la vara) y la referencia del juez, en `feature/caln34-gadea` (27ba702b, con el ruido del juez medido).
 - **Álvaro:** el 0,5 (#3701). Integrado en `feature/bloque05-alvaro` (2e77937a, aceptado) y medido (38606c51: panel 24,5 → 16,7). Falta
-  «el enlace solo con el origen conocido» (mío, #3701 b) y la tanda. Memoria: falta que `feature/memoria-equipo-alvaro` entre en caln34.
+  el cierre: el enlace y el pase con un solo dueño en la reserva, y solo con el origen conocido (diseño antes, #3702), y la tanda.
 - **Gonzalo:** 0,5, el pase en una función (`feature/pase-gonzalo` 5ff32b8b).
 - **Gonzalo:** el 2a (#3701 c); si no se conecta, queda libre para el primero que acabe, en orden.
 - **Saldo (10-nov 00:30):** OpenAI recargado el 9-nov (22:57); OpenRouter, ~7,5 $ libres. Un panel ×3 por lado cuesta ~1,5 $ de OpenRouter.
