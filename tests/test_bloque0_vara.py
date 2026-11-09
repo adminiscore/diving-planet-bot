@@ -113,3 +113,15 @@ def test_el_estilo_frente_a_la_persona(tmp_path):
     f.write_text("".join(json.dumps(x, ensure_ascii=False) + "\n" for x in filas), encoding="utf-8")
     e = marcador.estilo([f])
     assert (e["turnos"], e["llamadas_por_turno"], e["con_pregunta"], e["con_precio"], e["con_enlace"]) == (2, 1.5, 50, 50, 50)
+
+
+def test_el_panel_de_la_vara_son_los_vistos_y_veinte_ciegos_cortos():
+    panel = json.loads((RAIZ / "docs/robustness/caln/panel-vara.json").read_text(encoding="utf-8"))["dialogos"]
+    vistos = [d for d in panel if d["id"].startswith("visto-")]
+    nuevos = [d for d in panel if d["id"].startswith("ciego-n")]
+    assert (len(panel), len(vistos), len(nuevos)) == (40, 20, 20)
+    assert all(2 <= len(d["turnos"]) <= 4 for d in nuevos)
+    largos = sorted(len(t) for d in nuevos for t in d["turnos"])
+    assert largos[len(largos) // 2] <= 40  # como los reales: unos 31 caracteres de mediana
+    horas = relojes_de([d["id"] for d in nuevos], "alterno")
+    assert set(horas.values()) == {RELOJ_ANTES, RELOJ_DESPUES}
