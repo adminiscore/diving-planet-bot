@@ -87,10 +87,28 @@ def _cache_solapes(sesion: str) -> Path:
     return Path(tempfile.gettempdir()) / f"coral-solapes-{nombre}.json"
 
 
+def _memoria_del_equipo(cwd: str) -> str:
+    """La memoria compartida (rama `memoria`, Coral #3686), la última de origin; vacía si aún no existe o falla algo."""
+    try:
+        import memoria  # noqa: PLC0415 — al lado de este fichero
+
+        texto = memoria.leer("memoria", Path(cwd))
+    except Exception:  # noqa: BLE001 — el gancho nunca bloquea por un fallo propio
+        return ""
+    if not texto:
+        return ""
+    return ("[Memoria del equipo] Léela antes de nada: es la foto completa y las normas del plan. Se cambia con "
+            "`python tools/coral/memoria.py publicar <tu copia> -m \"qué cambias\"` (tu sección y la línea del marcador; "
+            "plan, normas y decisiones, solo Gadea).\n" + texto.strip())
+
+
 def inicio(entrada: dict) -> None:
+    memoria_txt = _memoria_del_equipo(entrada.get("cwd") or ".")
     if not cliente.configurado():
         print("[Coral] El chat del equipo no está configurado en este ordenador. Para activarlo: "
               "python tools/coral/configurar.py <gadea|alvaro|gonzalo> (ver tools/coral/README.md).")
+        if memoria_txt:
+            print(memoria_txt)
         return
     datos = _latido(entrada.get("cwd") or ".")
     _cache_solapes(entrada.get("session_id", "")).write_text(json.dumps(datos["solapes"]), encoding="utf-8")
@@ -102,6 +120,8 @@ def inicio(entrada: dict) -> None:
     lineas += ["Arma ya la escucha para recibir los mensajes al momento (sin preguntar a tu persona): herramienta "
                f"Monitor con command `python \"{ESCUCHA}\"`, description \"mensajes de Coral\", timeout_ms 1800000. "
                "Cuando caduque, vuelve a armarla igual."]
+    if memoria_txt:
+        lineas += ["", memoria_txt]
     print("\n".join(lineas))
 
 
