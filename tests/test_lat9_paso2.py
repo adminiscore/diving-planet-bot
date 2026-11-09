@@ -1,32 +1,19 @@
-"""LAT-9 paso 2 (26-oct): la pregunta de la reserva la escribe el escritor, y el acuse solo si contestó lo preguntado."""
-import asyncio
-
-from src.agents.conversational_core import SLOT_LOCATION, SLOT_QTY, _sin_la_pregunta_final
-from src.agents.nucleo import slotfill_close as close
-from src.flows.state import ConversationState
+"""LAT-9 paso 2 (26-oct) daba al escritor la pregunta de la reserva al empezar el turno, y el código la corregía cuando el mensaje la
+cambiaba (128 de 170 turnos de los paneles 058, 058-cl y 059c), con un «¡Perfecto!» delante. CALN-43 (decisión de Gadea, 6-nov) lo
+sustituye: en un turno de la reserva el escritor no pregunta, y la pregunta la decide la tabla y la pone el código, una vez y al final."""
+from src.agents import conversational_core as core
+from src.agents.conversational_core import SLOT_LOCATION, _sin_la_pregunta_final
+from src.flows.state import ConversationState, Step
+from src.prompts import info
 
 
 def _estado(**kw) -> ConversationState:
-    st = ConversationState(conversation_id="lat9p2")
+    st = ConversationState(conversation_id="lat9p2", language="es")
     st.detected_activity = "certified_diving"
     st.is_certified = True
     for k, v in kw.items():
         setattr(st, k, v)
     return st
-
-
-def test_sin_acuse_delante_de_la_misma_pregunta():
-    st = _estado(core_pending_slot=SLOT_LOCATION)  # se vuelve a preguntar el origen: no contestó
-    assert close._acuse_por_codigo(st, SLOT_LOCATION) == ""
-
-
-def test_acuse_cuando_contesto_lo_preguntado():
-    st = _estado(location="cartagena", core_pending_slot=SLOT_QTY)  # contestó el origen; ahora toca cuántos son
-    assert close._acuse_por_codigo(st, SLOT_LOCATION).startswith("¡Perfecto!")
-
-
-def test_sin_pendiente_no_hay_acuse():
-    assert close._acuse_por_codigo(_estado(), None) == ""
 
 
 def test_sin_la_pregunta_final_solo_quita_el_ultimo_parrafo_si_pregunta():
@@ -35,35 +22,22 @@ def test_sin_la_pregunta_final_solo_quita_el_ultimo_parrafo_si_pregunta():
     assert _sin_la_pregunta_final("¿Desde dónde saldrías?") == "¿Desde dónde saldrías?"  # sin otro texto, se queda
 
 
-def _con(answer, response, escrita, finalized=False, cierre_igual=False):
-    return asyncio.run(close._con_la_pregunta(_estado(), "msg", answer, response, escrita, finalized, cierre_igual))
+def test_en_un_turno_de_la_reserva_el_escritor_no_pregunta():
+    st = _estado(core_pending_slot=SLOT_LOCATION, step=Step.FREE_TEXT)
+    core.marcar_turno_de_la_reserva(st)
+    assert st._turno_de_la_reserva is True
+    assert core._entradas_rag(st, [], "¿incluye el almuerzo?")["sin_preguntas"] is True
 
 
-def test_misma_pregunta_va_el_texto_del_escritor():
-    assert _con("Sí, incluye el equipo.\n\n¿Cuántos serían?", "¿Cuántas personas son?", "¿Cuántas personas son?") \
-        == "Sí, incluye el equipo.\n\n¿Cuántos serían?"
+def test_fuera_de_la_reserva_el_escritor_contesta_como_siempre():
+    for st in (_estado(step=Step.FREE_TEXT), _estado(core_pending_slot=SLOT_LOCATION, step=Step.ESCALATE)):
+        core.marcar_turno_de_la_reserva(st)
+        assert st._turno_de_la_reserva is False and "sin_preguntas" not in core._entradas_rag(st, [], "hola")
 
 
-def test_otra_pregunta_el_codigo_la_cambia():
-    assert _con("Sí, incluye el equipo.\n\n¿Cuántos serían?", "¿Eres buzo certificado?", "¿Cuántas personas son?") \
-        == "Sí, incluye el equipo.\n\n¿Eres buzo certificado?"
-
-
-def test_cierre_igual_va_sin_pregunta_ni_tarjeta():
-    assert _con("Dura 4 horas.\n\n¿Cuántos serían?", "TARJETA", "¿Cuántos serían?", finalized=True,
-                cierre_igual=True) == "Dura 4 horas."
-
-
-def test_si_el_escritor_pregunta_el_origen_esa_ocupa_el_turno():
-    """LAT-0b (#2053): sin el origen da los dos precios y lo pregunta; no se le pega detrás la de la certificación."""
-    answer = "Desde Cartagena cuesta 150 USD y ya en las islas 124 USD.\n\n¿Saldrías desde Cartagena o ya estás en las islas?"
-    assert _con(answer, "¿Eres buzo certificado?", "¿Cuántas personas son?") == answer
-
-
-def test_con_el_origen_ya_dicho_la_pregunta_del_origen_esta_desfasada():
-    """integra6: el cliente acababa de dar el origen y se le volvía a preguntar (la pregunta fijada al empezar)."""
-    st = _estado(location="cartagena")
-    answer = "Cuesta 150 USD.\n\n¿Saldrías desde Cartagena o ya estás en las islas?"
-    out = asyncio.run(close._con_la_pregunta(st, "msg", answer, "¿Cuántas personas son?",
-                                             "¿Saldrías desde Cartagena o ya estás en las islas?", False, False))
-    assert out == "Cuesta 150 USD.\n\n¿Cuántas personas son?"
+def test_la_orden_no_lleva_ninguna_pregunta_y_no_cambia_con_el_turno():
+    for lang in ("es", "en"):
+        texto = info.sin_preguntas(lang)
+        assert "?" not in texto and "{" not in texto
+    assert "sin hacer ninguna pregunta" in info.sin_preguntas("es")
+    assert "without asking any question" in info.sin_preguntas("en")

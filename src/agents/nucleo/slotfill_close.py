@@ -12,7 +12,6 @@ import re
 
 from src.agents.conversational_core import (
     _IMPORTE_RE,
-    _SLOTS_APLAZABLES,
     SLOT_COMPANION_QTY,
     SLOT_HOTEL,
     SLOT_SAFETY,
@@ -20,7 +19,6 @@ from src.agents.conversational_core import (
     _answer_asks_the_origin,
     _answer_replaces_the_booking_question,
     _cart_item,
-    _cierra_preguntando_el_origen,
     _effective_activity,
     _es_pregunta_de_origen,
     _fijar_origen_antes_del_precio,
@@ -31,14 +29,13 @@ from src.agents.conversational_core import (
     _rag_answer,
     _same_for_customer,
     _sin_importes,
-    _sin_la_pregunta_final,
     _take_parallel_answer,
     ask_slot,
     next_missing_slot,
 )
 from src.domain import activities as dom
 from src.domain.politicas import politica
-from src.flows import cart_render, grupo
+from src.flows import cart_render, grupo, que_preguntar
 from src.flows.catalog import politica_breve
 from src.flows.como_reserva import (
     ENLACE,
@@ -59,10 +56,12 @@ def _tarjeta_sin_seguridad(state: ConversationState, nxt: str | None, prev_pendi
     respuesta de seguridad? Sí cuando es lo ÚNICO que falta y el cliente no la contestó en este mensaje (se la hicimos
     en el anterior). pareja-certificados-cop-descuento-almuerzo (3/3): la pareja preguntaba por un "bono" y por el
     almuerzo, el bot repetía "¿más de 2 años?" y la tarjeta con el precio no salía nunca. El aplazamiento de EX-FLUJO-1
-    no servía: siendo la última pregunta, el resumen la volvía a hacer en el mismo turno."""
+    no servía: siendo la última pregunta, el resumen la volvía a hacer en el mismo turno. CALN-43 P11: también si ya salió 2 veces,
+    aunque no fuera la del turno anterior (la tarjeta sale con el aviso, sin la pregunta)."""
+    hechas = state.preguntas_hechas
     return bool(
-        nxt == SLOT_SAFETY and prev_pending == SLOT_SAFETY
-        and next_missing_slot(state, saltar=frozenset({SLOT_SAFETY})) is None
+        nxt == SLOT_SAFETY and (prev_pending == SLOT_SAFETY or SLOT_SAFETY in que_preguntar.agotadas(hechas))
+        and next_missing_slot(state, saltar=frozenset({SLOT_SAFETY}) | que_preguntar.se_sigue_sin(hechas)) is None
     )
 
 
@@ -95,23 +94,12 @@ def _tras_la_tarjeta_ya_vista(state: ConversationState) -> str:
             else "Whenever you're ready, book with the link above: you choose the date and the number of people there. 🌊")
 
 
-def _siguiente_pregunta(state: ConversationState, prev_pending: str | None) -> str | None:
-    """EX-FLUJO-1 (decisión de Gadea, 14-oct): si el cliente no contestó la
-    pregunta del turno anterior (sigue faltando ese dato), no se repite: se aplaza y se pregunta otra cosa; las
-    aplazadas vuelven justo antes del resumen, cuando no falta nada más. Ronda atencion-B2: "¿Ha pasado más de 2 años
-    desde la última inmersión?" salía tres turnos seguidos mientras el cliente daba fechas y su regreso."""
-    nxt = next_missing_slot(state)
-    if nxt is None:
-        return nxt
-    # Ronda flujo1-B2: aplazar a la PRIMERA pregunta sin contestar reordenaba casi todas las conversaciones ("Última
-    # cosa… ¿sois colombianos?" demasiado pronto; el acuse tomaba la respuesta a una aplazada por la de la pendiente).
-    # El problema era el bucle: se pregunta como mucho dos veces seguidas y a la tercera se aplaza.
-    state.veces_sin_respuesta = state.veces_sin_respuesta + 1 if nxt == prev_pending else 0
-    if (nxt == prev_pending and state.veces_sin_respuesta >= 2 and nxt in _SLOTS_APLAZABLES
-            and nxt not in state.preguntas_aplazadas):
-        state.preguntas_aplazadas.append(nxt)
-        logger.info(f"[CORE][APLAZA] el cliente no contestó {nxt!r} dos veces: se pregunta antes del resumen")
-    otro = next_missing_slot(state, saltar=set(state.preguntas_aplazadas))
+def _siguiente_pregunta(state: ConversationState, nxt: str) -> str:
+    """CALN-43 P11 (decisión de Gadea, 6-nov; sustituye al aplazamiento de EX-FLUJO-1): la pregunta del turno la elige la tabla
+    (`que_preguntar`). `nxt`: lo primero que falta. La que ya salió 2 veces no vuelve: se pregunta otro dato que falte. Si no falta otro,
+    `nxt` es de las que paran la reserva (el origen, la actividad…) y queda pendiente: el compositor pone en su lugar lo que dice la tabla.
+    Las que no la paran ya las saltó el flujo antes de llegar aquí (`que_preguntar.se_sigue_sin`)."""
+    otro = next_missing_slot(state, saltar=que_preguntar.agotadas(state.preguntas_hechas))
     return otro if otro is not None else nxt
 
 
@@ -399,45 +387,6 @@ def _resumen_sin_enlace(state: ConversationState) -> str:
     return "\n".join(lines).strip()
 
 
-# lat-B (24-oct, fase LAT, corte B; decisión de Gadea #1720): el acuse lo pone el CÓDIGO. Era una llamada (el «redactor
-# cálido» de una frase) en el 54 % de los turnos de real-1, 1,08 s de mediana y el único tiempo propio de la reserva.
-# Solo cuando el cliente acaba de contestar la pregunta pendiente; la pregunta siguiente y los datos van detrás.
-_ACUSE = {"es": "¡Perfecto! 🙌", "en": "Perfect! 🙌"}
-
-
-def _acuse_por_codigo(state: ConversationState, prev_pending) -> str:
-    """ACUSE (26-oct): solo si el cliente contestó lo que se le preguntó: la pregunta de este turno ya no es la pendiente
-    y ese dato ya no falta. Salía siempre que había una pendiente: 111 de 273 respuestas de integra4, 32 delante de la
-    MISMA pregunta («Muchas gracias!» → «¡Perfecto! 🙌» y otra vez la de la nacionalidad). «Ya no falta» se mira también
-    detrás de las aplazables que salgan delante: «voy con una amiga que no está certificada» a la pregunta del origen
-    trae delante la de qué hará ella, y el origen sigue sin contestar (CALN-2 paso 3a)."""
-    sigue = next_missing_slot(state, saltar=_SLOTS_APLAZABLES - {prev_pending}) if prev_pending else None
-    if not prev_pending or state.core_pending_slot == prev_pending or sigue == prev_pending:
-        return ""
-    return _ACUSE["es" if state.language == "es" else "en"]
-
-
-async def _con_la_pregunta(state: ConversationState, message: str, answer: str, response: str, escrita: str,
-                           finalized: bool, cierre_igual: bool) -> str:
-    """lat-9 paso 2 (26-oct): el escritor cerró con la pregunta fijada al empezar el turno (`escrita`). Si es la que toca,
-    su texto va solo (los botones ya los puso `ask_slot`). Si el mensaje la cambió (contestaba el dato, o la reserva se
-    cierra con la tarjeta), el código cambia su último párrafo por lo que toca (variante «corrige»)."""
-    from src.observability import note_turn  # lazy
-
-    if not finalized and response == escrita:
-        note_turn(pregunta_escritor="igual")
-        logger.info("[CORE][LAT9] el escritor cerró con la pregunta que toca")
-        return answer if _answer_already_asks(answer) else f"{answer.rstrip()}\n\n{response}"
-    if not finalized and _cierra_preguntando_el_origen(state, answer):
-        state.quick_replies = []  # la pregunta del turno es la del origen; la de la reserva queda pendiente
-        logger.info("[CORE][LAT9] el escritor pregunta el origen: esa ocupa el turno")
-        return answer
-    note_turn(pregunta_escritor="corrige")
-    logger.info("[CORE][LAT9] la pregunta cambió con el mensaje: el código pone la que toca")
-    sin = _sin_la_pregunta_final(answer)
-    return sin if cierre_igual else f"{sin.rstrip()}\n\n{response}"
-
-
 def _rehecha_o_sin_importes(rehecha: str | None, answer: str) -> str:
     """G3-07a: la respuesta rehecha sin precio. Si sale vacía o «no lo tengo a la mano», la primera sin sus importes: el cierre la
     tiraba por fallback (s4-7) y «¿cuánto dura? ¿puedo bucear al día siguiente?» recibía solo «¡Perfecto!» y la tarjeta (s05b
@@ -448,40 +397,24 @@ def _rehecha_o_sin_importes(rehecha: str | None, answer: str) -> str:
     return _sin_importes(answer) or answer
 
 
-async def _sin_dato(state: ConversationState, message: str, prev_pending: str, pregunta: str) -> str | None:
-    """lat-9 paso 2 (decisión de Gadea del 26-oct: «el escritor»): el cliente no contestó la pregunta pendiente (da las
-    gracias, se despide, corrige o da otro dato): en vez de la misma pregunta otra vez, el escritor contesta a lo que dijo
-    y cierra con ella. En el banco del paso 2, sin esto, «voy solo» o «en realidad somos 3» recibían la misma pregunta sin
-    que nadie reconociera lo que dijo. None con la reserva fuera de marcha, si la pregunta cambia o si el escritor no
-    sabe qué decir: entonces la pregunta del flujo, como antes. Una pregunta que cambia porque la de antes se APLAZÓ
-    (EX-FLUJO-1: no la contestó dos veces) sigue siendo un turno sin dato: «bueno, aceptamos el precio normal, ¿cómo
-    reservamos?» recibía solo la de seguridad, sin los enlaces (regateo-grupo-6, ronda caln2-B)."""
-    from src.agents.jev_router import SE_DESPIDE  # lazy
-    from src.observability import note_turn  # lazy
+# #3300 (2b): a quien se despide («gracias», «al final no vamos a reservar») no le sale la pregunta de la reserva ni sus botones.
+# CALN-43 (decisión de Gadea, 6-nov): una frase fija, sin llamar al escritor. La llamada para el cliente que no contesta
+# (lat-9 paso 2) no salió en ningún turno de los paneles 058, 058-cl y 059c (0 de 471): fuera.
+_DESPEDIDA = {
+    "es_uno": "¡Con gusto! Si más adelante te animas, aquí estaremos. 🌊",
+    "es_grupo": "¡Con gusto! Si más adelante se animan, aquí estaremos. 🌊",
+    "en": "My pleasure! If you'd like to go ahead later, we're here. 🌊",
+}
 
-    # #3300 (2b): a quien se despide, el escritor le contesta sin la pregunta de la reserva y sin sus botones. Si falla, la de siempre.
-    # Antes de mirar si la pregunta cambió: «Gracias, pero al final no vamos a reservar» con el origen pendiente recibía «¡Perfecto!»
-    # y la de la actividad.
-    se_despide = bool((getattr(state, "_senales_router", None) or {}).get(SE_DESPIDE))
-    sin_contestar = state.core_pending_slot == prev_pending or prev_pending in (state.preguntas_aplazadas or [])
-    if not se_despide and (not getattr(state, "_pregunta_del_escritor", None) or not sin_contestar):
+
+def _despedida(state: ConversationState) -> str | None:
+    """La respuesta a quien se despide (Jev: `se_despide`), sin pregunta ni botones. None si no se despide."""
+    from src.agents.jev_router import SE_DESPIDE  # lazy
+
+    if not (getattr(state, "_senales_router", None) or {}).get(SE_DESPIDE):
         return None
-    state._pregunta_del_escritor = None if se_despide else pregunta
-    try:
-        escrita = await _rag_answer(state, message, history=list(state.history), sin_busqueda=True)
-    except Exception as exc:  # noqa: BLE001 — sin escritor, la pregunta del flujo
-        logger.warning(f"[CORE][LAT9] el escritor falló en un turno sin dato: {exc!r}")
-        return None
-    if not escrita or _is_rag_fallback(escrita) or _es_pregunta_de_origen(escrita):
-        return None
-    if se_despide:
-        note_turn(pregunta_escritor="se_despide")
-        logger.info("[CORE][LAT9] se despide: contesta el escritor, sin la pregunta de la reserva")
-        state.quick_replies = []
-        return escrita
-    note_turn(pregunta_escritor="sin_dato")
-    logger.info("[CORE][LAT9] no contestó la pregunta: contesta el escritor con la pregunta pendiente")
-    return escrita if _answer_already_asks(escrita) else f"{escrita.rstrip()}\n\n{pregunta}"
+    state.quick_replies = []
+    return _DESPEDIDA[clave_de_idioma_y_grupo(state)]
 
 
 async def _si_se_despide(state: ConversationState, message: str, prev_pending: str | None) -> str | None:
@@ -494,7 +427,7 @@ async def _si_se_despide(state: ConversationState, message: str, prev_pending: s
     if answer and not _is_rag_fallback(answer):
         state.quick_replies = []
         return answer
-    return await _sin_dato(state, message, prev_pending or "", "")
+    return _despedida(state)
 
 
 def _no_hace_falta_certificacion(state: ConversationState, carry: dict) -> str:
@@ -551,8 +484,7 @@ async def _slotfill_close_phase(
 ) -> str:
     """Fase 3.3e — RESOLVER + RESPONDER: elige el siguiente slot que falta
     (`next_missing_slot`) y lo pregunta (`ask_slot`), o cierra la reserva
-    (`_finalize` + nota de lead), y envuelve la respuesta con el acuse
-    (`_acuse_por_codigo`). Extraído de `_extract_close_phase`; corre cuando
+    (`_finalize` + nota de lead). Extraído de `_extract_close_phase`; corre cuando
     la extracción no resolvió el turno. Lo llama la cascada (vía
     `maybe_handle_turn`) y el nodo `slotfill_close` del subgrafo."""
     from src.agents import supervisor  # lazy
@@ -611,7 +543,8 @@ async def _slotfill_close_phase(
         response = ask_slot(state, SLOT_COMPANION_QTY, reasking=True)
         state.step = Step.FREE_TEXT
     else:
-        nxt = next_missing_slot(state)
+        # CALN-43 P11: las agotadas que no paran la reserva se saltan; si no falta nada más, se cierra con lo que hay.
+        nxt = next_missing_slot(state, saltar=que_preguntar.se_sigue_sin(state.preguntas_hechas))
         if nxt is None and (despedida := await _si_se_despide(state, message, prev_pending)):
             # s05a (crucero, 2 de 9): «Never mind then, thanks» sin pregunta pendiente recibía la tarjeta entera con su enlace.
             state.history.append({"role": "assistant", "content": despedida})
@@ -650,7 +583,7 @@ async def _slotfill_close_phase(
             # _finalize_tree_response — aquí el equivalente).
             supervisor._maybe_build_pending_note(state)
         else:
-            nxt = _siguiente_pregunta(state, prev_pending)
+            nxt = _siguiente_pregunta(state, nxt)
             response = ask_slot(state, nxt, reasking=(nxt == prev_pending))
             state.step = Step.FREE_TEXT
 
@@ -683,7 +616,7 @@ async def _slotfill_close_phase(
         # precio, y la respuesta (adelantada, escrita antes de saber de dónde es el cliente) traía otro importe: "126
         # USD" en el texto y "2 × 448.000 COP" en la tarjeta (conv 5573). Se rehace sin precio; solo en este caso.
         logger.info("[CORE][G3-07a] la respuesta trae un importe y el turno lleva la tarjeta: se rehace sin precio")
-        state._pregunta_del_escritor = None  # lat-9 paso 2: la tarjeta cierra el turno; no hay pregunta que escribir
+        state._turno_de_la_reserva = False  # la tarjeta cierra el turno
         try:
             rehecha = await _rag_answer(state, message, history=list(state.history), sin_precio=True)
         except Exception as exc:  # noqa: BLE001 — si falla, va la de antes
@@ -697,10 +630,7 @@ async def _slotfill_close_phase(
         answer = None
     cierre_igual = bool(finalized and cierre_previo and state.mixed_last_summary == cierre_previo) or hotel_ya_dicho
     if answer:
-        escrita = getattr(state, "_pregunta_del_escritor", None)
-        if escrita and not _is_rag_fallback(answer) and not _answer_asks_the_origin(state, answer):
-            response = await _con_la_pregunta(state, message, answer, response, escrita, finalized, cierre_igual)
-        elif _answer_replaces_the_booking_question(state, answer, finalized=finalized):
+        if _answer_replaces_the_booking_question(state, answer, finalized=finalized):
             state.quick_replies = []
             response = answer
         elif cierre_igual:
@@ -717,22 +647,16 @@ async def _slotfill_close_phase(
         return response
 
     if sin_seguridad and cierre_igual and state.step != Step.ESCALATE:
-        sigue = _tras_la_tarjeta_ya_vista(state)
-        response = await _sin_dato(state, message, SLOT_SAFETY, sigue) or sigue
+        response = _despedida(state) or _tras_la_tarjeta_ya_vista(state)
         state.history.append({"role": "assistant", "content": response})
         return response
 
-    if not first_turn and not finalized and not hotel_primero and prev_pending and (escrita := await _sin_dato(state, message, prev_pending,
-                                                                                         response)):
-        state.history.append({"role": "assistant", "content": escrita})
-        return escrita
+    if not first_turn and not finalized and not hotel_primero and prev_pending and (despedida := _despedida(state)):
+        state.history.append({"role": "assistant", "content": despedida})
+        return despedida
 
-    ack = ""
-    if not first_turn and not hotel_primero:
-        ack = _acuse_por_codigo(state, prev_pending)
-        if ack:
-            ack = ack.rstrip() + "\n\n"
-        ack += _no_hace_falta_certificacion(state, carry) + _precio_en_su_moneda(state, carry)
-    response = greeting + ack + response
+    # CALN-43 (Gadea, 6-nov): sin el «¡Perfecto! 🙌» delante de la pregunta.
+    delante = "" if first_turn or hotel_primero else _no_hace_falta_certificacion(state, carry) + _precio_en_su_moneda(state, carry)
+    response = greeting + delante + response
     state.history.append({"role": "assistant", "content": response})
     return response

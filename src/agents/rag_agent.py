@@ -51,8 +51,14 @@ def _load_brand_tone_cached() -> dict:
     return _BRAND_TONE_CACHE
 
 
-def _build_tone_section(lang: str) -> str:
-    """Compose the Style/Tone bullets dynamically from brand_tone.json.
+def _pide_cerrar_preguntando(linea: str) -> bool:
+    """La línea del tono que pide cerrar con una pregunta («Cerrar con una pregunta útil…», «End with a useful question…»)."""
+    return any(palabra in linea.lower() for palabra in ("pregunta", "question"))
+
+
+def _build_tone_section(lang: str, sin_preguntas: bool = False) -> str:
+    """Compose the Style/Tone bullets dynamically from brand_tone.json. `sin_preguntas` (CALN-43, bloque 0,5 del Plan Gadea): en
+    un turno de la reserva la pregunta la pone el código, así que el tono no pide cerrar con una pregunta.
 
     Falls back to a minimal hard-coded set if the file is missing or malformed.
     """
@@ -76,7 +82,8 @@ def _build_tone_section(lang: str) -> str:
 
     ws_lang = (tone.get("whatsapp_style") or {}).get(lang) or {}
     for shape in ws_lang.get("message_shape", []):
-        bullets.append(f"- {shape}")
+        if not (sin_preguntas and _pide_cerrar_preguntando(shape)):
+            bullets.append(f"- {shape}")
 
     human = ws_lang.get("human_touches", [])
     if human:
@@ -88,17 +95,12 @@ def _build_tone_section(lang: str) -> str:
 
     if not bullets:
         # Defensive fallback if brand_tone.json is empty or unreadable.
-        if lang == "es":
-            return (
-                "- Cercano, confiable, profesional pero amigable.\n"
-                "- Usa frases cortas y naturales.\n"
-                "- Cierra con una pregunta util o un siguiente paso claro."
-            )
-        return (
-            "- Approachable, trustworthy, professional but friendly.\n"
-            "- Use short, natural sentences.\n"
-            "- End with a useful question or clear next step."
-        )
+        bullets = (["- Cercano, confiable, profesional pero amigable.", "- Usa frases cortas y naturales.",
+                    "- Cierra con una pregunta util o un siguiente paso claro."] if lang == "es" else
+                   ["- Approachable, trustworthy, professional but friendly.", "- Use short, natural sentences.",
+                    "- End with a useful question or clear next step."])
+        if sin_preguntas:
+            bullets = [b for b in bullets if not _pide_cerrar_preguntando(b)]
 
     return "\n".join(bullets)
 
@@ -130,8 +132,12 @@ def is_fallback_answer(text: str | None) -> bool:
     return bool(text) and (FALLBACK_ES in text or FALLBACK_EN in text)
 
 
-def build_system_prompt(lang: str, query: str | None = None) -> str:
+def build_system_prompt(lang: str, query: str | None = None, sin_preguntas: bool = False) -> str:
     """Compose the full system prompt: intro + dynamic tone + body + las reglas de cualquier escritor.
+
+    `sin_preguntas` (CALN-43, bloque 0,5 del Plan Gadea): en un turno de la reserva la pregunta la pone el código, así que fuera las dos
+    órdenes de preguntar: «cerrar con una pregunta» del tono y «preguntar lo que falta». Son dos prompts fijos por idioma: el prefijo
+    sigue siendo cacheable.
 
     ``query`` ya no se usa: alimentaba el few-shot de los chats antiguos de WhatsApp
     (conversations.json), retirado en g-7 paso 4 (2026-09-24). Se deja en la firma para
@@ -154,18 +160,20 @@ def build_system_prompt(lang: str, query: str | None = None) -> str:
         prompt = (
             f"{RAG_INTRO_ES}\n\n"
             f"{RAG_SECURITY_ES}\n"
-            f"Estilo y tono:\n{_build_tone_section('es')}\n\n"
+            f"Estilo y tono:\n{_build_tone_section('es', sin_preguntas)}\n\n"
             f"{RAG_BODY_ES}"
         )
     else:
         prompt = (
             f"{RAG_INTRO_EN}\n\n"
             f"{RAG_SECURITY_EN}\n"
-            f"Style and tone:\n{_build_tone_section('en')}\n\n"
+            f"Style and tone:\n{_build_tone_section('en', sin_preguntas)}\n\n"
             f"{RAG_BODY_EN}"
         )
     # Solo del RAG: nombrar los varios planes que encajan (busca en todo el catálogo) y preguntar lo que falta.
     varios = RAG_VARIOS_PLANES_ES if lang == "es" else RAG_VARIOS_PLANES_EN
+    if sin_preguntas:
+        return f"{prompt}\n\n{reglas_del_escritor(lang)}\n\n{varios}"
     pregunta = RAG_PREGUNTA_LO_QUE_FALTA_ES if lang == "es" else RAG_PREGUNTA_LO_QUE_FALTA_EN
     return f"{prompt}\n\n{reglas_del_escritor(lang)}\n\n{varios}\n\n{pregunta}"
 
@@ -712,8 +720,7 @@ async def rag_answer(
     precios_por_codigo: bool = False,
     hechos: str | None = None,
     hechos_bloques: tuple[list[dict], list[str]] | None = None,
-    pregunta_final: str | None = None,
-    sin_busqueda: bool = False,
+    sin_preguntas: bool = False,
     sin_fichas: bool = False,
 ) -> str:
     """`hechos` (arq-1g, flag `hechos_al_rag`): en un mensaje mezclado, los hechos del código (JSON de
@@ -723,9 +730,7 @@ async def rag_answer(
     escritor con los hechos: el plan ya se lo dan los hechos del código, y con las fichas de otros planes mezclaba lo que
     incluye cada uno (mini de la 0.46: «debes pasar la noche» en la salida de 2 inmersiones, «ambos incluyen nocturno»).
 
-    `pregunta_final` (lat-9 paso 2): la pregunta de la reserva que decidió el código; el escritor cierra con ella.
-    `sin_busqueda` (lat-9 paso 2): el escritor solo, sin reescritura ni búsqueda, con el catálogo, las políticas y el
-    estado; el revisor, con la regla de lat-5.
+    `sin_preguntas` (CALN-43): un turno de la reserva; el escritor no pregunta, la pregunta la pone el código al final.
 
     `sin_precio` (G3-07a, 18-oct; lo pide el flujo con el flag `rag_sin_precio_con_tarjeta`): el turno lleva la
     tarjeta del plan con el precio y el enlace, así que el texto no los da (ver RAG_SIN_PRECIO_*).
@@ -782,98 +787,93 @@ async def rag_answer(
 
     catalog_prefix_juez = para_el_juez(f"{facts}\n\n{policies_facts(lang)}", lang)  # 1-oct: la regla de moneda como hecho
 
-    if sin_busqueda:
-        # lat-9 paso 2 (26-oct): un turno de la reserva en que el cliente no contestó la pregunta («voy solo», «gracias»):
-        # la reescritura y la búsqueda no aportan nada (banco del paso 2: 1,9 → 5,4 s de mediana con el RAG entero).
-        condensed_query, docs, safe_query = query, [], ""
+    # CAL-D (`consulta_con_lo_sabido`): el reescritor recibe lo que ya sabemos del cliente para que la consulta nombre
+    # el asunto (sin esto deja la elipsis: "per day", "en concepto").
+    condensed_query = await condense_query(query, history=history, lang=lang, hechos=avisos_hechos)
+    ambiguous_location_clarification = _ambiguous_location_clarification(condensed_query, lang)
+    if ambiguous_location_clarification:
+        logger.info(f"[RAG][CANONICAL_SHORTCUT] shortcut=ambiguous_location query={query!r} lang={lang}")
+        return ambiguous_location_clarification
+
+    retrieval_query = build_retrieval_query(condensed_query, history)
+
+    # If the query got enriched with prior turns (because it looked like a
+    # follow-up), try the BARE query alone first: a short, self-contained
+    # question that already retrieves confidently on its own must not be
+    # diluted by unrelated earlier turns. Found live 2026-07-21: "y si llueve
+    # que pasa" retrieved the correct weather FAQ alone at cosine 0.42 (above
+    # threshold), but enriched with the 2 previous unrelated turns (price,
+    # food) that same doc dropped to 0.377 (below threshold) and lost to the
+    # food FAQs instead — the customer got "no lo tengo a la mano" for a
+    # question the KB actually answers well.
+    # rag-3: el origen del estado, no leido del resumen (la deteccion por frases de abajo solo casa en espanol).
+    origen_kb = {"cartagena": "cartagena", "island": "islas"}.get(origin or "")
+    buscar_kw = {"origin": origen_kb} if origen_kb else {}
+
+    bare_docs = None
+    bare_safe_query = None
+    if retrieval_query != condensed_query:
+        bare_safe_query = redact_pii(condensed_query)
+        bare_docs = await search_knowledge_base(bare_safe_query, lang=lang, **buscar_kw)
+        if any(_is_confident(d) for d in bare_docs):
+            retrieval_query = condensed_query
+
+    # Lightly bias retrieval using known origin from extra_context (Cartagena vs already on the islands)
+    antes_del_origen = retrieval_query
+    if extra_context:
+        lowered_ctx = extra_context.lower()
+
+        # Cliente saliendo desde Cartagena
+        if "saldra desde cartagena" in lowered_ctx:
+            rq_lower = retrieval_query.lower()
+            if lang == "es" and "desde cartagena" not in rq_lower:
+                retrieval_query += "\n\n[origen_cliente]=desde Cartagena"
+            elif lang == "en" and "from cartagena" not in rq_lower:
+                retrieval_query += "\n\n[origin]=from Cartagena"
+
+        # Cliente que ya esta en las islas del Rosario
+        if "ya esta en las islas del rosario" in lowered_ctx:
+            rq_lower = retrieval_query.lower()
+            if lang == "es" and "ya estoy en las islas del rosario" not in rq_lower:
+                retrieval_query += "\n\n[origen_cliente]=ya en las islas"
+            elif lang == "en" and "already on the rosario islands" not in rq_lower:
+                retrieval_query += "\n\n[origin]=already on the Rosario Islands"
+
+    safe_query = redact_pii(retrieval_query)
+
+    # Retrieve relevant documents (parent expansion happens later, only if confident).
+    # Reuse the bare-query search above instead of repeating it when nothing
+    # (origin bias included) ended up changing the query further.
+    # 1-oct (búsqueda doble): se busca TAMBIÉN con la pregunta tal cual y se unen los dos rankings. La
+    # reescritura mete el servicio de la conversación y a veces se come el tema ("great, how do i pay" -> "How do I
+    # pay for the Fun Dives?": las 6 piezas de pago salen con la original y ninguna con la reescrita;
+    # `docs/robustness/juez/README.md`). Las dos búsquedas van a la vez. Solo si la reescritura CAMBIÓ la pregunta, y
+    # la original lleva la misma marca de origen: en rag_piezas, con la reescrita idéntica, la única diferencia era
+    # la marca y la búsqueda sin ella sacaba del top-8 una pieza buena.
+    sufijo_origen = retrieval_query[len(antes_del_origen):]
+    principal = None
+    if bare_docs is not None and safe_query == bare_safe_query:
+        docs = bare_docs
     else:
-        # CAL-D (`consulta_con_lo_sabido`): el reescritor recibe lo que ya sabemos del cliente para que la consulta nombre
-        # el asunto (sin esto deja la elipsis: "per day", "en concepto").
-        condensed_query = await condense_query(query, history=history, lang=lang, hechos=avisos_hechos)
-        ambiguous_location_clarification = _ambiguous_location_clarification(condensed_query, lang)
-        if ambiguous_location_clarification:
-            logger.info(f"[RAG][CANONICAL_SHORTCUT] shortcut=ambiguous_location query={query!r} lang={lang}")
-            return ambiguous_location_clarification
-
-        retrieval_query = build_retrieval_query(condensed_query, history)
-
-        # If the query got enriched with prior turns (because it looked like a
-        # follow-up), try the BARE query alone first: a short, self-contained
-        # question that already retrieves confidently on its own must not be
-        # diluted by unrelated earlier turns. Found live 2026-07-21: "y si llueve
-        # que pasa" retrieved the correct weather FAQ alone at cosine 0.42 (above
-        # threshold), but enriched with the 2 previous unrelated turns (price,
-        # food) that same doc dropped to 0.377 (below threshold) and lost to the
-        # food FAQs instead — the customer got "no lo tengo a la mano" for a
-        # question the KB actually answers well.
-        # rag-3: el origen del estado, no leido del resumen (la deteccion por frases de abajo solo casa en espanol).
-        origen_kb = {"cartagena": "cartagena", "island": "islas"}.get(origin or "")
-        buscar_kw = {"origin": origen_kb} if origen_kb else {}
-
-        bare_docs = None
-        bare_safe_query = None
-        if retrieval_query != condensed_query:
-            bare_safe_query = redact_pii(condensed_query)
-            bare_docs = await search_knowledge_base(bare_safe_query, lang=lang, **buscar_kw)
-            if any(_is_confident(d) for d in bare_docs):
-                retrieval_query = condensed_query
-
-        # Lightly bias retrieval using known origin from extra_context (Cartagena vs already on the islands)
-        antes_del_origen = retrieval_query
-        if extra_context:
-            lowered_ctx = extra_context.lower()
-
-            # Cliente saliendo desde Cartagena
-            if "saldra desde cartagena" in lowered_ctx:
-                rq_lower = retrieval_query.lower()
-                if lang == "es" and "desde cartagena" not in rq_lower:
-                    retrieval_query += "\n\n[origen_cliente]=desde Cartagena"
-                elif lang == "en" and "from cartagena" not in rq_lower:
-                    retrieval_query += "\n\n[origin]=from Cartagena"
-
-            # Cliente que ya esta en las islas del Rosario
-            if "ya esta en las islas del rosario" in lowered_ctx:
-                rq_lower = retrieval_query.lower()
-                if lang == "es" and "ya estoy en las islas del rosario" not in rq_lower:
-                    retrieval_query += "\n\n[origen_cliente]=ya en las islas"
-                elif lang == "en" and "already on the rosario islands" not in rq_lower:
-                    retrieval_query += "\n\n[origin]=already on the Rosario Islands"
-
-        safe_query = redact_pii(retrieval_query)
-
-        # Retrieve relevant documents (parent expansion happens later, only if confident).
-        # Reuse the bare-query search above instead of repeating it when nothing
-        # (origin bias included) ended up changing the query further.
-        # 1-oct (búsqueda doble): se busca TAMBIÉN con la pregunta tal cual y se unen los dos rankings. La
-        # reescritura mete el servicio de la conversación y a veces se come el tema ("great, how do i pay" -> "How do I
-        # pay for the Fun Dives?": las 6 piezas de pago salen con la original y ninguna con la reescrita;
-        # `docs/robustness/juez/README.md`). Las dos búsquedas van a la vez. Solo si la reescritura CAMBIÓ la pregunta, y
-        # la original lleva la misma marca de origen: en rag_piezas, con la reescrita idéntica, la única diferencia era
-        # la marca y la búsqueda sin ella sacaba del top-8 una pieza buena.
-        sufijo_origen = retrieval_query[len(antes_del_origen):]
-        principal = None
-        if bare_docs is not None and safe_query == bare_safe_query:
-            docs = bare_docs
-        else:
-            principal = asyncio.create_task(search_knowledge_base(safe_query, lang=lang, **buscar_kw))
-        # lat-B (24-oct, fase LAT): la segunda búsqueda vuelve a ir con el mensaje tal cual; la «pregunta sola» de G3-05
-        # (una llamada más en el 62 % de los turnos) salió: la reescritura ya traduce lo que viene en otro idioma.
-        tal_cual = query
-        reescrita_distinta = tal_cual.strip() != condensed_query.strip()
-        original_q = redact_pii(tal_cual + sufijo_origen) if reescrita_distinta else ""
-        buscar_original = bool(original_q.strip()) and original_q not in (safe_query, bare_safe_query)
-        # CALN-11, sin la marca del origen (Gadea #2845): en una pregunta corta tapaba la pieza buena («Can we bring some
-        # beers on the boat?»: no_alcohol_policy fuera del top-4 con ella, 1.ª sin ella). El origen sigue en `origin`.
-        por_pregunta = [q for q in (redact_pii(p) for p in preguntas_del_mensaje(tal_cual))
-                        if q not in (safe_query, bare_safe_query, original_q)]
-        de_cada_pregunta = asyncio.gather(*(search_knowledge_base(q, lang=lang, **buscar_kw) for q in por_pregunta))
-        originales = await search_knowledge_base(original_q, lang=lang, **buscar_kw) if buscar_original else None
-        if principal is not None:
-            docs = await principal
-        if originales:
-            docs = fusionar_busquedas(docs, originales)
-        for de_una in await de_cada_pregunta:  # CALN-11
-            docs = fusionar_busquedas(docs, de_una, extra=POR_PREGUNTA_EXTRA)
+        principal = asyncio.create_task(search_knowledge_base(safe_query, lang=lang, **buscar_kw))
+    # lat-B (24-oct, fase LAT): la segunda búsqueda vuelve a ir con el mensaje tal cual; la «pregunta sola» de G3-05
+    # (una llamada más en el 62 % de los turnos) salió: la reescritura ya traduce lo que viene en otro idioma.
+    tal_cual = query
+    reescrita_distinta = tal_cual.strip() != condensed_query.strip()
+    original_q = redact_pii(tal_cual + sufijo_origen) if reescrita_distinta else ""
+    buscar_original = bool(original_q.strip()) and original_q not in (safe_query, bare_safe_query)
+    # CALN-11, sin la marca del origen (Gadea #2845): en una pregunta corta tapaba la pieza buena («Can we bring some
+    # beers on the boat?»: no_alcohol_policy fuera del top-4 con ella, 1.ª sin ella). El origen sigue en `origin`.
+    por_pregunta = [q for q in (redact_pii(p) for p in preguntas_del_mensaje(tal_cual))
+                    if q not in (safe_query, bare_safe_query, original_q)]
+    de_cada_pregunta = asyncio.gather(*(search_knowledge_base(q, lang=lang, **buscar_kw) for q in por_pregunta))
+    originales = await search_knowledge_base(original_q, lang=lang, **buscar_kw) if buscar_original else None
+    if principal is not None:
+        docs = await principal
+    if originales:
+        docs = fusionar_busquedas(docs, originales)
+    for de_una in await de_cada_pregunta:  # CALN-11
+        docs = fusionar_busquedas(docs, de_una, extra=POR_PREGUNTA_EXTRA)
 
     # Helper to call the LLM with unstructured context (either KB docs o solo extra_context)
     async def _answer_with_llm(
@@ -888,7 +888,7 @@ async def rag_answer(
         answers a factual question from its own world knowledge (e.g. inventing
         a list of fish species). The judge is the only thing standing between
         that and the customer."""
-        system_prompt = build_system_prompt(lang, query=condensed_query)
+        system_prompt = build_system_prompt(lang, query=condensed_query, sin_preguntas=sin_preguntas)
         if catalog_prefix:
             system_prompt = f"{system_prompt}\n\n{catalog_prefix}"
         if sin_precio:
@@ -915,17 +915,15 @@ async def rag_answer(
             user_content += f"\n\nContexto adicional de la situacion: {extra_context}"
         if hechos:
             # arq-1g: la parte de la tabla sale del dato, no de memoria; detrás del contexto, antes de la pregunta.
-            # lat-9 paso 3: sin búsqueda, los hechos lo cubren todo y son lo único que se dice (la regla del redactor).
             from src.prompts import info as prompts_info  # lazy
 
-            cabeza = ((prompts_info.RAG_SOLO_HECHOS_ES, prompts_info.RAG_SOLO_HECHOS_EN) if sin_busqueda
-                      else (prompts_info.RAG_CON_HECHOS_ES, prompts_info.RAG_CON_HECHOS_EN))
-            user_content += f"\n\n{cabeza[0] if lang == 'es' else cabeza[1]}\n{hechos}"
+            cabeza = prompts_info.RAG_CON_HECHOS_ES if lang == "es" else prompts_info.RAG_CON_HECHOS_EN
+            user_content += f"\n\n{cabeza}\n{hechos}"
         user_content += f"\n\nPregunta del cliente: {redact_pii(query)}"
-        if pregunta_final:
-            from src.prompts.info import pregunta_final as instruccion_pregunta  # lazy
+        if sin_preguntas:
+            from src.prompts.info import sin_preguntas as instruccion  # lazy
 
-            user_content += f"\n\n{instruccion_pregunta(pregunta_final, lang)}"
+            user_content += f"\n\n{instruccion(lang)}"
         # lat-deuda (26-oct): los avisos que el cliente necesita y no pregunta ya no van aquí; los pone el código al
         # final de la respuesta del turno, sea del RAG, del redactor o de la reserva (`src/flows/avisos.py`).
 
@@ -934,9 +932,6 @@ async def rag_answer(
         grounding_context = _build_grounding_context(context, extra_context=extra_context, history=history)
         if hechos:
             grounding_context = f"{grounding_context}\n\n{hechos}"  # arq-1g: el revisor y las guardas también los ven
-        if pregunta_final:
-            # lat-9 paso 2: la pregunta es del sistema (puede llevar el precio del refresher); el revisor también la ve.
-            grounding_context = f"{grounding_context}\n\nPregunta del sistema: {pregunta_final}"
         cabeza = [catalog_prefix_juez or catalog_prefix] if catalog_prefix else []
         # Lo que el bot tiene ordenado decir de la empresa, el juez tiene que poder comprobarlo (1-oct). Va tras el
         # catálogo: los dos son fijos por idioma, así que el prefijo sigue siendo cacheable.
@@ -1056,12 +1051,8 @@ async def rag_answer(
             # No hay nada util en el KB, pero si tenemos resumen de estado: dejamos que el LLM
             # razone SOLO con ese contexto en lugar de ir directo al fallback.
             # El juez de grounding es OBLIGATORIO aqui (require_grounding): sin
-            # soporte del KB, el modelo responderia de su conocimiento propio. lat-9 paso 2: sin búsqueda, la regla de
-            # lat-5 (solo si trae cifras o días fuera del contexto): contesta a lo dicho y repite la pregunta.
-            return await _answer_with_llm(
-                extra_context or "", context_sources=["sin_busqueda" if sin_busqueda else "extra_context_only"],
-                require_grounding=not sin_busqueda,
-            )
+            # soporte del KB, el modelo responderia de su conocimiento propio.
+            return await _answer_with_llm(extra_context or "", context_sources=["extra_context_only"], require_grounding=True)
         return FALLBACK_ES if lang == "es" else FALLBACK_EN
 
     # 2) Hay documentos pero ninguno con confianza suficiente

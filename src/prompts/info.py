@@ -518,42 +518,22 @@ RAG_CON_HECHOS_EN = (
     "ages). For that part use them as given and IN FULL (whole lists, every amount, the age), without swapping them for "
     "what the catalog says; answer the rest of the question as usual:"
 )
-# lat-9 paso 3 (27-oct, Gadea #2059): los hechos lo cubren todo y no hay búsqueda (`redactor_hechos._con_el_escritor`).
-# Sin la regla del redactor que sustituye, el escritor completaba con el catálogo del prompt («el regreso no está
-# incluido», precios-y-disponibilidad) o hacía la cuenta del corte con la hora de hoy («cerró ayer», curso-open-water).
-RAG_SOLO_HECHOS_ES = (
-    "Hechos del sistema para lo que pregunta el cliente, ya calculados con las reglas de Diving Planet (moneda, origen, "
-    "edades). Contesta con ellos, tal cual y COMPLETOS (las listas enteras, cada importe, la edad), sin cambiarlos por lo "
-    "que diga el catálogo. No añadas nada que no esté en los hechos: ni precios, ni horarios, ni itinerarios, ni "
-    "condiciones. Un corte de horario («antes de las 4:30 p. m. del día anterior») dilo como viene, sin calcular con la "
-    "fecha o la hora de hoy si ya pasó. Si el cliente pregunta algo que los hechos no contestan, dilo en una frase, sin "
-    "inventarlo:"
-)
-RAG_SOLO_HECHOS_EN = (
-    "System facts for what the customer asks, already worked out with Diving Planet's rules (currency, origin, ages). "
-    "Answer with them, as given and IN FULL (whole lists, every amount, the age), without swapping them for what the "
-    "catalog says. Do not add anything that is not in the facts: no prices, schedules, itineraries or conditions. Say a "
-    "time cutoff («before 4:30 PM the day before») as given, without working out from today's date or time whether it "
-    "has passed. If the customer asks something the facts do not answer, say so in one sentence, without making it up:"
-)
 
 
-# lat-9 paso 2 (26-oct): la pregunta de la reserva la decide el código y la escribe el escritor, al final de su texto. Antes
-# el código la pegaba detrás de la respuesta («…\n\n¿Desde dónde saldrías?») y a veces salían dos preguntas seguidas.
-_PREGUNTA_FINAL = {
-    "es": ("La reserva sigue y el sistema necesita preguntarle esto: «{pregunta}». Contesta primero a lo que dice el "
-           "cliente y termina tu mensaje con esa pregunta, en un párrafo aparte al final. Puedes cambiar las primeras "
-           "palabras para que enlace con tu respuesta, pero pide lo mismo y conserva tal cual sus opciones y sus datos. "
-           "No hagas ninguna otra pregunta."),
-    "en": ("The booking continues and the system needs to ask them this: «{pregunta}». First reply to what the customer "
-           "says, then end your message with that question, in a separate paragraph at the end. You may change the first "
-           "words so it follows on from your reply, but ask the same thing and keep its options and details as they are. "
-           "Do not ask any other question."),
+# CALN-43, qué preguntar (decisión de Gadea, 6-nov): en un turno de la reserva, la pregunta la decide la tabla después de leer el
+# mensaje y la pone el código, una vez y al final (`src/flows/que_preguntar.py`). El escritor no pregunta. Sustituye a la de lat-9
+# paso 2, que le daba la pregunta al empezar el turno: el mensaje la cambiaba y el código la corregía en 128 de 170 turnos de los
+# paneles 058, 058-cl y 059c.
+_SIN_PREGUNTAS = {
+    "es": ("La reserva sigue y el sistema pondrá su pregunta al final de tu mensaje. Contesta solo a lo que dice el cliente, "
+           "sin hacer ninguna pregunta."),
+    "en": ("The booking continues and the system will add its question at the end of your message. Reply only to what the "
+           "customer says, without asking any question."),
 }
 
 
-def pregunta_final(pregunta: str, lang: str) -> str:
-    """La instrucción para que el escritor cierre con la pregunta que decidió el código."""
-    return _PREGUNTA_FINAL["es" if lang == "es" else "en"].format(pregunta=pregunta.strip())
+def sin_preguntas(lang: str) -> str:
+    """La instrucción para que el escritor no pregunte en un turno de la reserva."""
+    return _SIN_PREGUNTAS["es" if lang == "es" else "en"]
 
 

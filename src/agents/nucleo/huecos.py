@@ -26,7 +26,6 @@ from src.agents.conversational_core import (
     _companion_activity_options,
     _course_level_options,
     _describe_value,
-    _es_la_ultima_pregunta,
     _known_field_values,
     _pregunta_si_tambien_bucea,
 )
@@ -607,11 +606,8 @@ def _texto_de_la_pregunta(state: ConversationState, slot: str, *, reasking: bool
              "are you a Colombian national, or do you have a Colombian *cédula de extranjería* (Colombia's ID card "
              "for foreigners)?")
         )
-        if lang == "es":
-            cabeza = ("Para darte el precio correcto:" if not _es_la_ultima_pregunta(state)
-                      else "Última cosa para darte el precio correcto:")
-        else:
-            cabeza = ("So I can give you the right price:" if not _es_la_ultima_pregunta(state)
-                      else "One last thing so I can give you the right price:")
+        # La nacionalidad va la última (`next_missing_slot`), y con CALN-43 P11 las que ya salieron 2 veces no vuelven detrás.
+        cabeza = ("Última cosa para darte el precio correcto:" if lang == "es"
+                  else "One last thing so I can give you the right price:")
         return f"{cabeza} {pregunta}"
     raise ValueError(f"unknown slot {slot!r}")

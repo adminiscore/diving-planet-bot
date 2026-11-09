@@ -112,14 +112,12 @@ async def test_los_hechos_van_en_el_mensaje_y_los_ve_el_revisor(rag, monkeypatch
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("sin_busqueda", [False, True])
-async def test_sin_busqueda_los_hechos_son_lo_unico_que_se_dice(rag, sin_busqueda):
-    """lat-9 paso 3 (Gadea #2059): con los hechos cubriéndolo todo y sin búsqueda, la regla del redactor."""
+async def test_con_hechos_va_la_regla_de_usarlos_tal_cual(rag):
+    """arq-1g. (lat-9 paso 3 tenía otra regla sin búsqueda, para el escritor de `_sin_dato`; se fue con él en CALN-43.)"""
     from src.prompts import info
 
     rag_agent, llamadas = rag
     hechos = '[{"actividad": "minicourse", "precio": {"cartagena": {"online": "183 USD"}}}]'
-    await rag_agent.rag_answer("¿cuánto cuesta el minicurso?", lang="es", hechos=hechos, sin_busqueda=sin_busqueda)
+    await rag_agent.rag_answer("¿cuánto cuesta el minicurso?", lang="es", hechos=hechos)
     primera = next(m["content"] for m in reversed(llamadas[0]["messages"]) if m["role"] == "user")
-    assert (info.RAG_SOLO_HECHOS_ES in primera) is sin_busqueda
-    assert (info.RAG_CON_HECHOS_ES in primera) is not sin_busqueda
+    assert info.RAG_CON_HECHOS_ES in primera

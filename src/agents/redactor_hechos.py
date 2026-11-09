@@ -329,8 +329,6 @@ async def _con_el_escritor(state: ConversationState, message: str, history: list
     lang = "es" if state.language == "es" else "en"
     origen_pendiente = any(b.get("pregunta_pendiente") == "origen" for b in bloques)
     entradas = core._entradas_rag(state, history, message)
-    if origen_pendiente:
-        entradas.pop("pregunta_final", None)  # la pregunta del origen la pone el código, abajo
     entradas.update(hechos=texto_de_los_hechos(bloques), hechos_bloques=(bloques, intenciones), sin_fichas=True)
     # 5.ª ronda: con una pregunta de precio guardada a la espera del origen, arq-8f añade «precio» a cada turno con alguna
     # intención, y la pieza salía en turnos que preguntan otra cosa (la hora de vuelta, cómo reservar). Va si el cliente
@@ -350,6 +348,7 @@ async def _con_el_escritor(state: ConversationState, message: str, history: list
         # CALN-3 paso 3 «A»: el escritor no escribe importes; los pone el código debajo y no se le exigen.
         entradas.update(precios_por_codigo=True, hechos_bloques=(bloques, [i for i in intenciones if i != "precio"]))
     answer = await supervisor.rag_answer(message, **entradas)
+    core.contar_si_el_escritor_pregunta(entradas, answer)  # bloque 0,5 del Plan Gadea: ¿pregunta el escritor en la reserva?
     if not answer or is_fallback_answer(answer):
         note_turn(hechos_por_codigo="fallo")
         return None

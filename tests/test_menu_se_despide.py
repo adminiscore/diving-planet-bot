@@ -1,4 +1,5 @@
-"""#3300 (2b, 4-nov): «Entiendo, gracias. Entonces lo dejo para otra ocasión» recibía «¿Con cuál te animas?»."""
+"""#3300 (2b, 4-nov): «Entiendo, gracias. Entonces lo dejo para otra ocasión» recibía «¿Con cuál te animas?». CALN-43 (decisión
+de Gadea, 6-nov): a quien se despide, una frase fija, sin la pregunta ni sus botones, y sin llamar al escritor."""
 import asyncio
 
 from src.agents import conversational_core as core
@@ -6,67 +7,45 @@ from src.agents import jev_router as j
 from src.agents.nucleo import slotfill_close as sc
 from src.flows.state import ConversationState
 
-PREGUNTA = "¿Con cuál te animas — *buceo*, *minicurso*, *snorkel* o un *curso PADI*? 🌊"
-
 
 def _estado(**senales) -> ConversationState:
     st = ConversationState(conversation_id="despide", language="es")
     st.core_pending_slot = "activity"
-    st._pregunta_del_escritor = PREGUNTA
     st._senales_router = senales
     st.quick_replies = [{"title": "Buceo", "value": "buceo"}]
     return st
 
 
-def _con_escritor(monkeypatch, texto="¡Claro, aquí estaremos! 🌊"):
-    vistas = []
+def _sin_escritor(monkeypatch):
+    llamadas = []
 
-    async def falso(state, message, history=None, **kw):
-        vistas.append(state._pregunta_del_escritor)
-        return texto
+    async def falso(*_a, **_k):
+        llamadas.append(1)
+        return "no debería salir"
 
     monkeypatch.setattr(sc, "_rag_answer", falso)
-    return vistas
+    return llamadas
 
 
-def _sin_dato(st):
-    return asyncio.run(sc._sin_dato(st, "lo dejo para otra ocasión", "activity", PREGUNTA))
-
-
-def test_si_se_despide_no_lleva_la_pregunta_ni_sus_botones(monkeypatch):
-    vistas = _con_escritor(monkeypatch)
+def test_si_se_despide_va_la_frase_fija_sin_la_pregunta_ni_sus_botones(monkeypatch):
+    llamadas = _sin_escritor(monkeypatch)
     st = _estado(**{j.SE_DESPIDE: True})
-    assert _sin_dato(st) == "¡Claro, aquí estaremos! 🌊"
-    assert vistas == [None] and st.quick_replies == []
+    assert sc._despedida(st) == sc._DESPEDIDA["es_uno"]
+    assert st.quick_replies == [] and llamadas == []
 
 
-def test_se_despide_aunque_la_pregunta_pendiente_haya_cambiado(monkeypatch):
-    """banco-se-despide, d-no-reservar: con el origen pendiente, «al final no vamos a reservar» recibía «¡Perfecto!» y el menú."""
-    vistas = _con_escritor(monkeypatch)
+def test_la_despedida_va_en_su_numero_y_su_idioma():
     st = _estado(**{j.SE_DESPIDE: True})
-    st.core_pending_slot = "location"
-    assert _sin_dato(st) == "¡Claro, aquí estaremos! 🌊"
-    assert vistas == [None] and st.quick_replies == []
+    st.detected_group_size = 3
+    assert sc._despedida(st) == sc._DESPEDIDA["es_grupo"]
+    st.language = "en"
+    assert sc._despedida(st) == sc._DESPEDIDA["en"]
+    assert all("?" not in texto for texto in sc._DESPEDIDA.values())
 
 
-def test_sin_despedida_y_con_la_pregunta_cambiada_sigue_el_flujo(monkeypatch):
-    vistas = _con_escritor(monkeypatch)
-    st = _estado(**{j.SE_DESPIDE: False})
-    st.core_pending_slot = "location"
-    assert _sin_dato(st) is None and vistas == []
-
-
-def test_si_no_se_despide_sigue_la_pregunta(monkeypatch):
-    vistas = _con_escritor(monkeypatch)
-    st = _estado(**{j.SE_DESPIDE: False})
-    assert _sin_dato(st) == f"¡Claro, aquí estaremos! 🌊\n\n{PREGUNTA}"
-    assert vistas == [PREGUNTA] and st.quick_replies
-
-
-def test_sin_la_senal_de_jev_es_la_conducta_de_hoy(monkeypatch):
-    vistas = _con_escritor(monkeypatch)
-    assert _sin_dato(_estado()) == f"¡Claro, aquí estaremos! 🌊\n\n{PREGUNTA}"
-    assert vistas == [PREGUNTA]
+def test_sin_despedida_nada():
+    assert sc._despedida(_estado(**{j.SE_DESPIDE: False})) is None
+    assert sc._despedida(_estado()) is None
 
 
 def _pregunta_actividad(idioma="es", **campos):
@@ -107,12 +86,12 @@ def _turno(st):
 
 def test_a_quien_se_despide_sin_pregunta_pendiente_no_le_sale_la_tarjeta(monkeypatch):
     """s05a (crucero): Jev veía la despedida y salía la tarjeta con su enlace."""
-    _con_escritor(monkeypatch, "You're welcome! Enjoy Cartagena.")
+    llamadas = _sin_escritor(monkeypatch)
     texto = _turno(_listo_para_la_tarjeta(**{j.SE_DESPIDE: True}))
-    assert texto == "You're welcome! Enjoy Cartagena."
+    assert texto == sc._DESPEDIDA["es_grupo"] and "book.divingplanet.org" not in texto and llamadas == []
 
 
 def test_si_no_se_despide_la_tarjeta_sale_como_siempre(monkeypatch):
-    _con_escritor(monkeypatch)
+    _sin_escritor(monkeypatch)
     texto = _turno(_listo_para_la_tarjeta(**{j.SE_DESPIDE: False}))
     assert "book.divingplanet.org" in texto

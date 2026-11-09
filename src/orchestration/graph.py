@@ -157,11 +157,11 @@ async def _router_node(state: BotState) -> dict:
         conv.kids_mention_detected = True
 
     from src.agents.conversational_core import (
-        fijar_pregunta_del_escritor,
         lanzar_extraccion_adelantada,
+        marcar_turno_de_la_reserva,
     )
 
-    fijar_pregunta_del_escritor(conv)  # lat-9 paso 2
+    marcar_turno_de_la_reserva(conv)  # CALN-43: en la reserva, el escritor no pregunta
     lanzar_extraccion_adelantada(conv, message)  # ex-5: el extractor "LLM primero", a la vez que el enrutador
 
     # gen-5 (flag `idioma_unico_de_apertura`): el idioma de la apertura se decide aquí, una vez y a la vez que las
