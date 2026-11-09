@@ -64,7 +64,8 @@ Borrador del Claude de Álvaro, 9-nov-2026, a partir del Plan Gadea («Por qué 
   sin «cerrar con una pregunta» y el contador `escritor_pregunta`, y P9/P10 con `pasar_a_persona`). Suite 3597; src −13 netas frente a
   5ee94c7b. Falta medirlo con saldo. La memoria, hecha: falta que `feature/memoria-equipo-alvaro` entre en `feature/caln34-gadea`.
 - **Gonzalo:** 0,5, el pase en una función (`feature/pase-gonzalo` 5ff32b8b).
-- **Bloqueo:** OpenRouter, sin saldo desde el 6-nov a las 10:48. Sin él no corren las tandas ni el panel; los bancos de código, sí.
+- **Bloqueo:** OpenAI, sin saldo en PRE desde el 9-nov ~22:00 (429 credit_balance_exhausted): fallan Luna y las búsquedas. OpenRouter,
+  recargado el 9-nov (~9,8 $). Sin los dos no corren las tandas ni el panel; los bancos de código, sí.
 
 ## 5. Lecciones: lo que no funcionó · cualquiera añade · tope 12 líneas, una por lección
 
@@ -75,11 +76,13 @@ Borrador del Claude de Álvaro, 9-nov-2026, a partir del Plan Gadea («Por qué 
 - Quitar un corrector antes de cubrir su caso (el paso 4 de qué preguntar, 6-nov).
 - El panel no se parece a los reales: infla el grupo y la tercera pregunta. Un tercio de los reales ya ha reservado.
 - Atribuir a una persona lo que dijo su Claude. Hay que decir «el Claude de X».
+- Medir sin mirar antes los dos saldos: el 9-nov, OpenRouter recargado pero OpenAI vacío. Antes de medir, una llamada a cada uno.
 
 ## 6. Marcador · la tabla entera, en `docs/plan/marcador.md` · aquí, la última línea
 
 | Fecha | Versión | Bloque | Graves por vuelta | Líneas de src | Llamadas de IA por turno | Respuesta: caracteres · con pregunta |
 |---|---|---|---|---|---|---|
 | 6-nov | PRE 0.61 | antes del plan | 21, 25 y 21 (referencia del 6-nov) | 27.145 | ~4,1 | 703 · 77 % |
+
 
 
