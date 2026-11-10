@@ -82,10 +82,24 @@ def instrucciones(reference: str) -> str:
     return f"{base}\n\n{FORMATO}\n\nREFERENCIA:\n{reference}"
 
 
+_DIAS = ("lunes", "martes", "miércoles", "jueves", "viernes", "sábado", "domingo")
+
+
+def hora_de_la_charla(records: list[dict]) -> str:
+    """Bloque 0 (10-nov): si la charla corrió con reloj fijo (`reproducir_juez_pre --reloj`), la hora para el juez. Sin ella,
+    el juez juzgaba los cierres y las fechas sin saber cuándo hablaba el cliente."""
+    reloj = next((r.get("reloj") for r in records if r.get("reloj")), None)
+    if not reloj:
+        return ""
+    t = datetime.fromisoformat(reloj)
+    return (f"HORA DE LA CHARLA: {_DIAS[t.weekday()]} {t:%Y-%m-%d}, {t:%H:%M} (hora de Colombia). Juzga con esa hora las fechas "
+            "relativas («mañana», «next Friday») y si un cierre ya pasó.\n\n")
+
+
 def mensaje_del_dialogo(dialogue: dict, records: list[dict], criterios: list[dict]) -> str:
     lineas = "\n".join(f"- {c['id']}: {c['check']}" for c in criterios)
-    return (f"CONVERSACION (dialogo '{dialogue['id']}', categoria {dialogue['category']}):\n{transcript(records)}\n\n"
-            f"CRITERIOS A JUZGAR:\n{lineas}")
+    return (f"{hora_de_la_charla(records)}CONVERSACION (dialogo '{dialogue['id']}', categoria {dialogue['category']}):\n"
+            f"{transcript(records)}\n\nCRITERIOS A JUZGAR:\n{lineas}")
 
 
 def entorno() -> dict:
@@ -243,7 +257,8 @@ def juzgar_ronda(args) -> int:
     summary = summarize(results)
     report = {"judged_at": datetime.now(UTC).isoformat(timespec="seconds"), "run_file": args.run.replace("\\", "/"),
               "golden_version": golden["version"], "model": f"claude-{args.modelo}", "modelo_exacto": modelo_exacto(args.modelo), "effort": args.esfuerzo,
-              "referencia": REFERENCIA_POR_DEFECTO, "usage": dict(uso), "cost_usd": 0.0, "summary": summary,
+              "referencia": REFERENCIA_POR_DEFECTO, "huella_referencia": ctx.get("huella"), "usage": dict(uso), "cost_usd": 0.0,
+              "summary": summary,
               "minutos": round((time.perf_counter() - t0) / 60, 1),
               "human_review": review_list(results, 5, Path(args.run).stem), "dialogues": results}
     out = RESULTS_DIR / f"{Path(args.run).stem}__claude-{args.modelo}-{args.esfuerzo}{args.sufijo}.json"
@@ -257,7 +272,10 @@ def juzgar_ronda(args) -> int:
 def _clientes_de_las_charlas(charlas: str) -> list[tuple[dict, list[dict]]]:
     tareas = []
     for conv in charlas.split(","):
-        filas = [json.loads(ln) for ln in (CHARLAS / f"{conv.strip()}.jsonl").read_text(encoding="utf-8").splitlines() if ln.strip()]
+        fichero = CHARLAS / f"{conv.strip()}.jsonl"
+        if not fichero.exists():  # bloque 0 (10-nov): las charlas contra una rama (`scripts.charla_rama`), con su reloj
+            fichero = CHARLAS.parent / "charlas-rama" / f"{conv.strip()}.jsonl"
+        filas = [json.loads(ln) for ln in fichero.read_text(encoding="utf-8").splitlines() if ln.strip()]
         records = [{**f, "turn": f["turno"], "tag": conv.strip()} for f in filas]
         tareas.append(({"id": conv.strip(), "category": "sparring", "criteria": [CRITERIO_GRAVES]}, records))
     return tareas
@@ -289,7 +307,8 @@ def juzgar_charlas(args) -> int:
     results = [hechos[d["id"]] for d, _ in tareas]
     out = RESULTS_DIR / f"tanda-{args.nombre}__claude-{args.modelo}-{args.esfuerzo}{args.sufijo}.json"
     out.write_text(json.dumps({"tanda": args.nombre, "model": f"claude-{args.modelo}", "modelo_exacto": modelo_exacto(args.modelo), "effort": args.esfuerzo,
-                               "usage": dict(uso), "dialogues": results}, ensure_ascii=False, indent=1) + "\n", encoding="utf-8", newline="\n")
+                               "huella_referencia": ctx.get("huella"), "usage": dict(uso), "dialogues": results},
+                              ensure_ascii=False, indent=1) + "\n", encoding="utf-8", newline="\n")
     graves = [d for d in results for c in d["criteria"] if c["id"] == "sin-graves" and c["verdict"] != "cumple"]
     print(f"Clientes con grave según el juez: {len(graves)} de {len(results)}")
     if args.panel:

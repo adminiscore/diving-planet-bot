@@ -70,3 +70,15 @@ la rama de otro sigue siendo cosa de cada persona.
   tocan. Caddy lo sirve en `/coral` de `pre.is-core.dev` (bloque `# >>> coral` del `Caddyfile`).
 - Los tokens están en `/opt/coral-hub/.env`; los mensajes, en el volumen `coral_datos` (SQLite).
 - Tests: `python -m pytest tests/test_coral.py`.
+
+## La memoria compartida del equipo (9-nov, Coral #3686)
+
+La foto completa del plan, de la que parte cada sesión: `docs/plan/memoria.md` (y el marcador, `docs/plan/marcador.md`) en la rama fija
+`memoria`, no en las de trabajo. El gancho de inicio la muestra al empezar cada sesión y tras cada compactación, siempre la última de
+origin, sea cual sea tu rama.
+
+- Verla: `python tools/coral/memoria.py ver` (o `ver marcador`).
+- Cambiarla: copia el texto a un fichero, edita tu sección y `python tools/coral/memoria.py publicar FICHERO -m "qué cambias"` (con
+  `marcador` detrás del fichero para el marcador). Sube sin cambiar de rama y se niega si alguien la cambió después de tu último `ver`.
+- Quién toca qué: el plan, las normas y las decisiones, solo Gadea; «quién lleva qué», cada uno su línea; las lecciones, cualquiera; el
+  marcador, quien mide.
