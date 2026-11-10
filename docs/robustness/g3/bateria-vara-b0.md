@@ -19,7 +19,7 @@ Al acabar, el juez dos veces y el marcador:
 
 - **Corto:** de 2 a 10 palabras por mensaje, como mucho una pregunta, sin saludos largos. Faltas y abreviaturas a veces.
   Los reales escriben 31 caracteres de mediana.
-- **En ráfagas:** en las 4 charlas marcadas, dos mensajes seguidos. El segundo se manda sin leer la respuesta al primero,
+- **En ráfagas:** en las 3 charlas marcadas, dos mensajes seguidos. El segundo se manda sin leer la respuesta al primero,
   como en WhatsApp.
 - **Reacciona como un cliente:** contesta lo que sabe cuando el bot pregunta; a veces no contesta e insiste en lo suyo.
   Como mucho 6 turnos; si el bot lo resuelve, se despide.
