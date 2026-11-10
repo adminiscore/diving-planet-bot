@@ -130,26 +130,16 @@ def classify_route(conv_state: ConversationState, message: str, signals: dict) -
     sensible = sup.sensitive_response_for(signals["sensitive_topic"], lang) if signals.get("sensitive_topic") else None
     if sensible and not clima_general_al_redactor(sensible[0], signals):
         return ROUTE_SAFETY
-    # s4-20 (paso 6): post-venta / empresa -> el nodo de escalado hace el pase (`_needs_staff_handoff`).
-    if signals.get("needs_staff") is True:
-        return ROUTE_SAFETY
+    # Bloque 4P (C2): el pase fuera de la reserva, en un solo sitio (`rutas.safety.decidir_pase`): la privacidad, un
+    # cambio de una reserva (con su política) antes que `needs_staff`, y `needs_staff` (el nodo de escalado hace el pase).
+    from src.agents.rutas.changes import TIPOS_DE_CAMBIO
+    from src.agents.rutas.safety import decidir_pase
 
-    # ── CHANGE (cancelar / reprogramar) ──
-    if (regex_vale and sup._detect_cancellation_request(msg_lower)) or (
-        signals.get("booking_change_topic") == "cancellation"
-        and not sup._in_active_cart_building(conv_state)
-    ):
+    pase = decidir_pase(conv_state, message, signals)
+    if pase in TIPOS_DE_CAMBIO:
         return ROUTE_CHANGE
-    if (regex_vale and sup._detect_reschedule_request(msg_lower)) or (
-        signals.get("booking_change_topic") == "reschedule"
-        and not sup._in_active_cart_building(conv_state)
-    ) or sup._jev_changes_date(signals, conv_state):
-        return ROUTE_CHANGE
-    if (regex_vale and sup._detect_modify_booking_request(msg_lower)) or (
-        signals.get("booking_change_topic") == "modify_headcount"
-        and not sup._in_active_cart_building(conv_state)
-    ):
-        return ROUTE_CHANGE
+    if pase:
+        return ROUTE_SAFETY
 
     # ── DEFLECT (contacto / identidad IA) ──
     if (regex_vale and sup._asks_for_contact_number(msg_lower)) or signals.get("asks_for_contact_number"):

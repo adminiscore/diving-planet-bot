@@ -140,10 +140,46 @@ def _jev_changes_date(signals: dict, state: ConversationState | None = None) -> 
     con el carrito abierto confunde "hazlo para 3 dias" con reprogramar. Banco `scripts/sonda_cambia_fecha.py`: 7/8
     cambios, 0/12 falsas. 3-nov (decisión de Gadea, sparring s03g): al asesor SOLO con una reserva ya hecha; sin
     reserva no hace falta («¿se puede el 25?» → cerrado → «entonces el 26» pasaba al asesor con los términos de los
-    cambios de fecha) y se sigue con el día nuevo. Antes (s4-6) también con la reserva en construcción."""
+    cambios de fecha) y se sigue con el día nuevo (confirmado por Gadea el 10-nov). Antes (s4-6) también con la reserva
+    en construcción."""
     if signals.get("changes_date") is not True:
         return False
-    return state is None or bool(getattr(state, "ya_reservado", False) or signals.get("ya_reservado") is True)
+    return state is None or tiene_reserva_hecha(state, signals)
+
+
+def tiene_reserva_hecha(state: ConversationState, signals: dict) -> bool:
+    """Bloque 4P (C2): ¿ya tiene una reserva hecha? Lo mismo que la posventa (`availability._modo_posventa`), sin tocar el
+    estado; antes el cambio de fecha miraba la señal cruda de Jev y la posventa no (manda la reserva nueva en curso)."""
+    from src.agents.nucleo.availability import (
+        _reserva_nueva_en_curso,  # lazy: el núcleo importa de las rutas
+    )
+
+    if getattr(state, "ya_reservado", False):
+        return signals.get("ya_reservado") is True or signals.get("affirms_activity") is not True
+    return signals.get("ya_reservado") is True and not _reserva_nueva_en_curso(state)
+
+
+TIPOS_DE_CAMBIO = ("cancellation", "reschedule", "modify_headcount")
+
+
+def cambio_de_reserva(state: ConversationState | None, message: str, signals: dict) -> str | None:
+    """Bloque 4P (C2): qué cambio de una reserva pide el mensaje (de `TIPOS_DE_CAMBIO`) o None, en UN sitio para el router,
+    el nodo de cambios y la cascada (antes, tres copias). `booking_change_topic` no vale mientras se arma una reserva nueva
+    («mejor 3 días» no es reprogramar), salvo con una reserva hecha; las listas de palabras, solo si la IA calla."""
+    from src.agents.supervisor import regex_decide  # lazy
+
+    msg = message.strip().lower()
+    regex_vale = regex_decide(signals)
+    tema = signals.get("booking_change_topic")
+    vale_el_tema = state is None or tiene_reserva_hecha(state, signals) or not _in_active_cart_building(state)
+    if (regex_vale and _detect_cancellation_request(msg)) or (tema == "cancellation" and vale_el_tema):
+        return "cancellation"
+    if ((regex_vale and _detect_reschedule_request(msg)) or (tema == "reschedule" and vale_el_tema)
+            or _jev_changes_date(signals, state)):
+        return "reschedule"
+    if (regex_vale and _detect_modify_booking_request(msg)) or (tema == "modify_headcount" and vale_el_tema):
+        return "modify_headcount"
+    return None
 
 
 def _in_active_cart_building(state: ConversationState) -> bool:

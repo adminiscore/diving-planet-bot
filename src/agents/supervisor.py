@@ -411,44 +411,17 @@ async def _shared_turn_handler(
             logger.info(f"[SUPERVISOR] Sensitive escalation triggered (LLM signal, early) reason={reason}")
             return response
 
-    staff = _needs_staff_handoff(state, message, routing_signals)
-    if staff:
-        return staff
+    # Bloque 4P (C2): el pase fuera de la reserva, decidido como en el router (`rutas.safety.decidir_pase`); un cambio de
+    # una reserva va con su política (antes `needs_staff`, mirado primero, lo pasaba sin ella).
+    from src.agents.rutas.changes import TIPOS_DE_CAMBIO
+    from src.agents.rutas.safety import decidir_pase
 
-    # Booking cancellation/reschedule requests: inform the policy text from
-    # the KB and let the customer choose between talking to an advisor or
-    # going back to the main menu, instead of the bot deciding on its own.
-    # La lista de keywords (`_detect_cancellation_request`) solo caza frases
-    # casi exactas — medido en vivo (2026-07-23) que 16 de 18 frases realistas
-    # de cancelación/reprogramación (indirectas, jerga, typos, ES+EN) se
-    # escapaban. Respaldo LLM `booking_change_topic` en la MISMA llamada
-    # `detect_routing_signals` de arriba (sin coste extra), estricto como
-    # wants_human (una pregunta por la política NO lo dispara). Mismo patrón
-    # que DIVE TO HEAL (v0.20.58).
-    if (regex_decide(routing_signals) and _detect_cancellation_request(msg_lower)) or (
-        routing_signals.get("booking_change_topic") == "cancellation"
-        and not _in_active_cart_building(state)
-    ):
-        logger.info("[SUPERVISOR] Cancellation request detected -> policy info + escalate/home buttons")
-        return _booking_change_response(state, message, "cancellation")
-
-    if (regex_decide(routing_signals) and _detect_reschedule_request(msg_lower)) or (
-        routing_signals.get("booking_change_topic") == "reschedule"
-        and not _in_active_cart_building(state)
-    ) or _jev_changes_date(routing_signals, state):
-        logger.info("[SUPERVISOR] Reschedule request detected -> policy info + escalate/home buttons")
-        return _booking_change_response(state, message, "reschedule")
-
-    # Hallazgo G (batería sintética contra PRE, 2026-08-26): "ya tengo una
-    # reserva hecha, quiero agregar una persona más" caía al menú genérico de
-    # bienvenida, sin ningún reconocimiento — asimetría con cancelación/
-    # reprogramación (arriba), que sí se reconocían. Mismo patrón exacto.
-    if (regex_decide(routing_signals) and _detect_modify_booking_request(msg_lower)) or (
-        routing_signals.get("booking_change_topic") == "modify_headcount"
-        and not _in_active_cart_building(state)
-    ):
-        logger.info("[SUPERVISOR] Modify-headcount request detected -> policy info + escalate/home buttons")
-        return _booking_change_response(state, message, "modify_headcount")
+    pase = decidir_pase(state, message, routing_signals)
+    if pase in TIPOS_DE_CAMBIO:
+        logger.info(f"[SUPERVISOR] {pase} de una reserva -> política + pase a un asesor")
+        return _booking_change_response(state, message, pase)
+    if pase:
+        return _needs_staff_handoff(state, message, routing_signals)
 
     # Deflexión (Bloque 2.2): petición de número/WhatsApp/correo o vía de
     # contacto directa. El bot no da un número (política); en vez de escalar o

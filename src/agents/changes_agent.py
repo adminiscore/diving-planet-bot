@@ -50,46 +50,18 @@ logger = logging.getLogger("uvicorn.error")
 
 
 async def changes_node(state: BotState) -> dict:
-    from src.agents.supervisor import (
-        _booking_change_response,
-        _detect_cancellation_request,
-        _detect_modify_booking_request,
-        _detect_reschedule_request,
-        _in_active_cart_building,
-        _jev_changes_date,
-        _shared_turn_handler,
-        regex_decide,
-    )
+    from src.agents.rutas.changes import cambio_de_reserva
+    from src.agents.supervisor import _booking_change_response, _shared_turn_handler
 
     conv = state["conv_state"]
     message = state["message"]
     signals = state.get("signals") or {}
-    msg_lower = message.strip().lower()
 
-    # 1 · Cancelación (pre-núcleo).
-    if (regex_decide(signals) and _detect_cancellation_request(msg_lower)) or (
-        signals.get("booking_change_topic") == "cancellation"
-        and not _in_active_cart_building(conv)
-    ):
-        logger.info("[NODE:changes] cancelación -> política + botones asesor/menú")
-        return {"reply": _booking_change_response(conv, message, "cancellation")}
-
-    # 2 · Reprogramación (pre-núcleo).
-    if (regex_decide(signals) and _detect_reschedule_request(msg_lower)) or (
-        signals.get("booking_change_topic") == "reschedule"
-        and not _in_active_cart_building(conv)
-    ) or _jev_changes_date(signals, conv):
-        logger.info("[NODE:changes] reprogramación -> política + botones asesor/menú")
-        return {"reply": _booking_change_response(conv, message, "reschedule")}
-
-    # 3 · Modificar headcount de una reserva existente (pre-núcleo, hallazgo G,
-    #     portado de pre_gadea v0.21.13 — mismo patrón que cancelación/reprogramación).
-    if (regex_decide(signals) and _detect_modify_booking_request(msg_lower)) or (
-        signals.get("booking_change_topic") == "modify_headcount"
-        and not _in_active_cart_building(conv)
-    ):
-        logger.info("[NODE:changes] modificar headcount -> política + botones asesor/menú")
-        return {"reply": _booking_change_response(conv, message, "modify_headcount")}
+    # 1-3 · Cancelar, reprogramar o cambiar el número de personas de una reserva (pre-núcleo). Bloque 4P (C2): qué cambio es
+    #     se decide en el mismo sitio que el router y la cascada (`rutas.changes.cambio_de_reserva`); antes, tres copias.
+    if cambio := cambio_de_reserva(conv, message, signals):
+        logger.info(f"[NODE:changes] {cambio} -> política + pase a un asesor")
+        return {"reply": _booking_change_response(conv, message, cambio)}
 
     # 4 · Disponibilidad (post-núcleo, patrón B) + defensa "sin fugas": delegar en
     #     la cascada preserva el orden exacto respecto al núcleo (que puede

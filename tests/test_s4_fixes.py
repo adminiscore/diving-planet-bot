@@ -100,7 +100,13 @@ def test_cambio_de_fecha_con_el_carrito_abierto_va_a_cambios_solo_con_reserva(mo
     st.ya_reservado = True
     assert router.classify_route(st, "espera, mejor cambiemos la fecha", signals) == router.ROUTE_CHANGE
     st.ya_reservado = False
-    assert router.classify_route(st, "mejor el sábado", {**signals, "ya_reservado": True}) == router.ROUTE_CHANGE
+    # Bloque 4P (C2, 10-nov, diseño aprobado por Gadea): con una reserva NUEVA en curso (actividad elegida y sin enlace),
+    # el ya_reservado de Jev no basta, como en la posventa (`_modo_posventa`): manda lo que se está reservando. Antes este
+    # turno pasaba al asesor con la señal cruda.
+    assert router.classify_route(st, "mejor el sábado", {**signals, "ya_reservado": True}) != router.ROUTE_CHANGE
+    # sin una reserva nueva en curso (no hay actividad elegida), la señal de Jev sí vale
+    st_sin_carrito = _state()
+    assert router.classify_route(st_sin_carrito, "mejor el sábado", {**signals, "ya_reservado": True}) == router.ROUTE_CHANGE
     # sin la pregunta de Jev, la señal del router sigue sin valer con el carrito abierto
     assert router.classify_route(st, "hazlo para 3 días", {"booking_change_topic": "reschedule"}) != router.ROUTE_CHANGE
 

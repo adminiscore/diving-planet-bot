@@ -147,6 +147,23 @@ def _broken_link_escalation_response(state: ConversationState, message: str) -> 
     )
 
 
+def decidir_pase(state: ConversationState, message: str, signals: dict) -> str | None:
+    """Bloque 4P (C2): el pase fuera de la reserva, en UN sitio para el router y la cascada y sin tocar el estado:
+    `privacidad` (antes solo con `needs_staff`), un cambio de una reserva (`TIPOS_DE_CAMBIO`: política y pase), `persona`
+    (`needs_staff`) o None. El cambio va antes que `needs_staff`, que también lo marca y pasaba sin la política."""
+    from src.agents.rutas.changes import cambio_de_reserva  # lazy
+
+    if signals.get("pide_datos_ajenos") is True:
+        return "privacidad"
+    if cambio := cambio_de_reserva(state, message, signals):
+        if signals.get("needs_staff") is True:
+            logger.info(f"[CORE][4P] {cambio} de una reserva con needs_staff -> va con su política")
+        return cambio
+    if signals.get("needs_staff") is True:
+        return "persona"
+    return None
+
+
 def _needs_staff_handoff(state: ConversationState, message: str, routing_signals: dict) -> str | None:
     """s4-20 (paso 6, 27-sep): post-venta y trato de empresa -> pase a una persona ANTES del
     nucleo. Jev (`needs_staff`, misma llamada) dice que el mensaje trata de una reserva o un pago ya
