@@ -63,6 +63,7 @@ secciones 1 a 3 por el Claude de Gadea, con su OK, el 10-nov.
   con un asesor»; un plan con asesor se dice una vez y pasa al reservar; otro horario → pase directo. Sin reserva hecha, cambiar la fecha no pasa a un asesor.
   Origen sin saber al reservar: se pide UNA vez con su motivo y, si no, asesor (excepción de sin-tercera-pregunta); también
   antes de pasar a un colombiano o a un grupo de 5+ (las islas sin hotel no pasan: hotel-antes-de-reservar).
+  Lo que la base no tiene y no está en la lista de fuera-de-la-base → pase de verdad con una persona (P-a).
 - **Pendientes de decidir:** pedir a Andrés más conversaciones reales; la norma de 5 de 5 en los clientes «a veces»; el vuelo con el
   lector de notas (3.2); quitar la segunda lectura de la nacionalidad (CALN-30).
 
