@@ -78,7 +78,7 @@ def test_el_juez_encuentra_las_charlas_contra_una_rama_y_su_hora(tmp_path, monke
 
 
 def _juicio(tmp: Path, nombre: str, graves: set[str], huella: str | None = "h1") -> Path:
-    ids = ["visto-1", "visto-2", "visto-3", "visto-4", "visto-5"]
+    ids = sorted({"visto-1", "visto-2", "visto-3", "visto-4", "visto-5"} | graves)
     datos = {"huella_referencia": huella, "dialogues": [
         {"id": i, "criteria": [{"id": "sin-graves", "verdict": "no_cumple" if i in graves else "cumple"}]} for i in ids]}
     f = tmp / nombre
@@ -94,8 +94,15 @@ def test_el_marcador_cuenta_la_bajada_solo_si_pasa_del_ruido(tmp_path):
     assert (a["media"], b["media"]) == (5, 0.5)
     assert c["cuenta"] and c["misma_referencia"]
     assert len(c["mejoran"]) == 5 and c["igual"] == 0  # visto-1 pasa de grave en los dos juicios a grave en uno
-    poco = marcador.comparar(a, marcador.lado([_juicio(tmp_path, "b3", {"visto-1", "visto-2"})]))
-    assert not poco["cuenta"]
+    # umbral de 3 en panel-vara (Gadea, 10-nov): de 5 a 3 no cuenta
+    poco = marcador.comparar(a, marcador.lado([_juicio(tmp_path, "b3", {"visto-1", "visto-2", "visto-3"})]))
+    assert not poco["cuenta"] and marcador.UMBRAL == 3
+
+
+def test_el_marcador_separa_vistos_y_ciegos(tmp_path):
+    lado = marcador.lado([_juicio(tmp_path, "m1", {"visto-1", "visto-2", "ciego-n01"}), _juicio(tmp_path, "m2", {"visto-1"})])
+    assert (lado["media_visto"], lado["media_ciego"]) == (1.5, 0.5)
+    assert "ciegos: A 0.5" in marcador.informe(lado, lado, None, None)
 
 
 def test_el_marcador_avisa_si_la_referencia_del_juez_no_es_la_misma(tmp_path):
