@@ -5,6 +5,14 @@
 - **v3:** del Claude de Gadea, a petición de Gadea, con su segunda revisión independiente (#3800).
 - **v4:** recoge la revisión independiente de la v3 y las decisiones de Gadea del 10-nov entre las 21:50 y las 22:25. Lo que
   afirmaba la revisión sobre el código y la memoria del equipo está comprobado.
+- **v4.1:** las siete correcciones de la verificación de la v4, también comprobadas:
+  - el vuelo, sin leer el texto de Luna;
+  - con qué se comprueba el idioma;
+  - «hecho» definido solo con el reloj y la base;
+  - las salidas cerradas, acotadas;
+  - el código de la respuesta correcta, como parte de la vara;
+  - `por-otros`, que se reescribe;
+  - `detect_sensitive_escalation`, bien descrito.
 
 La revisa el Claude de Álvaro.
 
@@ -44,7 +52,7 @@ El diagnóstico del análisis (`docs/plan/analisis-por-fases.md`) se queda (§7)
 | Medida | Meta | Sobre qué se cuenta |
 |---|---|---|
 | Clientes con grave | ≤ 10 % | El examen sin los 75 reales (F0), la media de sus tiradas, con la rúbrica cerrada en F0 |
-| Importes | 0 mal | Contador **contra la ficha de cada cliente**: el precio por persona de su plan, con el descuento que le toca. Antes de la puerta |
+| Importes | 0 mal | Contador **contra la ficha de cada cliente**: el precio por persona de su plan, con el descuento que le toca. Antes de la puerta. **Propuesta: cambia el «fuera del catálogo» del acuerdo, y la confirma Gadea** |
 | Enlace (plan, origen e idioma) e idioma de la respuesta | 100 % bien | Contador contra la ficha, antes de la puerta |
 | p90 del turno | ≤ 7,5 s | Contador, en el examen |
 | Largo mediano | ≤ 300 caracteres | Contador, en el examen |
@@ -73,7 +81,8 @@ El diagnóstico del análisis (`docs/plan/analisis-por-fases.md`) se queda (§7)
 el código calcula HECHOS ──▶ Luna lee, DECIDE y ESCRIBE (1 llamada) ──▶ la puerta COMPRUEBA hechos ──▶ cliente
 ```
 
-- **Hecho antes:** un dato que el código sabe sin leer el mensaje de este turno. Aprobados por Gadea:
+- **Hecho antes:** un dato que el código calcula solo con el reloj y la base, sin nada del cliente (ni el mensaje ni «entendido»).
+  Aprobados por Gadea:
   - **el primer día que se puede reservar** (el cierre de las 4:30 y el de la noche): V1 ya lo recibe;
   - **la tabla de precios por persona con descuento:** para cada plan, su precio con cada descuento que le aplica según la base
     (`discounts.json`: el de grupo no vale en los cursos PADI ni se suma al de equipo propio; el de equipo propio no vale en el
@@ -86,18 +95,20 @@ el código calcula HECHOS ──▶ Luna lee, DECIDE y ESCRIBE (1 llamada) ─�
 - **Comprobación después:** solo de hechos, sobre lo que Luna escribió:
   - **un importe** que no está en el catálogo ni en la tabla de precios con descuento;
   - **un enlace** que no es de un plan del catálogo o no lleva su idioma;
-  - **el idioma** de la respuesta;
-  - **el vuelo** (Gadea, 10-nov). Se compara la hora del vuelo que Luna apunta en «entendido» con la hora desde la que puede volar tras
-    el plan, y con lo que dice su texto. No es un lector nuevo: usa lo que Luna entendió. Si Luna no apuntó vuelo, no se comprueba.
+  - **el idioma** de la respuesta: la heurística que ya existe (`_detect_language_from_text`, `src/flows/catalog.py:83`), aplicada al
+    texto de Luna (no al del cliente) y comparada con `entendido.idioma`;
+  - **el vuelo** (Gadea, 10-nov). Luna devuelve `vuelo` (día y hora, o null) y `vuelo_alcanza` (sí, no o null). El código calcula, con el
+    plan, el día y `vuelo-hora`, si alcanza. Si no coincide con lo que dijo Luna, se rehace una vez nombrando el hecho. **No lee el
+    texto de Luna.** Sin `vuelo`, no se comprueba, y el contador cuenta contra la ficha los vuelos que Luna no apuntó.
 
   **La puerta no comprueba conducta:** cuándo pasar, cuándo preguntar o las condiciones del enlace (colombianos, hotel, grupo). Eso son
-  reglas para Luna. La puerta no lee «entendido» para decidir qué debería haber dicho Luna.
+  reglas para Luna. **De «entendido», la puerta solo lee `idioma` y `vuelo`, para comparar un hecho.**
 - **Si la puerta encuentra un fallo:** se rehace una vez, y **el motivo solo nombra el hecho** («X no está en el catálogo ni en los
   hechos»), sin instrucciones de conducta. Si vuelve a fallar, **sale el segundo texto y se cuenta como fallo** (Gadea, 10-nov).
   **La puerta nunca escribe, nunca decide, nunca recorta y no tiene plantilla.**
 - **El idioma** lo fija Luna en «entendido» (`idioma`), con su fila (otro idioma → inglés). De ahí lo leen `_el_cierre`,
-  `_respuesta_fallo_tecnico` y `lead_summary`. El detector de idioma (`language_detector.py`, una heurística más un LLM) es otro lector:
-  se borra (propuesta, la confirma Gadea).
+  `_respuesta_fallo_tecnico` y `lead_summary`. El respaldo con LLM del detector de idioma (`language_detector.py`) es otro lector: se
+  borra (propuesta, la confirma Gadea). La heurística de `catalog.py:83` se queda, pero solo para comprobar el texto de Luna.
 - **Si Luna no contesta** (error o sin saldo): el aviso técnico que ya existe (`_respuesta_fallo_tecnico`, `src/agents/supervisor.py`),
   que dice la verdad y pasa con una persona. No hay respaldo en otro modelo.
 - **No entra nunca:**
@@ -143,9 +154,12 @@ examen. La revisa otro agente contra la decisión.
 - **El horario que no es el de siempre** (visto-6899): regla. La política `schedule_not_adjustable` («los horarios son fijos; un ajuste
   lo revisa un asesor») pasa con una persona. No es la P4: la P4 es «2 días desde las islas sin nocturna».
 - **El cierre:** hecho antes, desde F1.
-- **Los descuentos:** la tabla de precios por persona es un hecho (§3). La fila junta el descuento con `grupo-por-el-asesor` y
-  `equipo-propio-por-el-asesor`: «di el precio por persona con el descuento que le toca, tal cual está en los hechos, y pasa con un asesor
-  antes de pagar». Los totales son una regla (`sin-totales`).
+- **Los descuentos:** la tabla de precios por persona es un hecho (§3). La fila la escribe el agente de §4, juntando tres decisiones:
+  - la de los descuentos (10-nov);
+  - `grupo-por-el-asesor`: pasa con un asesor antes del enlace;
+  - `equipo-propio-por-el-asesor`: pasa con un asesor antes de pagar.
+
+  El descuento online se aplica en la web (`descuento-online`). Los totales son una regla (`sin-totales`).
 - **El vuelo:** la hora desde la que puede volar es un hecho, y el vuelo del cliente se comprueba después (§3).
 - **Reservar para otro:**
   - Un particular que reserva para otra persona (un regalo o un amigo), aunque ya sepa el plan y la fecha: el bot le da el precio por
@@ -190,10 +204,12 @@ nueva o cambiada entra a la vez en la referencia del juez, y B se vuelve a juzga
    - **Un hecho mal calculado:** se arregla el cálculo.
    - **Una comprobación de un hecho nueva:** solo con una decisión de Gadea.
    - **Luna no cumple una fila ya bien escrita:** **la fila no se reescribe.** Gadea elige entre cuatro salidas cerradas:
-     - convertirlo en un hecho, si se puede calcular sin leer el mensaje;
-     - una comprobación de un hecho;
-     - aceptar la cifra tal cual;
-     - probar otro modelo (Gadea, 10-nov: «si algo se complica, planteamos otras situaciones»).
+     - convertirlo en un hecho, si se puede calcular solo con el reloj y la base (§3);
+     - una comprobación, solo de un hecho como los de §3, nunca de conducta (por ejemplo, contar las «?» no vale);
+     - aceptar la cifra tal cual. Si es la de una meta de §2, eso es cambiar la meta, y lo decide Gadea por escrito;
+     - cambiar el modelo de **toda** la llamada, que es revisar la decisión de «solo Luna» (Gadea, 10-nov: «si vemos que hay
+       determinadas cosas que se complican… planteamos otras situaciones»). Se mide como una integración. Nunca un segundo modelo para
+       una fila o una familia.
    - **Si no es nada de esto, no se hace.**
 3. **El diseño corto:** qué, por qué y qué borra. Lo revisa un agente independiente sin nuestra conclusión.
 4. **El código**, con su banco sin IA y la suite. Otro agente revisa el diff contra el diseño.
@@ -234,8 +250,11 @@ borran piezas antes, la vara se mueve sola. Solo por cambiar la referencia, la 0
 
 **F0 · La vara, congelada, y B medido** (sin tocar el bot).
 - **La etiqueta de B en git:** hoy no existe ninguna (`git tag` sale vacío).
-- **La tabla de decisiones cerrada con Gadea (§4).** Se reescriben los textos que choquen: `cambio-de-fecha` y la instrucción de
-  `temas-3nov`.
+- **La tabla de decisiones cerrada con Gadea (§4).** Se reescriben los textos que choquen:
+  - `cambio-de-fecha`;
+  - la instrucción de `temas-3nov`;
+  - `por-otros`, texto e instrucción: hoy incluye a «quien paga por otras personas», y pasa a ser solo para las agencias y los
+    instructores.
 - **La referencia del juez, congelada en un fichero con su huella**, sin armarla desde src:
   - sin `escalation_rules.json`, que está desfasado;
   - con la tabla de decisiones;
@@ -254,9 +273,14 @@ borran piezas antes, la vara se mueve sola. Solo por cambiar la referencia, la 0
     cifras al lado;
   - **los reales nuevos de Andrés:** cuando lleguen (Gadea: «calma»), son un examen aparte que no se mezcla con este;
   - **lo de varios turnos, con clientes que reaccionan.** Un Claude hace de cliente con una **ficha de objetivo congelada**, escrita por un
-    agente ciego que solo recibe el catálogo público y las proporciones. **La respuesta correcta de cada ficha** (plan, origen, moneda,
-    enlace, el precio por persona que le toca y si debe pasar) **la calcula el código** a partir de la ficha, la tabla de decisiones y el
-    catálogo, no el agente. Contra ella cuentan los contadores. No son guiones que no contestan, que explicaban 16-18 de los 67 graves.
+    agente ciego que solo recibe el catálogo público y las proporciones. No son guiones que no contestan, que explicaban 16-18 de los
+    67 graves.
+  - **La respuesta correcta de cada ficha** (plan u opciones, origen, moneda, enlace, los precios por persona que le tocan y si debe
+    pasar) la calcula un código de medida, contra el que cuentan los contadores:
+    - lo escribe un agente que solo recibe la tabla y el catálogo, y lo revisa otro;
+    - Gadea aprueba una muestra y qué cuenta como importe mal;
+    - si el cliente aún no ha elegido, los precios de las opciones que le tocan cuentan como bien;
+    - se congela con su huella antes de medir B y **nunca entra en el bot**: es parte de la vara, no un decisor.
 - **El ruido, con números:** siempre 2 juicios por tirada, porque el juez se contradice en un 4-9 %. Con 200 clientes, 3 tiradas y 2
   juicios por lado, una diferencia en graves cuenta si supera unos 4 puntos. El ruido de cada cifra se calcula con las tiradas de B.
 - **B, medido en el examen** desde su etiqueta, en local. En PRE, a partir de F1, estará V1.
@@ -264,7 +288,7 @@ borran piezas antes, la vara se mueve sola. Solo por cambiar la referencia, la 0
 **F1 · V1 dentro del bot** (la primera reducción y la primera integración).
 - **Qué entra:**
   - el manejador del turno pasa a ser una llamada a Luna con la base del bot, las filas de la tabla y los hechos de §3;
-  - «entendido» se guarda en el estado, con `idioma` y `vuelo`;
+  - «entendido» se guarda en el estado, con `idioma`, `vuelo` y `vuelo_alcanza`;
   - `pasar_a_persona` se llama cuando Luna marca «pasar»;
   - la puerta comprueba los hechos (§3);
   - **las ráfagas, con la opción (c)** (Gadea, 10-nov): se contesta en cuanto llega, y si mientras se genera llega otro mensaje, esa
@@ -279,8 +303,14 @@ borran piezas antes, la vara se mueve sola. Solo por cambiar la referencia, la 0
   - el aviso técnico (`_respuesta_fallo_tecnico`);
   - el guardado del estado y el candado de Chatwoot.
 - **Qué decide Gadea antes de F1, con una propuesta:**
-  - **`detect_sensitive_escalation`** (`escalation.py:187`): palabras clave sobre lo que escribe el cliente que deciden un pase. Es un
-    regex que decide. Propuesta: se borra, y la salud y lo sensible las decide Luna con sus filas (`salud`, `datos-ajenos`).
+  - **`detect_sensitive_escalation`** (`escalation.py:187`): palabras clave sobre lo que escribe el cliente que deciden un pase. Sus
+    reglas activas (`escalation.py:118-122`) son las emergencias (ahogos, desmayos, sangrados…) y las incidencias en el momento (un pago
+    o una reserva que fallan). Ninguna fila de la tabla las cubre. Hay dos opciones:
+    - dos filas nuevas para Luna (una emergencia pasa con una persona de inmediato; una incidencia de pago o de reserva, también), y el
+      detector se borra;
+    - o el detector se queda como alarma de seguridad, solo para las emergencias, porque ahí un fallo de Luna cuesta demasiado.
+
+    Lo decide Gadea.
   - **`src/privacy.py`:** regex de correos, teléfonos, cédulas y tarjetas que bloquea y escribe texto. Propuesta: se mira en el diseño de
     F1 qué hace exactamente. Si protege datos (no guardar ni repetir una tarjeta), se queda como comprobación de un hecho, sin escribir
     al cliente. Si decide la conducta, sale.
@@ -393,6 +423,10 @@ Una sola unidad: **la ventana de 5 horas de cada Claude.** Se anota también cu�
 - las ráfagas, con la opción (c).
 
 **Falta:**
-- (a) las tres de F1: `detect_sensitive_escalation`, `privacy.py` y el detector de idioma;
-- (b) la fecha para pedir a Andrés los reales nuevos («calma»);
-- (c) quién da el visto bueno final para Andrés («calma»).
+- (a) **la meta de importes contra la ficha** (§2). Cambia la del acuerdo, «fuera del catálogo», y por eso la confirma Gadea;
+- (b) las tres de F1:
+  - `detect_sensitive_escalation`: emergencias e incidencias, sin fila que las cubra;
+  - `privacy.py`;
+  - el respaldo con LLM del detector de idioma;
+- (c) la fecha para pedir a Andrés los reales nuevos («calma»);
+- (d) quién da el visto bueno final para Andrés («calma»).
