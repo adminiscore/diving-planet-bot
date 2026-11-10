@@ -16,7 +16,7 @@ import statistics
 import sys
 from pathlib import Path
 
-UMBRAL = 4  # clientes de media: lo que se mueve el panel por el juez y el azar (ruido medido el 9-nov)
+UMBRAL = 3  # clientes de media en panel-vara (Gadea, 10-nov; con su ruido, ~1 % de falsos positivos). Era 4 en el panel viejo
 PERSONA = {"caracteres": 119, "con_pregunta": 23, "con_precio": 13, "con_enlace": 25}  # los 75 episodios reales
 _PRECIO = re.compile(r"\d{1,3}(?:\.\d{3})+\s*(?:COP|pesos)|\b\d{2,4}\s*(?:USD|US\$|dólares|dollars)\b|\$\s?\d", re.IGNORECASE)
 
@@ -36,6 +36,9 @@ def lado(ficheros: list[Path]) -> dict:
     clientes = sorted(set().union(*juicios))
     return {"por_juicio": [sum(j.values()) for j in juicios],
             "media": statistics.mean(sum(j.values()) for j in juicios),
+            # 10-nov (revisión del rumbo): vistos y ciegos por separado; los vistos se usaron para diseñar y pueden sobreajustarse
+            **{f"media_{g}": statistics.mean(sum(v for c, v in j.items() if c.startswith(g)) for j in juicios)
+               for g in ("visto", "ciego")},
             "cuota": {c: sum(j.get(c, False) for j in juicios) / len(juicios) for c in clientes},
             "huellas": {huella_de(f) for f in ficheros}}
 
@@ -69,7 +72,9 @@ def informe(a: dict, b: dict, ea: dict | None, eb: dict | None) -> str:
     c = comparar(a, b)
     lineas = [f"Clientes con grave por juicio: A {a['por_juicio']} → B {b['por_juicio']}",
               f"Media: A {a['media']:.1f} → B {b['media']:.1f} ({c['diferencia']:+.1f}); "
-              + ("CUENTA (4 o más de media)" if c["cuenta"] else "no cuenta: por debajo del ruido (menos de 4 de media)"),
+              + (f"CUENTA ({UMBRAL} o más de media)" if c["cuenta"] else f"no cuenta: por debajo del ruido (menos de {UMBRAL} de media)"),
+              f"Vistos: A {a['media_visto']:.1f} → B {b['media_visto']:.1f} · ciegos: A {a['media_ciego']:.1f} → B "
+              f"{b['media_ciego']:.1f}",
               f"Cliente a cliente: mejoran {len(c['mejoran'])}, empeoran {len(c['empeoran'])}, igual {c['igual']}",
               "Referencia del juez: " + ("la misma en los dos lados" if c["misma_referencia"]
                                          else f"OJO, distinta o sin huella: A {sorted(map(str, a['huellas']))}, B {sorted(map(str, b['huellas']))}")]
