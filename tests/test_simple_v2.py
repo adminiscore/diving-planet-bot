@@ -1,4 +1,7 @@
 """Simplificar, V2: la puerta del código sobre V1 (docs/robustness/caln/diseno-puerta-v2.md). Banco sin IA."""
+import hashlib
+import json
+
 import pytest
 
 from scripts import simple_v1 as v1
@@ -160,7 +163,8 @@ def test_c2_con_varias_actividades_valen_los_precios_de_cada_una():
 def test_la_plantilla_del_grupo_da_cada_precio_y_el_motivo_en_su_idioma():
     grupo = _ent(origen="cartagena", nacionalidad="colombiana", reparto={"certified_diving": 3, "minicourse": 2, "snorkel": 2})
     texto = v2.plantilla(grupo, "es")
-    assert "655.000 COP" in texto and "448.000 COP" in texto and "630.000 COP" in texto and "asesor" in texto
+    assert "655.000 COP" in texto and "448.000 COP" in texto and "asesor" in texto
+    assert "630.000 COP" not in texto  # el buceo sin plan dicho tiene varios precios: no se adivina (revisión nº 11)
     assert "payment in pesos" in v2.plantilla({**grupo, "idioma": "en"}, "en")
 
 
@@ -171,3 +175,110 @@ def test_c2_el_buzo_certificado_puede_oir_todos_los_planes_de_buceo():
 
 def test_el_esquema_de_v2_dice_cuando_pasar():
     assert "solo cuando el cliente ya quiere reservar o pagar" in v2.INSTRUCCIONES_V2
+
+
+# --- Tras la revisión del código (paso 5): V2m, la puerta de lo exacto (#3773, #3774) --------------------------------------------
+
+
+
+def test_v1_no_cambia_huella_fijada():
+    assert hashlib.sha256(v1.INSTRUCCIONES.encode()).hexdigest()[:16] == "9936ca42e9c5ccf9"
+
+
+@pytest.mark.parametrize(("texto", "esperado"), [
+    ("178 dólares", [(178.0, "USD")]),
+    ("COP 630 mil", [(630000.0, "COP")]),
+    ("$630 mil pesos", [(630000.0, "COP")]),
+    ("1'154.000 COP", [(1154000.0, "COP")]),
+    ("630.000,00 COP", [(630000.0, "COP")]),
+    ("Brindamos con 2 Copas de vino", []),
+])
+def test_importes_formatos_de_la_revision(texto, esperado):
+    assert v2.importes(texto) == esperado
+
+
+def test_c2_los_precios_de_pricing_que_no_son_de_un_servicio_y_el_20():
+    ctg = _ent(origen="cartagena", nacionalidad="extranjera")
+    assert "C2" not in _fallos(ctg, "El acompañante, 80,44 USD; la nocturna, 84,6 USD; con online y grupo, un 20 %.")["fallos"]
+
+
+def test_c3_el_enlace_en_ingles_vale():
+    en = _ent(origen="cartagena", plan="2_dives_1_day", idioma="en")
+    assert "C3" not in _fallos(en, f"Book here: {URL_2_CTG}")["fallos"]  # la base solo tiene los de language=es
+
+
+@pytest.mark.parametrize(("campos", "forma"), [
+    ({"origen": "cartagena", "personas": 6, "plan": "open_water"}, v2.ENLACE),  # un curso PADI no tiene descuento de grupo
+    ({"origen": "islas", "hotel": "todavía no sé"}, v2.HOTEL_PRIMERO),
+    ({"origen": "islas", "hotel": "Isla Grande"}, v2.HOTEL_PRIMERO),
+    ({"origen": "cartagena", "reparto": {"bubble_makers": 2}}, v2.ASESOR),
+])
+def test_decision_tras_la_revision(campos, forma):
+    assert v2.decision(_ent(**campos))[0] == forma
+
+
+# El bucle de un cliente, con las salidas de Luna simuladas (sin llamar a nadie).
+def _luna(*salidas):
+    cola = list(salidas)
+
+    def _salida(clave, mensajes):
+        datos = cola.pop(0)
+        if isinstance(datos, Exception):
+            raise datos
+        return v2._limpio(datos), json.dumps(datos, ensure_ascii=False), {"s": 1.0, "u": {"in": 1, "ca": 0, "out": 1}}, None
+    return _salida
+
+
+def _salida_de(texto, pasar=None, pregunta=None, **ent):
+    return {"entendido": {**ent}, "pasar": pasar or {"si": False}, "pregunta": pregunta, "texto": texto}
+
+
+def _correr(monkeypatch, turnos, salidas, puerta=True):
+    monkeypatch.setattr(v2, "_salida", _luna(*salidas))
+    return v2.cliente("x", "BASE", {"id": "prueba", "turnos": turnos}, None, puerta)
+
+
+_COL = {"origen": "cartagena", "nacionalidad": "colombiana", "plan": "2_dives_1_day", "quiere_reservar": True}
+
+
+def test_un_importe_malo_se_rehace_y_la_plantilla_conserva_el_pase_bueno(monkeypatch):
+    pase = {"si": True, "motivo": "reservar_con_asesor"}
+    [fila] = _correr(monkeypatch, ["Quiero reservar"], [_salida_de("Total 1.260.000 COP.", pase, **_COL),
+                                                        _salida_de("Son 1.260.000 COP en total.", pase, **_COL)])
+    assert fila["estado"]["puerta"]["rehecho"] and fila["estado"]["puerta"]["plantilla"]
+    assert "630.000 COP" in fila["reply"] and fila["estado"]["pasar"]["si"]  # el pase era bueno: se queda
+    assert len(fila["metricas"][0]["llamadas"]) == 2
+
+
+def test_el_pase_y_el_enlace_del_codigo_no_se_repiten(monkeypatch):
+    grupo = {"origen": "cartagena", "nacionalidad": "extranjera", "reparto": {"snorkel": 6}, "quiere_reservar": True}
+    filas = _correr(monkeypatch, ["Reservamos", "Gracias", "Ok"], [_salida_de("Genial.", **grupo)] * 3)
+    assert [("Te paso" in f["reply"]) for f in filas] == [True, False, False]
+    ctg = {"origen": "cartagena", "nacionalidad": "extranjera", "plan": "2_dives_1_day", "quiere_reservar": True}
+    filas = _correr(monkeypatch, ["¿El link?", "Gracias", "Ok"], [_salida_de("Claro.", **ctg)] * 3)
+    assert [f["reply"].count("book.divingplanet.org") for f in filas] == [1, 0, 0]
+
+
+def test_el_pase_y_la_pregunta_solo_se_cuentan_en_v2m(monkeypatch):
+    grupo = {"origen": "cartagena", "nacionalidad": "extranjera", "reparto": {"snorkel": 6}}
+    [fila] = _correr(monkeypatch, ["Hola"], [_salida_de("Te paso con un asesor.", {"si": True, "motivo": "reservar_con_asesor"},
+                                                       {"tema": "otra"}, **grupo)])
+    assert {"C1"} <= set(fila["estado"]["puerta"]["fallos_1"]) and not fila["estado"]["puerta"].get("rehecho")
+
+
+def test_v1r_no_rehace_ni_pone_nada(monkeypatch):
+    [fila] = _correr(monkeypatch, ["Hola"], [_salida_de("Son 999 USD en total.", **_COL)], puerta=False)
+    assert fila["reply"] == "Son 999 USD en total." and not fila["estado"]["puerta"].get("rehecho")
+    assert fila["metricas"][0]["turn_type"] == "simple-v1r"
+
+
+def test_si_la_segunda_llamada_falla_se_queda_la_primera(monkeypatch):
+    [fila] = _correr(monkeypatch, ["Hola"], [_salida_de("Son 999 USD.", **_COL), RuntimeError("HTTP 500")])
+    assert "rehacer_fallo" in fila["estado"]["puerta"] and not fila["reply"].startswith("ERROR")
+
+
+def test_una_salida_rara_no_tumba_la_tirada(monkeypatch):
+    raro = {"entendido": {"personas": "6", "reparto": ["snorkel"], "hotel": ["x"]}, "pasar": True, "pregunta": "origen",
+            "texto": "Hola"}
+    [fila] = _correr(monkeypatch, ["Hola"], [raro])
+    assert fila["reply"] and fila["metricas"][0]["llm_errores"] == 0

@@ -1,4 +1,22 @@
-# Simplificar, V2: la puerta del código sobre V1 (diseño, 10-nov; v2 tras la revisión)
+# Simplificar, V2: la puerta del código sobre V1 (diseño, 10-nov; v2 tras la revisión; V2m tras revisar el código)
+
+**V2m (10-nov, #3773 y #3774, con el OK del Claude de Gadea).** La revisión del código (paso 5) encontró 13 defectos en la primera
+puerta. En vez de tapar los 13, se simplifica:
+- **Solo lo exacto rehace:** C2, los importes, y C3, el enlace.
+- **C1 (el pase) y C4 (la pregunta) solo se cuentan.** El comportamiento lo llevan las reglas del esquema: el esquema lleva 5, no 3.
+  Si V2m pasa a más clientes que B, no cumple el criterio, y entonces sí haría falta que C1 decida.
+- **Arreglado en lo que queda:**
+  - C2 lee también los precios de `pricing.json` que no son de un servicio (el acompañante, la nocturna…);
+  - C2 acepta los redondeos hacia arriba y hacia abajo, «mil», «dólares», separadores, decimales en pesos y el 20 %;
+  - C3 acepta el enlace en los dos idiomas;
+  - el pase y el enlace del código no se repiten entre turnos;
+  - fuera el aviso del asesor añadido por el código;
+  - la plantilla conserva un pase bueno y no adivina el precio del buceo sin plan;
+  - si la plantilla no tiene nada seguro, se queda el texto de Luna;
+  - una salida rara de Luna, o una segunda llamada que falla, no tumban la tirada.
+- **Un brazo más para atribuir: V1R.** Es el mismo esquema con las mismas reglas, sin puerta (`--modo v1r`). Se mide sin juez, salvo
+  que sobre ventana. V2m se juzga entera.
+- **Banco:** 58 tests sin IA, también del bucle de un cliente con salidas simuladas, y la huella de V1 fijada.
 
 **Ficha:**
 - **Rama:** `feature/puerta-v2-alvaro`, sobre `simple-gadea` 0209842a. Prototipo fuera de src: `scripts/simple_v2.py` envuelve

@@ -69,6 +69,20 @@ def tiene_enlace(servicio: str) -> bool:
     return bool(s.get("booking_url")) and not s.get("contact_only")
 
 
+_SIN_HOTEL = re.compile(r"no s[eé]|todav[ií]a|a[uú]n no|por confirmar|to be confirmed|not sure|don'?t know|yet", re.I)
+
+
+def hotel_dicho(ent: dict) -> str | None:
+    """El hotel que dijo, o None si no dijo ninguno de verdad («todavía no sé», «por confirmar», el nombre de una isla), como
+    `como_reserva.hotel_conocido`."""
+    from src.domain.lugares import solo_nombra_una_isla  # lazy
+
+    hotel = ent.get("hotel")
+    if not isinstance(hotel, str) or not hotel.strip() or _SIN_HOTEL.search(hotel) or solo_nombra_una_isla(hotel):
+        return None
+    return hotel
+
+
 def decision(ent: dict) -> tuple[str, str | None]:
     """(forma, motivo del asesor). En el orden de `como_reserva.entrega` (4R): el hotel y el origen antes que el asesor (P5)."""
     from src.domain.lugares import recogida_conocida  # lazy
@@ -76,21 +90,24 @@ def decision(ent: dict) -> tuple[str, str | None]:
 
     if ent.get("ya_reservo"):
         return POSVENTA, None
-    origen = ent.get("origen")
-    if origen == "islas" and not ent.get("hotel"):
+    origen, hotel = ent.get("origen"), hotel_dicho(ent)
+    if origen == "islas" and not hotel:
         return HOTEL_PRIMERO, None
     if origen not in ("cartagena", "islas"):
         return ORIGEN_PRIMERO, None
     if ent.get("nacionalidad") in ("colombiana", "residente"):
         return ASESOR, "pago en pesos"
-    if origen == "islas" and not recogida_conocida(ent["hotel"]):
+    if origen == "islas" and not recogida_conocida(hotel):
         return ASESOR, "recogida por confirmar"
-    reparto = {a: n for a, n in (ent.get("reparto") or {}).items() if isinstance(n, int) and n > 0}
-    con_descuento = sum(n for a, n in reparto.items() if a in CON_DESCUENTO_DE_GRUPO) if reparto else (ent.get("personas") or 0)
+    reparto = ent.get("reparto") or {}
+    plan = _servicios().get(ent.get("plan")) or {}
+    # Sin reparto, cuentan las personas, salvo en un curso PADI, que no tiene descuento de grupo (discounts.json).
+    con_descuento = (sum(n for a, n in reparto.items() if a in CON_DESCUENTO_DE_GRUPO) if reparto
+                     else 0 if plan.get("category") == "course" else (ent.get("personas") or 0))
     if con_descuento >= minimo_del_grupo():
         return ASESOR, "grupo de 5 o más"
-    if len(reparto) > 1 and set(reparto) & SIN_ENLACE_EN_LA_WEB:
-        return ASESOR, "una parte del plan sin enlace"
+    if set(reparto) & SIN_ENLACE_EN_LA_WEB:  # una parte del plan, o todo, sin enlace (P10)
+        return ASESOR, "una parte del plan sin enlace" if len(reparto) > 1 else "el plan no tiene enlace"
     if (servicio := servicio_del_plan(ent)) and not tiene_enlace(servicio):
         return ASESOR, "el plan no tiene enlace"
     if ent.get("equipo_propio"):
@@ -111,13 +128,16 @@ def enlace_que_toca(ent: dict) -> str | None:
 # ── 3. Lo que hay en el texto ──────────────────────────────────────────────────────────────────────────────────────────────────────
 _URL = re.compile(r"https?://[^\s\"'<>]+?(?=[.,;:!?)\]*_\"'<>]*(?:[\s\"'<>]|$))")
 _RESERVA = re.compile(r"https?://book\.divingplanet\.org/[^\s\"'<>]+?(?=[.,;:!?)\]*_\"'<>]*(?:[\s\"'<>]|$))")
-_IMPORTE = re.compile(r"(?:(USD|US\$|COP|\$)\s?(\d[\d.,]*\d|\d))|(?:(\d[\d.,]*\d|\d)\s?(USD|US\$|COP|mil pesos|pesos))", re.I)
+_CIFRA = r"\d[\d.,']*\d|\d"
+_IMPORTE = re.compile(rf"(?:\b(USD|US\$|COP)\b|\$)\s?({_CIFRA})(\s?mil\b)?|({_CIFRA})(\s?mil\b)?\s?(USD\b|US\$|d[oó]lares\b|dollars\b|COP\b|pesos\b)",
+                      re.I)
 _PORCENTAJE = re.compile(r"(\d+(?:[.,]\d+)?)\s?%")
 
 
 def _numero(cifra: str, moneda: str) -> float:
+    cifra = cifra.replace("'", "")
     if moneda == "COP":
-        return float(re.sub(r"[.,]", "", cifra))
+        return float(re.sub(r"[.,]", "", re.sub(r",\d{2}$", "", cifra)))  # «630.000,00 COP»: sin los céntimos
     if "," in cifra and len(cifra.rsplit(",", 1)[1]) in (1, 2):
         cifra = cifra.replace(".", "").replace(",", ".")
     elif "." in cifra and len(cifra.rsplit(".", 1)[1]) == 3:
@@ -126,18 +146,21 @@ def _numero(cifra: str, moneda: str) -> float:
 
 
 def importes(texto: str) -> list[tuple[float, str]]:
-    """Las cifras con moneda del texto, como (valor, «USD» | «COP»). «$N» sin más: COP desde 5.000, si no USD."""
+    """Las cifras con moneda del texto, como (valor, «USD» | «COP»): «178 USD», «USD 178», «178 dólares», «630.000 COP», «COP 630
+    mil», «$630 mil pesos», «448 mil pesos». «$N» sin más: COP desde 5.000, si no USD."""
     salen = []
     for m in _IMPORTE.finditer(_URL.sub(" ", texto or "")):
-        simbolo, cifra = (m.group(1), m.group(2)) if m.group(1) else (m.group(4), m.group(3))
-        simbolo = simbolo.upper()
-        if simbolo == "MIL PESOS":
-            salen.append((float(re.sub(r"[.,]", "", cifra)) * 1000, "COP"))
-            continue
-        moneda = "COP" if simbolo in ("COP", "PESOS") else "USD"
-        if simbolo == "$":
-            moneda = "COP" if float(re.sub(r"[.,]", "", cifra)) >= 5000 else "USD"
-        salen.append((round(_numero(cifra, moneda), 2), moneda))
+        if m.group(2):
+            simbolo, cifra, mil = (m.group(1) or "$").upper(), m.group(2), bool(m.group(3))
+            if simbolo == "$" and re.match(r"\s?(mil\s)?pesos", texto[m.end():m.end() + 12] or "", re.I):
+                simbolo = "COP"
+        else:
+            cifra, mil, simbolo = m.group(4), bool(m.group(5)), m.group(6).upper()
+        moneda = "COP" if simbolo in ("COP", "PESOS") or mil else "USD"
+        if simbolo == "$" and not mil:
+            moneda = "COP" if float(re.sub(r"[.,']", "", cifra)) >= 5000 else "USD"
+        valor = _numero(cifra, moneda) * (1000 if mil else 1)
+        salen.append((round(valor, 2), moneda))
     return salen
 
 
@@ -148,7 +171,29 @@ def preguntas(texto: str) -> int:
 # ── 4. Las cuatro comprobaciones ──────────────────────────────────────────────────────────────────────────────────────────────────
 _LA_BASE_CONTESTA = re.compile(r"hotel|alojamiento|hospedaje|lodging|accommodation|punto|dive site|llevar|bring|comida|almuerzo|"
                                r"food|lunch|precio|price|horario|schedule|hora|disponib|availab", re.I)
-_PORCENTAJES_DE_LA_BASE = frozenset({5.0, 10.0, 50.0, 100.0})  # discounts.json (10, 10, 5) y el 50/50 y el 100 % de las políticas
+# discounts.json (10, 10, 5), el 20 % de online y grupo juntos (discounts.json), y el 50/50 y el 100 % de las políticas.
+_PORCENTAJES_DE_LA_BASE = frozenset({5.0, 10.0, 20.0, 50.0, 100.0})
+
+
+def _precios_de_pricing() -> set[tuple[float, str]]:
+    """Todos los precios de `pricing.json` (14 que no están en SERVICES: el acompañante, la nocturna, la inmersión extra…)."""
+    import json as _json
+
+    datos = _json.loads((v1.RAIZ / "data" / "knowledge_base" / "pricing.json").read_text(encoding="utf-8-sig"))
+    salen: set[tuple[float, str]] = set()
+
+    def recorre(x):
+        if isinstance(x, dict):
+            for k, v in x.items():
+                if isinstance(v, (int, float)) and not isinstance(v, bool) and re.match(r"(usd|cop)_", k):
+                    salen.add((round(float(v), 2), "USD" if k.startswith("usd") else "COP"))
+                else:
+                    recorre(v)
+        elif isinstance(x, list):
+            for v in x:
+                recorre(v)
+    recorre(datos)
+    return salen
 
 
 # El servicio de cada tipo del reparto (el de las islas, `<id>_already_on_island`). El acompañante no tiene precio propio.
@@ -185,12 +230,21 @@ def precios_permitidos(ent: dict) -> set[tuple[float, str]]:
         ids = _del_origen(list(servicios), ent.get("origen"))
     nac = ent.get("nacionalidad")
     monedas = {"COP"} if nac in ("colombiana", "residente") else {"USD"} if nac in ("extranjera", "mixta") else {"USD", "COP"}
+    import math
+
+    precios = {(float(s[c]), m) for sid in ids for s in [servicios.get(sid) or {}]
+               for c, m in (("price_usd", "USD"), ("price_usd_normal", "USD"), ("price_cop", "COP"), ("price_cop_normal", "COP"))
+               if s.get(c) is not None}
+    # Los de pricing.json que no son de ningún servicio (el acompañante, la nocturna…), siempre; los de los servicios siguen la regla
+    # del plan y del origen (si no, «124,20 USD» de las islas pasaría a un cliente de Cartagena).
+    de_servicios = {(float(s[c]), m) for s in servicios.values()
+                    for c, m in (("price_usd", "USD"), ("price_usd_normal", "USD"), ("price_cop", "COP"), ("price_cop_normal", "COP"))
+                    if s.get(c) is not None}
+    precios |= {(v, m) for v, m in _precios_de_pricing() if not any(abs(v - w) < 0.01 and m == n for w, n in de_servicios)}
     salen = set()
-    for sid in ids:
-        s = servicios.get(sid) or {}
-        for campo, moneda in (("price_usd", "USD"), ("price_usd_normal", "USD"), ("price_cop", "COP"), ("price_cop_normal", "COP")):
-            if s.get(campo) is not None and moneda in monedas:
-                salen |= {(round(float(s[campo]), 2), moneda), (float(round(float(s[campo]))), moneda)}
+    for valor, moneda in precios:
+        if moneda in monedas:  # como los escribe el bot: exacto, o redondeado hacia arriba o hacia abajo («204» por 204,3)
+            salen |= {(round(valor, 2), moneda), (float(math.floor(valor)), moneda), (float(math.ceil(valor)), moneda)}
     return salen
 
 
@@ -209,7 +263,7 @@ def comprobar(ent: dict, pasar: dict | None, pregunta: dict | None, texto: str, 
             "reservar_con_asesor": forma == ASESOR and quiere,
             "ya_reservo": bool(ent.get("ya_reservo")),
             "salud": True, "clima_del_dia": True, "pide_persona": True, "horario": True,
-            "recogida_fuera": ent.get("origen") == "islas" and bool(ent.get("hotel")) and not recogida_conocida(ent["hotel"]),
+            "recogida_fuera": ent.get("origen") == "islas" and bool(hotel_dicho(ent)) and not recogida_conocida(hotel_dicho(ent)),
             "origen_sin_saber": quiere and forma == ORIGEN_PRIMERO and p1b_usado,
             "la_base_no_lo_tiene": not _LA_BASE_CONTESTA.search(tema),
         }.get(motivo, False)
@@ -222,27 +276,30 @@ def comprobar(ent: dict, pasar: dict | None, pregunta: dict | None, texto: str, 
     pase_que_falta = not pasar.get("si") and quiere and (forma == ASESOR or (forma == ORIGEN_PRIMERO and p1b_usado))
     # C2, los importes
     permitidos = precios_permitidos(ent)
-    malos = [f"{v:g} {m}" for v, m in importes(texto) if (v, m) not in permitidos]
+    malos = [(f"{v:,.0f} COP".replace(",", ".") if m == "COP" else f"{v:g} USD") for v, m in importes(texto) if (v, m) not in permitidos]
     malos += [f"{p} %" for p in _PORCENTAJE.findall(texto) if float(p.replace(",", ".")) not in _PORCENTAJES_DE_LA_BASE]
     if malos:
         fallos["C2"] = ("solo el precio por persona del catálogo, en su moneda y de su origen, sin aplicar descuentos ni sumar: "
                         + ", ".join(malos[:4]))
     # C3, el enlace
     enlaces, toca = _RESERVA.findall(texto or ""), enlace_que_toca(ent)
-    if enlaces and (forma != ENLACE or any(e != toca for e in enlaces)):
+    sin_idioma = lambda u: re.sub(r"[?&]language=\w+", "", u or "")  # noqa: E731 — la base solo tiene los de «language=es»
+    if enlaces and (forma != ENLACE or any(sin_idioma(e) != sin_idioma(toca) for e in enlaces)):
         fallos["C3"] = ("ningún enlace de reserva todavía (" + {HOTEL_PRIMERO: "primero el hotel", ORIGEN_PRIMERO: "primero el origen",
-                        ASESOR: f"lo reserva un asesor: {motivo_asesor}", POSVENTA: "ya reservó"}.get(forma, "otro plan u origen") + ")")
+                        ASESOR: f"lo reserva un asesor: {motivo_asesor}", POSVENTA: "ya reservó"}.get(forma, "") + ")"
+                        if forma != ENLACE else f"el enlace de su plan y de su origen es {toca}" if toca
+                        else "ningún enlace de reserva: este plan no se reserva por la web desde su origen")
     enlace_que_falta = toca if (quiere and forma == ENLACE and toca and not enlaces) else None
     # C4, la pregunta
     n, tema_p = preguntas(texto), (pregunta or {}).get("tema")
     if n > 1:
         fallos["C4"] = "una pregunta como mucho"
     elif n == 1:
-        falta = {"origen": not ent.get("origen"), "hotel": ent.get("origen") == "islas" and not ent.get("hotel"),
+        falta = {"origen": not ent.get("origen"), "hotel": ent.get("origen") == "islas" and not hotel_dicho(ent),
                  "nacionalidad": not ent.get("nacionalidad"), "personas": not ent.get("personas"), "fecha": not ent.get("fecha"),
                  "certificado": ent.get("certificado") is None, "edades": not ent.get("edades"),
                  "refresher": ent.get("refresher") is None, "plan": not ent.get("plan")}.get(tema_p, False)
-        de_la_reserva = quiere or tema_p == "origen"  # origen-y-precio: con el precio, el origen
+        de_la_reserva = quiere or tema_p in ("origen", "certificado", "plan")  # origen-y-precio; o pregunta precio o plan (diseño C4)
         p1b = tema_p == "origen" and quiere and veces.get("origen", 0) >= 2 and not p1b_usado
         if not (falta and de_la_reserva and (veces.get(tema_p, 0) < 2 or p1b)):
             fallos["C4"] = "contesta sin preguntar (no hace falta ningún dato para reservar ahora)"
@@ -275,11 +332,15 @@ _HOTEL = {"es": "Para reservar desde las islas necesito el nombre de tu hotel: c
 
 
 def plantilla(ent: dict, lang: str) -> str:
-    """C2/C3 tras rehacer: lo del código, sin el texto de Luna (la pieza de precios del plan y la línea de la entrega)."""
+    """C2/C3 tras rehacer: lo del código, sin el texto de Luna (la pieza de precios del plan y la línea de la entrega). Vacío si no
+    tiene nada seguro que poner: entonces se queda el texto de Luna y se cuenta (revisión del paso 5, nº 3 y nº 11)."""
     forma, motivo = decision(ent)
     servicios, lineas = _servicios(), []
     reparto = [t for t in (ent.get("reparto") or {}) if t in _SERVICIO_DEL_TIPO]
-    tipos = [ent["plan"]] if ent.get("plan") in servicios and len(reparto) <= 1 else [_SERVICIO_DEL_TIPO[t] for t in reparto]
+    if ent.get("plan") in servicios and len(reparto) <= 1:
+        tipos = [ent["plan"]]
+    else:  # el buzo certificado sin plan dicho tiene varios (2, 3, 4… inmersiones): no se adivina cuál
+        tipos = [_SERVICIO_DEL_TIPO[t] for t in reparto if t != "certified_diving"]
     pesos = ent.get("nacionalidad") in ("colombiana", "residente")
     for sid in _del_origen(tipos, ent.get("origen")):
         s = servicios[sid]
@@ -292,86 +353,125 @@ def plantilla(ent: dict, lang: str) -> str:
         precio = f"{s['price_cop']:,.0f} COP".replace(",", ".") if pesos else f"{round(s['price_usd'])} USD"
         lineas.append(f"• *{nombre}*: {precio} por persona (online)" if lang == "es" else f"• *{nombre}*: {precio} per person (online)")
     lineas = ["\n".join(lineas)] if lineas else []
+    if not lineas:
+        return ""
     if forma == ENLACE and (url := enlace_que_toca(ent)):
-        lineas.append(_PARA_RESERVAR[lang].format(url=url))
+        lineas.append(_PARA_RESERVAR[lang].format(url=url) + ("" if ent.get("nacionalidad") else f"\n{_SI_ERES_COLOMBIANO[lang]}"))
     elif forma == ASESOR:
         lineas.append(_por_el_asesor(motivo, lang))
     elif forma == ORIGEN_PRIMERO:
         lineas.append(_SIN_ORIGEN[lang])
     elif forma == HOTEL_PRIMERO:
         lineas.append(_HOTEL[lang])
-    return "\n\n".join(lineas) or ("Te lo confirmo enseguida." if lang == "es" else "I'll confirm it shortly.")
+    return "\n\n".join(lineas)
 
 
 # ── 6. Un cliente, turno a turno ──────────────────────────────────────────────────────────────────────────────────────────────────
+# V2m (#3773, #3774): solo lo exacto rehace (C2, importes; C3, enlace). El pase (C1) y la pregunta (C4) los llevan las reglas del
+# esquema y aquí solo se cuentan. V1R: el mismo esquema y las mismas reglas, sin puerta (para atribuir lo que hace cada cosa).
+REHACEN = frozenset({"C2", "C3"})
+_DICE_EL_PASE = re.compile(r"asesor|advisor|equipo|team|persona|person", re.I)
+
+
+def _limpio(datos: dict) -> dict:
+    """Lo que devuelve Luna, con los tipos que espera la puerta: una salida rara no tumba la medida (revisión del paso 5, nº 6)."""
+    ent = datos.get("entendido") if isinstance(datos.get("entendido"), dict) else {}
+    ent = {k: v for k, v in ent.items() if k in ENTENDIDO_VACIO}
+    if not isinstance(ent.get("reparto"), dict):
+        ent.pop("reparto", None)
+    else:
+        ent["reparto"] = {a: int(n) for a, n in ent["reparto"].items() if str(n).isdigit() and int(n) > 0}
+    if "personas" in ent:
+        ent["personas"] = int(ent["personas"]) if str(ent["personas"]).isdigit() else None
+    if "hotel" in ent and not isinstance(ent["hotel"], str):
+        ent["hotel"] = None
+    pasar = datos.get("pasar") if isinstance(datos.get("pasar"), dict) else {"si": bool(datos.get("pasar"))}
+    pregunta = datos.get("pregunta") if isinstance(datos.get("pregunta"), dict) else None
+    # Un null nuevo no borra lo que ya entendió del origen, el hotel, la nacionalidad o el plan (revisión nº 13).
+    ent = {k: v for k, v in ent.items() if v is not None or k not in ("origen", "hotel", "nacionalidad", "plan")}
+    return {"entendido": ent, "pasar": pasar, "pregunta": pregunta,
+            "texto": datos.get("texto") if isinstance(datos.get("texto"), str) else ""}
+
+
 def _salida(clave: str, mensajes: list[dict]) -> tuple[dict | None, str, dict, str | None]:
     salida, m = v1.llamar(clave, mensajes)
     datos, fallo = v1.leer(salida)
-    return datos, salida, m, fallo
+    return (_limpio(datos) if datos is not None else None), salida, m, fallo
 
 
-def cliente(clave: str, base: str, d: dict, reloj: str | None) -> list[dict]:
+def cliente(clave: str, base: str, d: dict, reloj: str | None, puerta_activa: bool = True) -> list[dict]:
     sistema = v1.sistema_para(base, reloj).replace(v1.INSTRUCCIONES.replace("{base}", base), INSTRUCCIONES_V2.replace("{base}", base))
+    if sistema == v1.sistema_para(base, reloj):
+        raise RuntimeError("el esquema de V2 no se sustituyó: se mediría V1")
     historial = [{"role": "system", "content": sistema}]
-    entendido, filas, veces, p1b_usado, avisado = dict(ENTENDIDO_VACIO), [], {}, False, False
+    entendido, filas, veces = dict(ENTENDIDO_VACIO), [], {}
+    p1b_usado, pasado, enlaces_dados = False, False, set()
     for i, msg in enumerate(d["turnos"], 1):
         mensajes = [*historial, {"role": "system", "content": "Lo que ya entendiste del cliente: "
                                  + json.dumps(entendido, ensure_ascii=False)}, {"role": "user", "content": msg}]
-        t0, llamadas, errores, puerta, pasar = time.time(), [], 0, {}, None
+        t0, llamadas, errores, puerta, pasar, fallo = time.time(), [], 0, {}, None, None
         try:
             datos, salida, m, fallo = _salida(clave, mensajes)
             llamadas.append(m)
             if datos is None:
                 texto, errores = salida, 1
             else:
-                ent = {**entendido, **{k: v for k, v in (datos.get("entendido") or {}).items() if k in ENTENDIDO_VACIO}}
-                hecho = comprobar(ent, datos.get("pasar"), datos.get("pregunta"), datos["texto"], veces, p1b_usado)
+                ent = {**entendido, **datos["entendido"]}
+                hecho = comprobar(ent, datos["pasar"], datos["pregunta"], datos["texto"], veces, p1b_usado)
                 puerta["fallos_1"] = hecho["fallos"]
-                if hecho["fallos"]:
-                    motivo = "Corrige tu respuesta (mismo formato JSON): " + "; ".join(hecho["fallos"].values())
-                    datos2, salida2, m2, _ = _salida(clave, [*mensajes, {"role": "assistant", "content": salida},
-                                                              {"role": "user", "content": motivo}])
-                    llamadas.append(m2)
-                    puerta["rehecho"] = True
-                    if datos2 is not None:
-                        ent2 = {**entendido, **{k: v for k, v in (datos2.get("entendido") or {}).items() if k in ENTENDIDO_VACIO}}
-                        hecho2 = comprobar(ent2, datos2.get("pasar"), datos2.get("pregunta"), datos2["texto"], veces, p1b_usado)
-                        datos, ent, hecho = datos2, ent2, hecho2
-                        puerta["fallos_2"] = hecho["fallos"]
+                if puerta_activa and REHACEN & set(hecho["fallos"]):
+                    motivo = "Corrige tu respuesta (mismo formato JSON): " + "; ".join(
+                        v for k, v in hecho["fallos"].items() if k in REHACEN)
+                    try:
+                        datos2, salida2, m2, _ = _salida(clave, [*mensajes, {"role": "assistant", "content": salida},
+                                                                  {"role": "user", "content": motivo}])
+                        llamadas.append(m2)
+                        puerta["rehecho"] = True
+                        if datos2 is not None:
+                            ent2 = {**entendido, **datos2["entendido"]}
+                            hecho2 = comprobar(ent2, datos2["pasar"], datos2["pregunta"], datos2["texto"], veces, p1b_usado)
+                            datos, ent, hecho = datos2, ent2, hecho2
+                            puerta["fallos_2"] = hecho["fallos"]
+                    except RuntimeError as exc:  # la segunda llamada falla: se queda la primera (revisión nº 12)
+                        puerta["rehacer_fallo"] = str(exc)[:120]
                 entendido = ent
-                texto, pasar = datos["texto"], dict(datos.get("pasar") or {"si": False})
+                texto, pasar = datos["texto"], dict(datos["pasar"])
                 lang = "en" if entendido.get("idioma") == "en" else "es"
-                if {"C2", "C3"} & set(hecho["fallos"]):
-                    texto, pasar = plantilla(entendido, lang), {"si": False}
-                    puerta["plantilla"] = True
-                    avisado = avisado or hecho["forma"] == ASESOR  # la plantilla ya dice que lo reserva un asesor
-                if hecho["pase_que_falta"]:
-                    pasar = {"si": True, "motivo": "reservar_con_asesor" if hecho["forma"] == ASESOR else "origen_sin_saber"}
-                    texto = f"{texto}\n\n{_TE_PASO[lang]}"
-                    puerta["pase_del_codigo"] = True
-                elif hecho["enlace_que_falta"] and not pasar.get("si"):
-                    texto = f"{texto}\n\n{_PARA_RESERVAR[lang].format(url=hecho['enlace_que_falta'])}"
-                    if not entendido.get("nacionalidad"):
-                        texto = f"{texto}\n{_SI_ERES_COLOMBIANO[lang]}"
-                    puerta["enlace_del_codigo"] = True
-                elif hecho["forma"] == ASESOR and not entendido.get("quiere_reservar") and not avisado and not pasar.get("si"):
-                    texto = f"{texto}\n\n{_POR_EL_ASESOR[lang].format(motivo=hecho['motivo_asesor'])}"  # P3: una vez, sin preguntar
-                    avisado, puerta["aviso_del_asesor"] = True, True
-                elif hecho["forma"] == ORIGEN_PRIMERO and entendido.get("quiere_reservar") and veces.get("origen", 0) >= 2 \
-                        and not p1b_usado and preguntas(texto) == 0:
-                    texto, p1b_usado, puerta["origen_con_motivo"] = f"{texto}\n\n{_SIN_ORIGEN[lang]}", True, True  # P1b
-                if preguntas(texto) == 1 and (tema := (datos.get("pregunta") or {}).get("tema")):
+                if puerta_activa:
+                    if REHACEN & set(hecho["fallos"]) and (tpl := plantilla(entendido, lang)):
+                        texto = tpl  # norma 5: lo del código, sin recortar el de Luna; el pase que ya era bueno se queda
+                        puerta["plantilla"] = True
+                        if "C1" in hecho["fallos"]:
+                            pasar = {"si": False}
+                    if hecho["pase_que_falta"] and not pasado:
+                        pasar = {"si": True, "motivo": "reservar_con_asesor" if hecho["forma"] == ASESOR else "origen_sin_saber"}
+                        if not _DICE_EL_PASE.search(texto):
+                            texto = f"{texto}\n\n{_TE_PASO[lang]}"
+                        puerta["pase_del_codigo"] = True
+                    elif (url := hecho["enlace_que_falta"]) and url not in enlaces_dados and not pasar.get("si") \
+                            and not _RESERVA.search(texto):
+                        texto = f"{texto}\n\n{_PARA_RESERVAR[lang].format(url=url)}"
+                        if not entendido.get("nacionalidad"):
+                            texto = f"{texto}\n{_SI_ERES_COLOMBIANO[lang]}"
+                        puerta["enlace_del_codigo"] = True
+                enlaces_dados |= set(_RESERVA.findall(texto))
+                pasado = pasado or bool(pasar.get("si"))
+                tema = (datos.get("pregunta") or {}).get("tema")
+                if preguntas(texto) == 1 and tema and not puerta.get("plantilla"):
                     veces[tema] = veces.get(tema, 0) + 1
                     p1b_usado = p1b_usado or (tema == "origen" and veces[tema] > 2)
         except RuntimeError as exc:
             texto, errores, fallo = f"ERROR {exc}", 1, str(exc)
             llamadas.append({"s": 0, "u": {"in": 0, "ca": 0, "out": 0}})
+        except Exception as exc:  # noqa: BLE001 — un turno raro no tumba la tirada entera (revisión nº 6)
+            texto, errores, fallo = f"ERROR {type(exc).__name__}: {exc}", 1, f"{type(exc).__name__}: {exc}"
+            llamadas = llamadas or [{"s": 0, "u": {"in": 0, "ca": 0, "out": 0}}]
         historial += [{"role": "user", "content": msg}, {"role": "assistant", "content": texto}]
         filas.append({"dialogo": d["id"], "rep": 0, "turn": i, "msg": msg, "reply": texto, "rag": [], "juicios": [],
                       "segundos": round(time.time() - t0, 2), "estado": {"entendido": dict(entendido), "pasar": pasar,
                                                                          "puerta": puerta, "veces": dict(veces)},
                       "traza": [f"[SIMPLE] {fallo}"] if errores else [], "reloj": reloj,
-                      "metricas": [{"turn_type": "simple-v2", "llm_errores": errores,
+                      "metricas": [{"turn_type": "simple-v2m" if puerta_activa else "simple-v1r", "llm_errores": errores,
                                     "llamadas": [{"p": "simple-v2", "m": v1.MODELO, **x} for x in llamadas]}]})
     return filas
 
@@ -383,6 +483,8 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--banco", default="docs/robustness/caln/panel-vara.json")
     ap.add_argument("--reloj", default="alterno", help="como en reproducir_juez_pre; alterno por defecto")
     ap.add_argument("--ids", help="solo estos diálogos, separados por comas (para probar)")
+    ap.add_argument("--modo", choices=("v2m", "v1r"), default="v2m",
+                    help="v2m: con la puerta de lo exacto; v1r: el mismo esquema y reglas, sin puerta (#3773)")
     args = ap.parse_args(argv)
     from scripts.reproducir_juez_pre import relojes_de
 
@@ -393,7 +495,7 @@ def main(argv: list[str] | None = None) -> int:
     base, clave = v1.base_del_bot(), v1._clave()
     filas: list[dict] = []
     with cf.ThreadPoolExecutor(4) as ex:
-        for hecho in ex.map(lambda d: cliente(clave, base, d, relojes.get(d["id"])), dialogos):
+        for hecho in ex.map(lambda d: cliente(clave, base, d, relojes.get(d["id"]), args.modo == "v2m"), dialogos):
             filas += hecho
     Path(args.out).parent.mkdir(parents=True, exist_ok=True)
     Path(args.out).write_text("".join(json.dumps(f, ensure_ascii=False) + "\n" for f in filas), encoding="utf-8", newline="\n")
