@@ -51,3 +51,24 @@ def test_una_cifra_solo_ambigua_no_pega_ningun_plan():
     from src.agents.nucleo import origen_precio
 
     assert origen_precio._con_la_pieza(_buzo_en_cartagena("b2a-616"), "Ese curso cuesta 616 USD online.") is None
+
+
+# ── 4. Lo que falta de cada plan va con el nombre de su plan (frases nuestras: el refresher y la salida en el mismo turno) ──
+
+def test_lo_que_incluye_cada_plan_no_se_mezcla_con_el_de_otro():
+    from src.agents.rag_agent import _completar_con_hechos
+
+    bloques = [{"nombre": "Refresher", "incluye": {"cartagena": ["entrenamiento en piscina", "1 inmersión en el mar con instructor"]}},
+               {"nombre": "Buceo certificado", "incluye": {"cartagena": ["2 inmersiones guiadas", "almuerzo"]}}]
+    salida = _completar_con_hechos("Claro, te cuento qué lleva cada uno.", bloques, ["incluye"], "es")
+    refresher, buceo = salida.split("También incluye (Refresher):")[1].split("También incluye (Buceo certificado):")
+    assert "1 inmersión" in refresher and "2 inmersiones" not in refresher
+    assert "2 inmersiones guiadas" in buceo
+
+
+def test_con_un_solo_plan_el_rotulo_es_el_de_siempre():
+    from src.agents.rag_agent import _completar_con_hechos
+
+    bloques = [{"nombre": "Refresher", "incluye": {"cartagena": ["entrenamiento en piscina", "1 inmersión en el mar con instructor"]}}]
+    salida = _completar_con_hechos("El refresher es un repaso.", bloques, ["incluye"], "es")
+    assert "También incluye:\n" in salida and "(Refresher)" not in salida

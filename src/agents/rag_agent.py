@@ -597,10 +597,14 @@ def _completar_con_hechos(answer: str, bloques: list[dict], intenciones: list[st
     for campo, rotulos in _ROTULOS_DE_LO_QUE_FALTA.items():
         if campo not in intenciones:
             continue
-        faltan = dict.fromkeys(x for b in bloques for x in hechos_mod.faltan(
-            answer, [{campo: b.get(campo)}], [campo]))
-        if faltan:
-            extra.append(rotulos[i] + "\n" + "\n".join(f"• {x}" for x in faltan))
+        # Bloque 2a (10-nov): con varios planes en el turno, cada lista con el nombre de su plan. Juntas, «2 inmersiones guiadas» de
+        # la salida quedaba debajo del refresher, que tiene 1 (el refresher y la salida en el mismo mensaje).
+        con_lista = [b for b in bloques if b.get(campo)]
+        for b in con_lista:
+            faltan = dict.fromkeys(hechos_mod.faltan(answer, [{campo: b.get(campo)}], [campo]))
+            rotulo = rotulos[i] if len(con_lista) == 1 else f"{rotulos[i][:-1]} ({b.get('nombre')}):"
+            if faltan:
+                extra.append(rotulo + "\n" + "\n".join(f"• {x}" for x in faltan))
     # CALN-6 paso 2 (sparring CALN4, b11 t1): lo añadido va DELANTE de la pregunta con que cierra el escritor; detrás,
     # la pregunta quedaba en medio («¿Te comparto los enlaces?» y debajo el punto de encuentro).
     partes = answer.rstrip().split("\n\n")
