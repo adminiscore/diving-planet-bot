@@ -317,11 +317,13 @@ def _una_oferta_del_asesor(respuesta: str) -> str:
     sparring hasta el 3-nov, y Cali t2 en s04d). Una pregunta como mucho (paso 2), y es la nuestra: fuera las preguntas
     de los párrafos de delante."""
     from src.agents.nucleo.slotfill_close import _OFERTA_DEL_ASESOR  # lazy
+    from src.flows.que_preguntar import destapar_enlaces, tapar_enlaces  # lazy
 
+    respuesta, enlaces = tapar_enlaces(respuesta)  # bloque 4R (C5): el «?» de un enlace no es una pregunta
     partes = respuesta.split(_PARRAFO)
     oferta = next((i for i, p in enumerate(partes) if p.strip() in _OFERTA_DEL_ASESOR.values()), None)
     if not oferta:
-        return respuesta
+        return destapar_enlaces(respuesta, enlaces)
     delante = []
     for parrafo in partes[:oferta]:
         antes = parrafo
@@ -334,7 +336,7 @@ def _una_oferta_del_asesor(respuesta: str) -> str:
                 continue  # solo quedaba el emoji de la pregunta («… del domingo? 🐠»)
         if parrafo.strip():
             delante.append(parrafo)
-    return _PARRAFO.join(delante + partes[oferta:])
+    return destapar_enlaces(_PARRAFO.join(delante + partes[oferta:]), enlaces)
 
 
 def _sin_parrafos_repetidos(respuesta: str) -> str:

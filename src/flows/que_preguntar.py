@@ -73,3 +73,28 @@ def trae_pregunta(texto: str | None) -> bool:
     en un turno de la reserva el escritor no debe preguntar; si lo hace, se apunta (`escritor_pregunta` en [TURN_METRICS]). El borrado de
     sus copias en el compositor sigue activo y se quitará cuando esto marque cero en un panel y una tanda («primero cubre, luego borra»)."""
     return bool(texto) and "?" in _ENLACE_RE.sub("", texto)
+
+
+def tapar_enlaces(texto: str) -> tuple[str, list[str]]:
+    """Bloque 4R (C5): los enlaces, tapados, para buscar preguntas o frases sin partirlos. El «?language=es» de un enlace casaba
+    con las preguntas y el «.» de «divingplanet.org» cortaba la frase: `compositor._una_oferta_del_asesor` dejaba
+    «https://book.divingplanet.language=es» (comprobado) y `redactor_hechos.con_la_pieza`, el enlace partido."""
+    enlaces = _ENLACE_SIN_PUNTO_RE.findall(texto)
+    for i, enlace in enumerate(enlaces):
+        texto = texto.replace(enlace, _tapa(i), 1)
+    return texto, enlaces
+
+
+# Sin el punto, la coma o el cierre de negrita que lo siguen: son de la frase, no del enlace (si no, la frase del enlace y la pregunta de
+# detrás parecían una sola y se iban juntas).
+_ENLACE_SIN_PUNTO_RE = re.compile(r"https?://\S+?(?=[.,;:!?)\]*_]*(?:\s|$))")
+
+
+def destapar_enlaces(texto: str, enlaces: list[str]) -> str:
+    for i, enlace in enumerate(enlaces):
+        texto = texto.replace(_tapa(i), enlace, 1)
+    return texto
+
+
+def _tapa(i: int) -> str:
+    return f"\x00{chr(0xE000 + i)}\x00"  # sin cifras ni puntuación: ningún patrón de importes o frases la toca

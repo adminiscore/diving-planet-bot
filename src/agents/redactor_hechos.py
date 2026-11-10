@@ -242,7 +242,10 @@ def con_la_pieza(answer: str, pieza: str) -> str:
     cierra preguntando. Si aun así escribió algún importe, fuera esa frase: la cifra la da la pieza. Y si la pieza dice
     lo del descuento de grupo, fuera también las frases del escritor sobre él (r01: con «no aplica a los cursos PADI»
     debajo, el escritor seguía diciendo encima «10 % para grupos de 5, que se suma al online», 2 de 3)."""
+    from src.flows.que_preguntar import destapar_enlaces, tapar_enlaces  # lazy
+
     fuera = [_IMPORTE_RE, *([_DESCUENTO_DE_GRUPO_RE] if _DESCUENTO_DE_GRUPO_RE.match(pieza) else [])]
+    answer, enlaces = tapar_enlaces(answer)  # bloque 4R (C5): un enlace con «?» se partía por la pregunta
     parrafos = [p for p in answer.rstrip().split("\n\n") if p.strip()]
     cierre = [parrafos.pop()] if len(parrafos) > 1 and _CIERRA_PREGUNTANDO_RE.search(parrafos[-1]) else []
     if cierre and (pregunta := re.search(r"[^.!?]*\?[^.!?]*$", cierre[0].rstrip())) and cierre[0][:pregunta.start()].strip():
@@ -265,7 +268,7 @@ def con_la_pieza(answer: str, pieza: str) -> str:
         elif limpio:
             limpios.append(limpio)
     cierre = [c for c in (_sin_frases(p, fuera) for p in cierre) if c]
-    return "\n\n".join([*limpios, pieza, *cierre])
+    return destapar_enlaces("\n\n".join([*limpios, pieza, *cierre]), enlaces)
 
 
 async def nota_de_grupo(state: ConversationState, message: str, history: list[dict]) -> str | None:
