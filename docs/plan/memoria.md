@@ -19,8 +19,8 @@ secciones 1 a 3 por el Claude de Gadea, con su OK, el 10-nov.
   Gadea, Gonzalo no se ha conectado). Nada sube a PRE hasta cerrar el bloque.
 - **Línea base (10-nov):** Luna sola saca lo mismo que el bot en graves (10,7 frente a 10,3 de 40), más corta y con 1 llamada
   por turno frente a 4: según la regla, deciden coste, latencia y control. Lo habla Gadea con el equipo; el plan sigue.
-- **Por revisar con Gadea:** con la vara nueva la partida es 9-10 de 40; la meta de 5 y el punto de parada se fijaron con el panel
-  viejo (21-25).
+- **Por revisar con Gadea:** la meta de 5 y la parada se fijaron con el panel viejo (21-25); la vara nueva parte de 9-10 de 40. Y la
+  propuesta de adelantar el 4 y el 3 (con clientes como los reales fallan la agencia, quien ya reservó y el vuelo) tras el 0,5.
 - **Cierre del 0,5:** la tercera pregunta y el grupo a cero en su tanda y en el panel, y el saldo de código del bloque negativo.
 - **Metas:** al acabar el plan, 5 o menos clientes con grave de 40, de media. La de 2 en 60 queda por debajo del ruido del juez.
 - **Punto de parada:** tras el 0,5 y el 2a, el panel debería quedar en 8 a 11 por vuelta (antes del plan, 21 a 25). Si no baja de 16,
@@ -89,5 +89,6 @@ secciones 1 a 3 por el Claude de Gadea, con su OK, el 10-nov.
 | Fecha | Versión | Bloque | Graves por vuelta | Líneas de src | Llamadas de IA por turno | Respuesta: caracteres · con pregunta |
 |---|---|---|---|---|---|---|
 | 10-nov | caln34 frente a 0,5+2a | 0,5 y 2a en `panel-vara` (una pasada) | 9,0 → 9,7 (no cuenta) | +38 en el 2a | 3,99 → 3,93 | 571 · 67 % → 575 · 67 % |
+
 
 
