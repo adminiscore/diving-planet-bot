@@ -14,9 +14,9 @@ secciones 1 a 3 por el Claude de Gadea, con su OK, el 10-nov.
   son de plan, importe y moneda. El resto lo pone la vara: reglas posteriores, guiones que no contestan, fricción, el juez.
 - **Bloques, en orden:** 0 la vara · 0,5 lo ya escrito · 2a plan e importe, lo determinista · 1 lo que recibe el escritor · 2b plan,
   importe y moneda que dependen de leer · 4 el momento de reservar y el pase · 3 horas y fechas · 5 reglas que faltan.
-- **En curso (10-nov, noche):** el 0 tiene la vara montada (reloj fijo, juez con la hora y la huella, marcador, `panel-vara`,
-  tanda de la vara) y medida su partida; el 0,5, el enlace con un dueño (Álvaro); el 2a, tres piezas en `bloque2a-gadea` (Claude de
-  Gadea, Gonzalo no se ha conectado). Nada sube a PRE hasta cerrar el bloque.
+- **En curso (10-nov, mañana):** el 0, el 2a y la primera parte del 1 (una lectura por turno), hechos y medidos por el Claude de
+  Gadea (`bloque2a-gadea`, `bloque1-gadea`); el 0,5, el enlace con un dueño (Álvaro). Antes del 2b, Gadea decide la vara de la meta y
+  la parada y si el 4 y el 3 van antes (auditoría en curso). Nada sube a PRE hasta cerrar el bloque.
 - **Línea base (10-nov):** Luna sola saca lo mismo que el bot en graves (10,7 frente a 10,3 de 40), más corta y con 1 llamada
   por turno frente a 4: según la regla, deciden coste, latencia y control. Lo habla Gadea con el equipo; el plan sigue.
 - **Por revisar con Gadea:** la meta de 5 y la parada se fijaron con el panel viejo (21-25); la vara nueva parte de 9-10 de 40. Y la
@@ -88,7 +88,7 @@ secciones 1 a 3 por el Claude de Gadea, con su OK, el 10-nov.
 
 | Fecha | Versión | Bloque | Graves por vuelta | Líneas de src | Llamadas de IA por turno | Respuesta: caracteres · con pregunta |
 |---|---|---|---|---|---|---|
-| 10-nov | caln34 frente a 0,5+2a | 0,5 y 2a en `panel-vara` (una pasada) | 9,0 → 9,7 (no cuenta) | +38 en el 2a | 3,99 → 3,93 | 571 · 67 % → 575 · 67 % |
+| 10-nov | 0,5+2a frente a bloque 1 | 1 en `panel-vara` (6 juicios por lado) | 8,7 → 8,2 (no cuenta); «a veces» 18 → 11 | 1: −1 | 3,93 → 3,70 | 575 · 67 % → 570 · 66 % |
 
 
 
