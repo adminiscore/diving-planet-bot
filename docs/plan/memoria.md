@@ -38,8 +38,8 @@ secciones 1 a 3 por el Claude de Gadea, con su OK, el 10-nov.
 10. **Breve y al grano:** la meta es la persona (119 caracteres, 1 de cada 4 con pregunta). Lo que pinta el código, en español e inglés.
 11. **Los ciegos del panel no dan casos:** de ellos no sale nada para bancos ni arreglos; en los documentos solo se citan los `visto-*`.
 12. **PRE:** una medida a la vez, avisando en Coral y con los dos saldos comprobados antes.
-13. **Despacio y con doble confirmación (Gadea, 10-nov):** cada decisión de rumbo, con dos lecturas independientes (agentes sin la
-   conclusión) y comprobada en las charlas o en el código antes de proponerla.
+13. **Despacio y con doble confirmación (Gadea, 10-nov):** cada decisión de rumbo y cada bloque (diseño y código) se revisan con un agente
+   independiente, sin darle la conclusión; lo que se contradiga se mira en el código o en las charlas. Pasos: `#3734`.
 
 ## 3. Decisiones vigentes · dueña: Gadea · tope 20 líneas
 
