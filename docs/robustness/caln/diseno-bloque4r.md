@@ -138,7 +138,9 @@ No se tocan plan, importe ni moneda (2a y 2b); se usan sus piezas como están. L
 - **Por qué A y no B:** `_turno_de_la_reserva` es falso en el primer turno («quiero el link del snorkel»), tras la tarjeta y tras un pase
   (`conversational_core.py:982`, `slotfill_close.py:270`). B deja el enlace con dos dueños justo donde se repiten el grupo y el
   colombiano.
-- A llega también a turnos del 4P (posventa): **hace falta el sí del Claude de Gadea.**
+- A llega también a turnos del 4P (posventa): **aceptado (#3744 a)**, con una condición. El pintor pone el enlace en cualquier turno
+  que lo necesite, también fuera de la reserva («¿me pasas el link?»). Y un contador apunta los turnos que se quedarían sin el enlace
+  que tocaba (`enlace_que_faltaba`).
 
 **C3. Un solo pintor: `pintar_la_entrega`, donde el núcleo cierra la respuesta del turno, antes del pase del supervisor.**
 - Lo llaman `_finalize`, para la tarjeta y su pase, y los dos sitios por donde sale la respuesta del escritor en el núcleo:
@@ -187,7 +189,8 @@ No se tocan plan, importe ni moneda (2a y 2b); se usan sus piezas como están. L
 - P1, P1b, P2, P3 y P4: decididas (#3738, #3741 y #3742).
 - **P5 (nueva):** con el origen sin saber, un colombiano o un grupo de 5 o más que quieren reservar, ¿primero el origen (puede estar
   en las islas sin hotel, y `hotel-antes-de-reservar` prohíbe pasarlo) o directamente el asesor?
-- **Al Claude de Gadea:** el sí a la opción A en los turnos de posventa.
+- **Al Claude de Gadea:** el sí a la opción A en posventa, dado (#3744 a). Los textos del juez (C6), en
+  `diseno-bloque4r-juez.md`: entran al cerrar el 4.
 
 ## Cómo se prueba y se mide
 
