@@ -10,21 +10,18 @@ secciones 1 a 3 por el Claude de Gadea, con su OK, el 10-nov.
 - **Diagnóstico.** Los graves no vienen de la búsqueda (0 de 67) y poco del escritor (6-8 de 67, aunque Luna no repite). Vienen de
   cuatro cosas: decisiones sin un dueño en el código (el plan, en ~12 sitios; el pase, en 17), código que estropea respuestas correctas,
   una lectura que cambia entre vueltas (Haiku y los umbrales de Jev) y una vara que no se parece a los clientes reales.
-- **Lo que manda el orden:** de los 67 graves del panel 0.61, solo 26-31 son limpios (dos lecturas, 85 % de acuerdo); de ellos, 14-21
-  son de plan, importe y moneda. El resto lo pone la vara: reglas posteriores, guiones que no contestan, fricción, el juez.
-- **Bloques, en orden:** 0 la vara · 0,5 lo ya escrito · 2a plan e importe, lo determinista · 1 lo que recibe el escritor · 2b plan,
-  importe y moneda que dependen de leer · 4 el momento de reservar y el pase · 3 horas y fechas · 5 reglas que faltan.
-- **En curso (10-nov, mañana):** el 0, el 2a y la primera parte del 1 (una lectura por turno), hechos y medidos por el Claude de
-  Gadea (`bloque2a-gadea`, `bloque1-gadea`); el 0,5, el enlace con un dueño (Álvaro). Antes del 2b, Gadea decide la vara de la meta y
-  la parada y si el 4 y el 3 van antes (auditoría en curso). Nada sube a PRE hasta cerrar el bloque.
-- **Línea base (10-nov):** Luna sola saca lo mismo que el bot en graves (10,7 frente a 10,3 de 40), más corta y con 1 llamada
-  por turno frente a 4: según la regla, deciden coste, latencia y control. Lo habla Gadea con el equipo; el plan sigue.
-- **Por revisar con Gadea:** la meta de 5 y la parada se fijaron con el panel viejo (21-25); la vara nueva parte de 9-10 de 40. Y la
-  propuesta de adelantar el 4 y el 3 (con clientes como los reales fallan la agencia, quien ya reservó y el vuelo) tras el 0,5.
-- **Cierre del 0,5:** la tercera pregunta y el grupo a cero en su tanda y en el panel, y el saldo de código del bloque negativo.
-- **Metas:** al acabar el plan, 5 o menos clientes con grave de 40, de media. La de 2 en 60 queda por debajo del ruido del juez.
-- **Punto de parada:** tras el 0,5 y el 2a, el panel debería quedar en 8 a 11 por vuelta (antes del plan, 21 a 25). Si no baja de 16,
-  se para y se revisa el rumbo.
+- **Bloques, en orden (10-nov):** 0 la vara · 0,5 lo ya escrito · 2a plan e importe, lo determinista · 1 lo que recibe el escritor ·
+  4P el pase y la posventa fuera de la reserva (Gadea) a la vez que 4R el momento de reservar (Álvaro, con su cierre del 0,5) · 3.1 el
+  cierre de las 4:30, con el reloj y la base · 2b plan, importe y moneda que dependen de leer · 3.2 el vuelo (si Gadea lo decide) · 5.
+- **Por qué ese orden:** con clientes como los reales pesa el 4 (~5 de 40 en `panel-vara`; el 71 % de los reales pide algo suyo) y falla
+  siempre (la agencia, 18 de 18, por `needs_staff`); el 2b, 0,6-2,5 y siempre «a veces». Las decisiones del 9-nov, en el juez y no en el bot.
+- **En curso (10-nov):** medidos el 0, el 2a y la 1.ª parte del 1; el Claude de Gadea empieza el 4P. Nada sube a PRE hasta cerrar el bloque.
+- **Vara, meta y parada (10-nov):** `panel-vara`, reloj del jueves 5, huella 9326257c; partida 9,2. Meta: 5 o menos de 40, la mitad ciega
+  en 1 o menos y ningún cliente con grave en los 6 juicios. Parada: tras el 4 entero y el 3.1, si no baja al menos 3 desde 8,2.
+- **Lo que aún no sabemos y cuándo se mira:** (1) el reparto por bloque es una sola lectura: segunda a ciegas en la próxima medida; (2) la
+  tanda es una tirada: se repite en cada cierre; (3) cómo falla el bot con los reales: antes del 2b, con más charlas de Andrés; (4) si los
+  ciegos nuevos (escritos con el diagnóstico) inclinan la vara: al final, en el examen independiente.
+- **Línea base (10-nov):** Luna sola, 10,7 frente a 10,3 del bot, con 1 llamada por turno frente a 4: deciden coste, latencia y control.
 
 ## 2. Normas · dueña: Gadea · tope 15 líneas
 
@@ -35,11 +32,14 @@ secciones 1 a 3 por el Claude de Gadea, con su OK, el 10-nov.
 5. **Una puerta que no edita:** si el escritor pone algo que el código no le dio, se rehace una vez o va la plantilla; nunca se recorta.
 6. **Primero cubre, luego borra, y contando:** un corrector se borra cuando lleva un panel y una tanda sin actuar.
 7. **La vara, quieta:** la referencia del juez congelada y con su huella; una regla nueva entra a la vez en el juez, el banco y el código.
-8. **El panel, solo al cerrar un bloque:** 3 tiradas por lado, cada una juzgada dos veces; una bajada cuenta si es de 4 o más de media.
+8. **El panel, solo al cerrar un bloque:** 3 tiradas por lado, cada una juzgada dos veces; una bajada cuenta si es de 3 o más de media en
+   `panel-vara` (con su ruido, ~1 % de falsos positivos; se recalcula en cada cierre). Entre cierres, el mecanismo: sus clientes ×5.
 9. **Regla de parada:** si dos medidas seguidas no mueven el mecanismo, se para y se escribe «qué estamos haciendo mal».
 10. **Breve y al grano:** la meta es la persona (119 caracteres, 1 de cada 4 con pregunta). Lo que pinta el código, en español e inglés.
 11. **Los ciegos del panel no dan casos:** de ellos no sale nada para bancos ni arreglos; en los documentos solo se citan los `visto-*`.
 12. **PRE:** una medida a la vez, avisando en Coral y con los dos saldos comprobados antes.
+13. **Despacio y con doble confirmación (Gadea, 10-nov):** cada decisión de rumbo, con dos lecturas independientes (agentes sin la
+   conclusión) y comprobada en las charlas o en el código antes de proponerla.
 
 ## 3. Decisiones vigentes · dueña: Gadea · tope 20 líneas
 
@@ -52,24 +52,24 @@ secciones 1 a 3 por el Claude de Gadea, con su OK, el 10-nov.
   - A quien ya reservó le contesta la base; cambiar o cancelar va con un asesor.
   - Respuestas breves. Las agencias, como cualquier cliente.
   - La disponibilidad se contesta: siempre hay (21-oct).
-  - De lo que la base no contesta, el clima del día y una recogida fuera de los puntos de siempre van con una persona; lo demás lo
-    contesta la base.
-- **9-nov, plan:** meta intermedia de 5 o menos de 40. Referencia del juez con las decisiones del 9-nov: c7c7268a, en
-  `feature/caln34-gadea` desde el 10-nov. Ruido del juez: la misma vuelta juzgada dos veces da 20 y 23; cambian 5 de 40 clientes.
+  - De lo que la base no contesta, el clima del día y una recogida fuera de los puntos de siempre van con una persona; lo demás, la base.
+- **9-nov, plan:** referencia del juez con las decisiones del 9-nov (c7c7268a; huella 9326257c). Ruido del juez: la misma vuelta juzgada
+  dos veces da 20 y 23; cambian 5 de 40 clientes.
 - **10-nov:** el 0,5 de Álvaro, aceptado. Su cierre: el enlace con un solo dueño, y solo con el origen conocido, con diseño antes (#3702).
-- **10-nov, línea base:** sí. Luna sola con lo que lee el juez y la hora fija, sin nuestras piezas, sobre el panel de la vara (3 tiradas
-  × 2 juicios); frente a la versión actual en el mismo panel, umbral de 4. Solo medida; la lleva el Claude de Gadea.
-- **Pendientes de decidir:** pedir a Andrés más conversaciones reales; la norma de 5 de 5 en los clientes «a
-  veces»; leer el vuelo con el lector de notas; quitar la segunda lectura de la nacionalidad (CALN-30, Gonzalo).
+- **10-nov, línea base:** sí; Luna sola con lo que lee el juez y la hora fija, frente al bot en `panel-vara`. Solo medida (hecha).
+- **10-nov, rumbo (auditado con dos agentes independientes):** la vara, la meta, la parada y el orden de la sección 1, y el umbral de 3
+  (norma 8). El 4R, propuesto a Álvaro (#3721); si no está, se da por bueno.
+- **Pendientes de decidir:** pedir a Andrés más conversaciones reales; la norma de 5 de 5 en los clientes «a veces»; el vuelo con el
+  lector de notas (3.2); quitar la segunda lectura de la nacionalidad (CALN-30).
 
 ## 4. Quién lleva qué · cada uno su línea · tope 2 líneas por persona
 
-- **Gadea:** el bloque 0 (la vara) y la referencia del juez, en `feature/caln34-gadea` (27ba702b, con el ruido del juez medido).
+- **Gadea:** el 0, el 2a y la 1.ª parte del 1, hechos y medidos (`bloque0-gadea` 2761fbc1, `bloque2a-gadea`, `bloque1-gadea` b16e3612).
+  Ahora, el 4P: el pase y la posventa fuera de la reserva.
 - **Álvaro:** el 0,5 (#3701). Integrado en `feature/bloque05-alvaro` (2e77937a, aceptado) y medido (38606c51: panel 24,5 → 16,7). Falta
   el cierre: el enlace y el pase con un solo dueño en la reserva, y solo con el origen conocido (diseño antes, #3702), y la tanda.
-- **Gonzalo:** 0,5, el pase en una función (`feature/pase-gonzalo` 5ff32b8b).
-- **Gonzalo:** el 2a (#3701 c); si no se conecta, queda libre para el primero que acabe, en orden.
-- **Saldo (10-nov 00:30):** OpenAI recargado el 9-nov (22:57); OpenRouter, ~7,5 $ libres. Un panel ×3 por lado cuesta ~1,5 $ de OpenRouter.
+- **Gonzalo:** 0,5, el pase en una función (`feature/pase-gonzalo` 5ff32b8b). El 2a lo hizo el Claude de Gadea, al no conectarse él.
+- **Saldo (10-nov 05:54):** OpenAI con saldo; OpenRouter, 6,11 $. Un lado del panel ×3 cuesta ~1,5 $ de OpenRouter.
 
 ## 5. Lecciones: lo que no funcionó · cualquiera añade · tope 12 líneas, una por lección
 
