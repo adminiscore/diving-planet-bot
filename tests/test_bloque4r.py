@@ -4,7 +4,18 @@ import pytest
 from src.agents.compositor import _una_oferta_del_asesor
 from src.agents.nucleo.slotfill_close import _OFERTA_DEL_ASESOR
 from src.agents.redactor_hechos import con_la_pieza
+from src.flows.como_reserva import (
+    ASESOR,
+    ENLACE,
+    HOTEL_PRIMERO,
+    ORIGEN_PRIMERO,
+    RECOGIDA_POR_CONFIRMAR,
+    Entrega,
+    entrega,
+    recogida_por_confirmar,
+)
 from src.flows.que_preguntar import destapar_enlaces, tapar_enlaces
+from src.flows.state import ConversationState
 
 URL = "https://book.divingplanet.org/book/salidas-de-buceo/1?language=es"
 
@@ -37,3 +48,41 @@ def test_la_pieza_no_parte_un_enlace_con_pregunta():
     salida = con_la_pieza(f"Aquí tienes: {URL}\n\nTe va? Seguro que sí. ¿Te ayudo?", "PIEZA")
     assert URL in salida
     assert salida.index("PIEZA") < salida.index("¿Te ayudo?")
+
+
+# --- C1: una sola decisión del momento de reservar ----------------------------------------------------------------------------------
+
+def _estado(**campos) -> ConversationState:
+    st = ConversationState(conversation_id="4r")
+    for k, v in campos.items():
+        setattr(st, k, v)
+    return st
+
+
+@pytest.mark.parametrize(("campos", "esperado"), [
+    ({}, Entrega(ORIGEN_PRIMERO)),  # nunca el enlace de un origen supuesto (#3738)
+    ({"is_colombian": False}, Entrega(ORIGEN_PRIMERO)),
+    ({"pending_correction": {"location": "cartagena"}}, Entrega(ORIGEN_PRIMERO)),  # se le está confirmando
+    ({"location": "cartagena"}, Entrega(ENLACE, nacionalidad_por_saber=True)),  # con la línea del colombiano (#3741)
+    ({"location": "cartagena", "is_colombian": False}, Entrega(ENLACE)),
+    ({"location": "cartagena", "is_colombian": True, "mixed_nationality_notice": True}, Entrega(ENLACE)),  # grupo mixto: USD
+    ({"location": "cartagena", "is_colombian": True}, Entrega(ASESOR)),
+    ({"is_colombian": True}, Entrega(ASESOR)),  # sin origen: el asesor, hasta que Gadea decida P5
+    ({"location": "island"}, Entrega(HOTEL_PRIMERO)),
+    ({"pending_correction": {"location": "island"}}, Entrega(HOTEL_PRIMERO)),
+    ({"location": "island", "hotel": "Casa Azul", "is_colombian": False}, Entrega(RECOGIDA_POR_CONFIRMAR)),
+    ({"location": "island", "hotel": "Hotel Cocoliso", "is_colombian": False}, Entrega(ENLACE)),
+])
+def test_entrega(campos, esperado):
+    assert entrega(_estado(**campos)) == esperado
+
+
+@pytest.mark.parametrize(("campos", "lugar", "esperado"), [
+    ({"location": "island", "hotel": "Casa Azul"}, None, True),
+    ({"location": "island", "hotel": "Hotel Cocoliso"}, None, False),
+    ({"location": "island", "hotel": "Hotel Cocoliso"}, "un Airbnb en Isla Grande", True),  # quien ya reservó y pide otro sitio (4P)
+    ({"location": "island"}, None, False),  # sin hotel: es HOTEL_PRIMERO, no hay recogida que confirmar
+    ({"location": "cartagena", "hotel": "Casa Azul"}, None, False),  # desde Cartagena se va al muelle
+])
+def test_recogida_por_confirmar(campos, lugar, esperado):
+    assert recogida_por_confirmar(_estado(**campos), lugar) is esperado

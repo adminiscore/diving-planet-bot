@@ -13,12 +13,19 @@ colombianos se hablaba de la web o del enlace (mini c055, en A y en B), y quien 
   parte con enlace, como hoy: la tarjeta lo pasa al asesor.
 - `ENLACE`: el resto, también un grupo mixto, que paga en dólares.
 De momento solo «desde las islas», no los planes desde Cartagena con noche en las islas (Gadea, 5-nov).
+
+Bloque 4R (Plan Gadea, `docs/robustness/caln/diseno-bloque4r.md`): `entrega` es la decisión entera del momento de reservar, encima de
+`como_reserva` (que no mira el origen y se queda para quien la lee hoy):
+- `ORIGEN_PRIMERO`: tocaría el enlace pero no se sabe si sale desde Cartagena o desde las islas. Nunca el enlace de un origen supuesto
+  (Gadea, 10-nov, #3701 y #3738): los precios de las dos salidas y la pregunta del origen.
+- `ENLACE` con la nacionalidad por saber: el enlace y la línea de quien es colombiano (Gadea, 10-nov, #3741).
 """
 from __future__ import annotations
 
 import copy
 import functools
 import json
+from dataclasses import dataclass
 
 from src.domain.lugares import recogida_conocida, solo_nombra_una_isla
 
@@ -28,6 +35,7 @@ HOTEL_PRIMERO = "hotel_primero"
 RECOGIDA_POR_CONFIRMAR = "recogida_por_confirmar"
 GRUPO = "grupo"
 PARTE_SIN_ENLACE = "parte_sin_enlace"
+ORIGEN_PRIMERO = "origen_primero"  # bloque 4R: solo sale de `entrega`, nunca de `como_reserva`
 POR_EL_ASESOR = (ASESOR, RECOGIDA_POR_CONFIRMAR, GRUPO, PARTE_SIN_ENLACE)  # sin enlace de la web: reserva un asesor
 
 # A qué aplica el descuento de grupo (discounts.json, `group_discount`: «buceo recreativo, minicurso, snorkel y el plan de acompañante»).
@@ -72,7 +80,7 @@ def como_reserva(state) -> str:
         return HOTEL_PRIMERO
     if getattr(state, "is_colombian", None) and not getattr(state, "mixed_nationality_notice", False):
         return ASESOR
-    if islas and not recogida_conocida(hotel):
+    if recogida_por_confirmar(state):
         return RECOGIDA_POR_CONFIRMAR
     partes = partes_del_plan(state)
     if personas_con_descuento_de_grupo(partes) >= minimo_del_grupo():
@@ -81,6 +89,35 @@ def como_reserva(state) -> str:
     if con_enlace and len(con_enlace) < len(partes):
         return PARTE_SIN_ENLACE
     return ENLACE
+
+
+def recogida_por_confirmar(state, lugar: str | None = None) -> bool:
+    """Decisiones `hotel-antes-de-reservar` y `fuera-de-la-base`: sale desde las islas y se aloja fuera de los puntos de recogida de siempre
+    (una casa, un Airbnb, otro hotel): la recogida la confirma una persona. `lugar`, el que nombra ahora (p. ej. quien ya reservó y pide que
+    le recojan en otro sitio: el 4P la llama desde `decidir_pase`, #3723); si no, el hotel que ya dijo. Sin ninguno, no hay nada que
+    confirmar todavía (es `HOTEL_PRIMERO`)."""
+    hotel = lugar or hotel_conocido(state)
+    return _sale_desde_las_islas(state) and bool(hotel) and not recogida_conocida(hotel)
+
+
+def origen_sabido(state) -> bool:
+    """¿Sabemos si sale desde Cartagena o desde las islas? Lo ha dicho y no se le está confirmando (`pending_correction`)."""
+    return bool(getattr(state, "location", None)) and not (getattr(state, "pending_correction", None) or {}).get("location")
+
+
+@dataclass(frozen=True)
+class Entrega:
+    forma: str
+    nacionalidad_por_saber: bool = False  # ENLACE sin saber si es colombiano: va con la línea de quien lo es (#3741)
+
+
+def entrega(state) -> Entrega:
+    """Bloque 4R (C1): lo que se le da a este cliente en el momento de reservar. Pura: decide, no pinta ni pasa a nadie."""
+    forma = como_reserva(state)
+    if forma == ENLACE and not origen_sabido(state):
+        return Entrega(ORIGEN_PRIMERO)
+    sin_saber = forma == ENLACE and getattr(state, "is_colombian", None) is None
+    return Entrega(forma, nacionalidad_por_saber=sin_saber and not getattr(state, "mixed_nationality_notice", False))
 
 
 def partes_del_plan(state) -> list[dict]:
