@@ -337,7 +337,7 @@ def _con_la_pieza(state: ConversationState, answer: str | None, pieza_pedida: bo
     from src.agents import redactor_hechos  # lazy
     from src.agents.nucleo.extractor import origen_por_confirmar  # lazy
     from src.flows import cotizar  # lazy
-    from src.flows.catalog import SERVICES  # lazy
+    from src.flows.catalog import ISLAND_SERVICE_MAP, SERVICES  # lazy
 
     if not answer:
         return None
@@ -362,8 +362,18 @@ def _con_la_pieza(state: ConversationState, answer: str | None, pieza_pedida: bo
     if not pieza or not dados <= cifras(pieza):
         # Cotiza otro plan que el del estado («quiero reservar el paquete de 5 buceos» con la salida de 2 de base, o el
         # refresher de un buzo, que se cobra como el minicurso): la pieza, de los planes que cotizó (medida caln6-B1:
-        # eran los 2 turnos en que aún saltaba la puerta).
-        suyos = cotizar.bloques_de_los_servicios(state, [sid for sid, s in SERVICES.items() if de_servicio(s) & dados])
+        # eran los 2 turnos en que aún saltaba la puerta). Bloque 2a (10-nov): una cifra de más de un plan (16 en el catálogo, como el
+        # 204: el minicurso y el paquete de 4 desde las islas) no decide qué plan cotizó (visto-6941: el refresher recibía el paquete de 4).
+        # Primero se busca entre los planes de la salida del cliente; si ahí no está, entre todos (el escritor dio el de la otra salida).
+        de_cartagena = {isla: cartagena for cartagena, isla in ISLAND_SERVICE_MAP.items()}  # un plan en sus dos orígenes es uno
+        con_la_cifra = {c: [sid for sid, s in SERVICES.items() if c in de_servicio(s)] for c in dados}
+        if state.location in ("cartagena", "island"):
+            con_la_cifra = {c: [s for s in sids if s.endswith("_already_on_island") == (state.location == "island")] or sids
+                            for c, sids in con_la_cifra.items()}
+        unicas = {c for c, sids in con_la_cifra.items() if len({de_cartagena.get(s, s) for s in sids}) == 1}
+        if unicas != dados:
+            logger.info(f"[CORE][2A] cifras de más de un plan, no deciden el plan: {sorted(dados - unicas)}")
+        suyos = cotizar.bloques_de_los_servicios(state, sorted({s for c in unicas for s in con_la_cifra[c]}))
         la_suya = cotizar.pieza_de_precios(suyos, lang)
         # Con el origen sabido, sus bloques ya son de su salida: si el escritor da el importe de la otra (belgas de CALN-35: 392 USD,
         # el de Cartagena, a quien sale de las islas, 319), no cuadra porque él se equivoca. Manda la pieza, y sigue siendo la lista del

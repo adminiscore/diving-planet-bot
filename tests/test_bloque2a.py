@@ -23,3 +23,31 @@ def test_a_quien_esta_en_las_islas_se_le_dice_que_el_rescue_sale_de_cartagena():
     [b] = hechos.hechos(st, ["precio"], ["padi_rescue"])
     assert b["origen"] == "cartagena" and "solo sale desde Cartagena" in b["sin_plan_desde_las_islas"]
     assert "asesor" not in b["sin_plan_desde_las_islas"]
+
+
+# ── 3. Una cifra de más de un plan no decide qué plan cotizó el escritor (visto-6941: el 204) ───────────────────────────────
+
+def _buzo_en_cartagena(nombre: str) -> ConversationState:
+    return ConversationState(conversation_id=nombre, language="es", detected_activity="certified_diving", is_certified=True,
+                             location="cartagena", detected_location="cartagena", is_colombian=False)
+
+
+def test_el_204_no_mete_el_paquete_de_4_en_el_precio_del_refresher():
+    from src.agents.nucleo import origen_precio
+
+    salida = origen_precio._con_la_pieza(_buzo_en_cartagena("b2a-204"),
+                                         "El refresher incluye piscina y una inmersión. Cuesta 183 USD online o 204 USD normal.")
+    assert "Minicurso" in salida and "Paquete de 4" not in salida
+
+
+def test_una_cifra_de_un_solo_plan_sigue_diciendo_que_plan_cotizo():
+    from src.agents.nucleo import origen_precio
+
+    salida = origen_precio._con_la_pieza(_buzo_en_cartagena("b2a-392"), "El paquete de 5 inmersiones cuesta 392 USD online.")
+    assert "5 inmersiones" in salida
+
+
+def test_una_cifra_solo_ambigua_no_pega_ningun_plan():
+    from src.agents.nucleo import origen_precio
+
+    assert origen_precio._con_la_pieza(_buzo_en_cartagena("b2a-616"), "Ese curso cuesta 616 USD online.") is None
