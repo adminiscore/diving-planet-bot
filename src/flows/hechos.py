@@ -34,11 +34,11 @@ from src.flows.catalog import (
 from src.flows.como_reserva import (
     ASESOR,
     HOTEL_PRIMERO,
+    ORIGEN_PRIMERO,
     POR_EL_ASESOR,
     RECOGIDA_POR_CONFIRMAR,
     como_reserva,
-    hotel_conocido,
-    por_que_el_asesor,
+    entrega,
 )
 from src.flows.state import ConversationState
 from src.utils import money
@@ -320,24 +320,24 @@ def _hechos_por_actividad(state: ConversationState, intenciones: list[str], acti
         # página web» sin el enlace (3 diálogos). Con el pago va también el enlace del plan; el cómo pagar ya lo lleva
         # el pago, así que no se repite en `como_reservar`.
         if "enlace" in pedidas or "pago" in pedidas or "disponibilidad" in pedidas:
-            forma = como_reserva(state)
-            if forma in POR_EL_ASESOR:
+            # Bloque 4R: la decisión es `entrega` y el enlace lo pinta el código (`nucleo/entrega.py`); el escritor no lo recibe.
+            forma = entrega(state).forma
+            if forma == ORIGEN_PRIMERO:
+                # Sin saber el origen, ningún enlace, tampoco el de Cartagena (Gadea, 10-nov, #3738): se pregunta el origen.
+                bloque["enlace"] = {"origen_primero": True}
+            elif forma in POR_EL_ASESOR:
                 # Decisión de Gadea (21-oct): el cierre de un colombiano lo coordina un asesor (pago en COP), sin enlace. CALN-43 P9 y
-                # P10: también el grupo de 5 o más (el descuento) y el que tiene una parte sin enlace, con el porqué.
+                # P10: también el grupo de 5 o más (el descuento) y el que tiene una parte sin enlace. El porqué lo dice el código, una
+                # vez (bloque 4R, P3).
                 bloque["enlace"] = {"asesor": True}
                 if forma == RECOGIDA_POR_CONFIRMAR:
                     bloque["hotel_primero"] = _politica("hotel_before_booking", lang)
-                elif por_que := por_que_el_asesor(forma, lang):
-                    bloque["por_el_asesor"] = por_que
             elif forma == HOTEL_PRIMERO:
                 bloque["hotel_primero"] = _politica("hotel_before_booking", lang)  # CALN-35 (decisión de Gadea, 5-nov)
             else:
                 bloque["enlace"] = _por_origen(
                     actividad, origenes,
                     lambda sid: cart_render._resolve_service_booking_url(SERVICES.get(sid) or {}, state), elegido)
-                if "island" in bloque["enlace"] and not hotel_conocido(state):  # sin saber el origen: el de las islas, con el hotel
-                    del bloque["enlace"]["island"]
-                    bloque["hotel_primero"] = _politica("hotel_before_booking", lang)
                 if not bloque["enlace"] and any(_plan_base(actividad, o, elegido) for o in origenes):
                     bloque["enlace"] = {"asesor": True}  # s03g: el plan no tiene enlace de reserva: lo reserva un asesor
                 elif bloque["enlace"]:
@@ -760,9 +760,7 @@ def faltan(answer: str, bloques: list[dict], intenciones: list[str]) -> list[str
                              if precio.get(k) and re.sub(r"\D", "", precio[k]) not in cifras]
         if "edad" in intenciones:
             perdidos += [f"edad {v}" for v in (b.get("edad") or {}).values() if type(v) is int and str(v) not in cifras]
-        if "enlace" in intenciones or "disponibilidad" in intenciones:
-            perdidos += [u for u in (b.get("enlace") or {}).values()
-                         if isinstance(u, str) and _url_sin_parametros(u) not in answer]
+        # Bloque 4R: el enlace ya no se le exige al escritor (no lo recibe): lo pinta el código a la salida del turno.
         for intencion in ("incluye", "requisitos", "descuento", "en_que_consiste"):
             if (intencion if intencion != "en_que_consiste" else "incluye") not in intenciones:
                 continue

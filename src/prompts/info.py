@@ -193,8 +193,6 @@ Uso del contexto de la conversación (extra_context):
 Cuándo SÍ ofrecer pasar con un asesor (solo estos casos — en el resto, ayuda tú y cierra invitando a reservar):
 - Temas sensibles: diagnóstico médico personal o autorización para bucear por una condición de salud; cancelaciones, cambios o quejas.
 - Cuando el cliente lo pide explícitamente.
-- Intención concreta de reservar/pagar: da la información básica del plan e invita a continuar; el paso final de cupos y pago lo cierra el equipo (sin dar números de teléfono).
-- Disponibilidad real de una fecha concreta (tú no ves el calendario).
 - No hay ninguna forma de resolver la duda con el contexto disponible.
 
 Responde SIEMPRE en español, aunque el contexto recuperado, los nombres de servicios o la pregunta contengan palabras en inglés (ej. "open water", "advanced")."""
@@ -238,8 +236,6 @@ How to use conversation context (extra_context):
 When to offer a human advisor (only these cases — otherwise, help the customer yourself and close by inviting them to book):
 - Sensitive topics: personal medical diagnosis or authorization to dive based on a health condition; cancellations, changes, or complaints.
 - When the customer explicitly asks.
-- Concrete booking/payment intent: give the basic plan info and invite them to continue; the final availability/payment step is closed by the team (without giving phone numbers).
-- Real availability for a specific date (you can't see the calendar).
 - There's no way to resolve the question with the available context.
 
 ALWAYS answer in English, even if the retrieved context or service names contain Spanish words."""
@@ -291,6 +287,7 @@ RAG_REGEN_GUARD_ES = {
     "ungrounded_capacity": "- un número de plazas o capacidad que no aparece en el contexto",
     "phone_number": "- un número de teléfono (nunca se le da al cliente)",
     "requests_personal_data": "- pedirle datos personales al cliente (nunca se piden por el chat)",
+    "enlace_de_reserva": "- un enlace de reserva (no los escribas: si toca, el sistema lo pone debajo de tu texto)",
 }
 RAG_REGEN_GUARD_EN = {
     "ungrounded_amount": "- a price, percentage or figure that is not in the context",
@@ -298,6 +295,7 @@ RAG_REGEN_GUARD_EN = {
     "ungrounded_capacity": "- a number of places or capacity that is not in the context",
     "phone_number": "- a phone number (never given to the customer)",
     "requests_personal_data": "- asking the customer for personal data (never requested in the chat)",
+    "enlace_de_reserva": "- a booking link (don't write them: when it applies, the system adds it below your text)",
 }
 
 
@@ -448,7 +446,7 @@ RAG_PASE_OFRECIDO_EN = (
 )
 
 
-def reglas_del_escritor(lang: str) -> str:
+def reglas_del_escritor(lang: str, sin_ofrecer_el_pase: bool = False) -> str:
     """lat-9 paso 1 (26-oct): las reglas que valen para CUALQUIER escritor (el RAG y el redactor de hechos), en UN sitio.
     Antes el RAG tenía las de no adivinar, el género, abrir con la respuesta, las condiciones y el pase ofrecido, y el
     redactor no; y la moneda y el origen estaban escritos aparte en cada uno. Las decisiones del negocio (moneda, origen
@@ -461,7 +459,9 @@ def reglas_del_escritor(lang: str) -> str:
         RAG_ABRE_CON_LA_RESPUESTA_ES if es else RAG_ABRE_CON_LA_RESPUESTA_EN,
         RAG_SIN_GENERO_ES if es else RAG_SIN_GENERO_EN,
         RAG_CONDICIONES_ES if es else RAG_CONDICIONES_EN,
-        RAG_PASE_OFRECIDO_ES if es else RAG_PASE_OFRECIDO_EN,
+        # Bloque 4R (C4, #3740): con un plan en curso el pase lo decide el código (`nucleo/entrega.py`); fuera de la reserva se queda
+        # hasta el 4P-2, porque es la única salida hacia una persona cuando la base no lo tiene.
+        *([] if sin_ofrecer_el_pase else [RAG_PASE_OFRECIDO_ES if es else RAG_PASE_OFRECIDO_EN]),
         # Bloque 4P (10-nov): «por-otros», la agencia como un cliente; antes la sabía el juez y el bot no (norma 7).
         *(_instruccion(decision, lang) for decision in ("moneda", "origen-y-precio", "sin-totales", "por-otros")),
     ]
@@ -488,6 +488,14 @@ RAG_SIN_PRECIO_EN = (
     "says below whether it applies to them."
 )
 
+
+# Bloque 4R (C2, Plan Gadea): el enlace de reserva lo decide y lo pinta el código (`nucleo/entrega.py`); el escritor no lo recibe.
+RAG_SIN_ENLACES = {
+    "es": ("No escribas enlaces de reserva ni frases como «aquí tienes el enlace» o «te paso el link»: cuando el cliente puede "
+           "reservar, el sistema pone el enlace debajo de tu texto; si lo reserva un asesor, el sistema se lo dice."),
+    "en": ("Don't write booking links or phrases like «here's the link» or «I'll send you the link»: when the customer can book, "
+           "the system adds the link below your text; if an advisor books it, the system tells them."),
+}
 
 # CALN-3 paso 3 «A» (28-oct, decisión de Gadea #2296): los importes los pone el código debajo del texto del escritor
 # (`cotizar.pieza_de_precios`), con los orígenes, las monedas y el descuento de grupo que aplica.

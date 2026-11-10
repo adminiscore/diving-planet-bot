@@ -119,7 +119,10 @@ def test_el_grupo_de_cuatro_cierra_con_el_enlace_como_hoy():
 
 # ─── Lo que recibe el escritor ───
 
-def test_el_escritor_recibe_el_asesor_y_el_porque_sin_enlaces():
-    st = _grupo({"minicourse": 4, "certified_diving": 2}, mixed_nationality_notice=True)
+def test_el_escritor_recibe_el_asesor_sin_enlaces():
+    st = _grupo({"minicourse": 4, "certified_diving": 2}, mixed_nationality_notice=True, location="cartagena")
     [bloque, *_] = hechos.hechos(st, ["enlace"], ["minicourse"])
-    assert bloque["enlace"] == {"asesor": True} and bloque["por_el_asesor"] == por_que_el_asesor(GRUPO, "es")
+    # Bloque 4R (Gadea, 10-nov, P3): el porqué lo dice el código, una vez (`nucleo/entrega.py`); el escritor solo sabe que va
+    # con un asesor. Con el origen sin saber, primero el origen (P5): por eso el grupo sale desde Cartagena.
+    assert bloque["enlace"] == {"asesor": True} and "por_el_asesor" not in bloque
+    assert por_que_el_asesor(GRUPO, "es")  # el texto sigue: lo usa el pintor

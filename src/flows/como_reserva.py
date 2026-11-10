@@ -25,6 +25,7 @@ from __future__ import annotations
 import copy
 import functools
 import json
+import re
 from dataclasses import dataclass
 
 from src.domain.lugares import recogida_conocida, solo_nombra_una_isla
@@ -109,6 +110,20 @@ def origen_sabido(state) -> bool:
 class Entrega:
     forma: str
     nacionalidad_por_saber: bool = False  # ENLACE sin saber si es colombiano: va con la línea de quien lo es (#3741)
+
+
+# Bloque 4R (C2 y la puerta): un enlace de reserva, sin el punto o la coma de la frase que lo sigue.
+_ENLACE_DE_RESERVA_RE = re.compile(r"https?://book\.divingplanet\.org/\S+?(?=[.,;:!?)\]*_]*(?:\s|$))")
+
+
+def sin_enlaces_de_reserva(texto: str) -> str:
+    """Lo que lee el escritor, sin los enlaces de reserva (C2): los pinta el código. Lo que lee el juez no se toca (D1)."""
+    return _ENLACE_DE_RESERVA_RE.sub("", texto) if texto else texto
+
+
+def trae_enlace_de_reserva(texto: str | None) -> bool:
+    """La puerta (norma 5): el escritor no recibe enlaces, así que uno en su respuesta no lo dio el código."""
+    return bool(texto) and bool(_ENLACE_DE_RESERVA_RE.search(texto))
 
 
 def entrega(state) -> Entrega:

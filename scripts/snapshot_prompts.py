@@ -132,6 +132,8 @@ def _collect() -> dict[str, str]:
     add("info/rag.sin_precio.en", info.RAG_SIN_PRECIO_EN)
     add("info/rag.precios_por_codigo.es", info.RAG_PRECIOS_POR_CODIGO["es"])  # CALN-3 paso 3 «A»
     add("info/rag.precios_por_codigo.en", info.RAG_PRECIOS_POR_CODIGO["en"])
+    add("info/rag.sin_enlaces.es", info.RAG_SIN_ENLACES["es"])  # bloque 4R (C2): el enlace lo pinta el código
+    add("info/rag.sin_enlaces.en", info.RAG_SIN_ENLACES["en"])
     add("info/rag.con_hechos.es", info.RAG_CON_HECHOS_ES)
     add("info/rag.con_hechos.en", info.RAG_CON_HECHOS_EN)
     add("memory/seguridad.notas.es", memory.MEMORIA_SEGURA_NOTAS_ES)

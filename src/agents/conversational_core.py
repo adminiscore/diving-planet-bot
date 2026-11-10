@@ -896,7 +896,7 @@ async def _rag_answer(
     await await_pending_notes(state)
     if not sin_precio and (con_hechos := await _con_hechos(state, message,
                                                             state.history if history is None else history)):
-        return con_hechos
+        return await _con_la_entrega(state, message, con_hechos, history)
     if state.is_colombian is None:
         # gen-14 (21-oct): «Somos de Cali… ¿cuánto vale la salida?» se cotizaba en USD porque el RAG se escribía antes de
         # que la extracción guardara la nacionalidad. Bloque 1: espera a lo guardado, en vez de una copia del estado.
@@ -921,8 +921,18 @@ async def _rag_answer(
             answer = redactor_hechos.con_la_pieza(answer, nota)
     # 7-oct (opción C): si cotiza sin origen, se pregunta el origen; quien la recibe deja el estado preparado
     # (`_fijar_origen_antes_del_precio`).
-    return _con_la_puerta(state, message, answer, al_recoger=puerta_al_recoger, sin_precio=sin_precio,
-                          pieza_pedida=pieza_pedida)
+    answer = _con_la_puerta(state, message, answer, al_recoger=puerta_al_recoger, sin_precio=sin_precio,
+                            pieza_pedida=pieza_pedida)
+    if puerta_al_recoger:
+        return answer  # la entrega se pinta al recoger, con lo que la extracción de este mensaje ya guardó
+    return await _con_la_entrega(state, message, answer, history)
+
+
+async def _con_la_entrega(state: ConversationState, message: str, answer: str | None, history: list | None) -> str | None:
+    """Bloque 4R (C3): lo del momento de reservar (el enlace, el origen, el asesor) lo pinta el código a la salida del escritor."""
+    from src.agents.nucleo.entrega import pintar_la_entrega  # lazy
+
+    return await pintar_la_entrega(state, message, answer, state.history if history is None else history)
 
 
 def _con_la_puerta(state: ConversationState, message: str, answer: str, *, al_recoger: bool,
@@ -972,7 +982,16 @@ def _entradas_rag(state: ConversationState, history: list, message: str = "") ->
     entradas["avisos_hechos"] = avisos_mod.hechos_del_estado(state)
     if getattr(state, "_turno_de_la_reserva", False):
         entradas["sin_preguntas"] = True  # CALN-43: la pregunta la pone el código al final
+    if _plan_en_curso(state):
+        entradas["sin_ofrecer_el_pase"] = True  # bloque 4R (C4): el pase lo decide el código (`nucleo/entrega.py`)
     return entradas
+
+
+def _plan_en_curso(state: ConversationState) -> bool:
+    """Bloque 4R (C4): hay una reserva nueva en marcha (una actividad o un carrito), no una posventa ni un pase ya hecho. Más ancho que
+    `_turno_de_la_reserva`, que es falso en el primer mensaje y tras la tarjeta (diseño 4R, v2)."""
+    return (bool(state.detected_activity or state.detected_group_allocation or state.mixed_cart)
+            and not state.ya_reservado and state.step != Step.ESCALATE)
 
 
 def marcar_turno_de_la_reserva(state: ConversationState) -> None:
@@ -992,6 +1011,17 @@ def contar_si_el_escritor_pregunta(entradas: dict, answer: str | None) -> None:
     if entradas.get("sin_preguntas") and not _is_rag_fallback(answer) and trae_pregunta(answer):
         note_turn(escritor_pregunta=True)
         logger.info("[CORE][CALN43] el escritor preguntó en un turno de la reserva (el compositor quita las copias de las nuestras)")
+    if entradas.get("sin_ofrecer_el_pase") and not _is_rag_fallback(answer) and ofrece_el_pase(answer):
+        # Bloque 4R (C4): con un plan en curso ya no recibe la orden de ofrecerlo; si lo ofrece igual, se cuenta (norma 6).
+        note_turn(escritor_ofrece_el_pase=True)
+        logger.info("[CORE][4R] el escritor ofreció el pase con un plan en curso (sigue valiendo el «sí», #3570)")
+
+
+def ofrece_el_pase(answer: str | None) -> bool:
+    """¿El texto ofrece pasar con un asesor? Lo mismo que reconoce `supervisor.acepta_la_oferta_del_asesor` en el último mensaje."""
+    from src.agents import supervisor  # lazy
+
+    return bool(answer) and bool(supervisor._ADVISOR_OFFER_RE.search(answer) and supervisor._OFFER_VERB_RE.search(answer))
 
 
 # s4-27 (7-oct, Gonzalo; flag `rag_plan_nombrado`): "¿el precio de las 2 inmersiones? desde ese hotel" (cliente ya en
@@ -1111,6 +1141,7 @@ async def _take_parallel_answer(state: ConversationState) -> str | None:
         # La puerta del origen, con lo que la extracción de este mensaje ya guardó (`_con_la_puerta`).
         state._puerta_al_recoger = None
         answer = _puerta_del_origen(state, puerta[0], answer, sin_precio=puerta[1], pieza_pedida=puerta[2])
+        answer = await _con_la_entrega(state, puerta[0], answer, None)  # bloque 4R (C3), ya con lo guardado
     return answer
 
 

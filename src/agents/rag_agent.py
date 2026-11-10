@@ -132,7 +132,8 @@ def is_fallback_answer(text: str | None) -> bool:
     return bool(text) and (FALLBACK_ES in text or FALLBACK_EN in text)
 
 
-def build_system_prompt(lang: str, query: str | None = None, sin_preguntas: bool = False) -> str:
+def build_system_prompt(lang: str, query: str | None = None, sin_preguntas: bool = False,
+                        sin_ofrecer_el_pase: bool = False) -> str:
     """Compose the full system prompt: intro + dynamic tone + body + las reglas de cualquier escritor.
 
     `sin_preguntas` (CALN-43, bloque 0,5 del Plan Gadea): en un turno de la reserva la pregunta la pone el código, así que fuera las dos
@@ -172,10 +173,11 @@ def build_system_prompt(lang: str, query: str | None = None, sin_preguntas: bool
         )
     # Solo del RAG: nombrar los varios planes que encajan (busca en todo el catálogo) y preguntar lo que falta.
     varios = RAG_VARIOS_PLANES_ES if lang == "es" else RAG_VARIOS_PLANES_EN
+    reglas = reglas_del_escritor(lang, sin_ofrecer_el_pase)  # bloque 4R (C4): con un plan en curso, el pase lo decide el código
     if sin_preguntas:
-        return f"{prompt}\n\n{reglas_del_escritor(lang)}\n\n{varios}"
+        return f"{prompt}\n\n{reglas}\n\n{varios}"
     pregunta = RAG_PREGUNTA_LO_QUE_FALTA_ES if lang == "es" else RAG_PREGUNTA_LO_QUE_FALTA_EN
-    return f"{prompt}\n\n{reglas_del_escritor(lang)}\n\n{varios}\n\n{pregunta}"
+    return f"{prompt}\n\n{reglas}\n\n{varios}\n\n{pregunta}"
 
 
 # Anaphoric / follow-up indicators: demonstratives and pronouns that refer back
@@ -727,8 +729,11 @@ async def rag_answer(
     hechos_bloques: tuple[list[dict], list[str]] | None = None,
     sin_preguntas: bool = False,
     sin_fichas: bool = False,
+    sin_ofrecer_el_pase: bool = False,
 ) -> str:
-    """`hechos` (arq-1g, flag `hechos_al_rag`): en un mensaje mezclado, los hechos del código (JSON de
+    """`sin_ofrecer_el_pase` (bloque 4R, C4): hay un plan en curso; el pase al asesor lo decide el código, no lo ofrece el escritor.
+
+    `hechos` (arq-1g, flag `hechos_al_rag`): en un mensaje mezclado, los hechos del código (JSON de
     `src/flows/hechos.py`) para la parte que pregunta de la tabla (precio, qué incluye, requisitos…): se usan tal cual.
 
     `sin_fichas` (CALN-16, 3-nov): de la búsqueda, solo las políticas y las FAQ, no las fichas de los planes. Lo pide el
@@ -780,10 +785,10 @@ async def rag_answer(
     )
     from src.flows.catalog import catalog_booking_links  # lazy
 
-    facts += "\n" + catalog_booking_links(lang)
     # Paso 9 (l2-2): al prompt del sistema y a la cabeza del contexto del juez (prefijos fijos
     # que OpenAI cachea); en el mensaje del usuario, detras del historial, nunca se cacheaba.
-    catalog_prefix = facts
+    catalog_prefix = facts  # bloque 4R (C2): el escritor, sin la lista de enlaces; los pinta el código
+    facts += "\n" + catalog_booking_links(lang)  # la guarda sí la ve: un enlace que pinte el código sigue respaldado
     # EX-RAG-1 → CALN-8 (3) (28-oct): las políticas enteras ya no van al ESCRITOR (le llegan en los hechos las que el
     # caso exige, CALN-7), solo al juez: una política citada en la respuesta queda respaldada. Medido con Luna: mini-ronda
     # de 20 diálogos de políticas y catálogo 15 → 17/20, banco-precios 29 → 30/36; ~13.000 caracteres menos por llamada.
@@ -893,7 +898,8 @@ async def rag_answer(
         answers a factual question from its own world knowledge (e.g. inventing
         a list of fish species). The judge is the only thing standing between
         that and the customer."""
-        system_prompt = build_system_prompt(lang, query=condensed_query, sin_preguntas=sin_preguntas)
+        system_prompt = build_system_prompt(lang, query=condensed_query, sin_preguntas=sin_preguntas,
+                                            sin_ofrecer_el_pase=sin_ofrecer_el_pase)
         if catalog_prefix:
             system_prompt = f"{system_prompt}\n\n{catalog_prefix}"
         if sin_precio:
@@ -933,6 +939,13 @@ async def rag_answer(
         # final de la respuesta del turno, sea del RAG, del redactor o de la reserva (`src/flows/avisos.py`).
 
         messages.append({"role": "user", "content": user_content})
+        # Bloque 4R (C2): el escritor no recibe enlaces de reserva en nada de lo que lee (fichas, hechos, historial, resumen): los
+        # decide `como_reserva.entrega` y los pinta el código (`nucleo/entrega.py`). La guarda y el juez siguen viéndolos.
+        from src.flows.como_reserva import sin_enlaces_de_reserva, trae_enlace_de_reserva  # lazy
+        from src.prompts.info import RAG_SIN_ENLACES  # lazy
+
+        messages[0]["content"] = f"{messages[0]['content']}\n\n{RAG_SIN_ENLACES['es' if lang == 'es' else 'en']}"
+        messages = [{**m, "content": sin_enlaces_de_reserva(m["content"])} for m in messages]
 
         grounding_context = _build_grounding_context(context, extra_context=extra_context, history=history)
         if hechos:
@@ -980,6 +993,12 @@ async def rag_answer(
                 last_reject = "garbled_output"
             elif not currency_amounts_grounded(answer, amounts_context):
                 last_reject = "ungrounded_amount"
+            elif trae_enlace_de_reserva(answer):
+                # Bloque 4R, la puerta (norma 5): no recibió ninguno, así que no lo dio el código. Se rehace; no se recorta.
+                last_reject = "enlace_de_reserva"
+                from src.observability import note_turn  # lazy
+
+                note_turn(puerta_enlace=True)
             elif not urls_grounded(answer, grounding_context):
                 last_reject = "ungrounded_url"
             elif not capacity_claims_grounded(answer, grounding_context):

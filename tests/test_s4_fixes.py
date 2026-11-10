@@ -118,9 +118,10 @@ def test_cambio_de_fecha_con_el_carrito_abierto_va_a_cambios_solo_con_reserva(mo
     assert router.classify_route(st, "hazlo para 3 días", {"booking_change_topic": "reschedule"}) != router.ROUTE_CHANGE
 
 
-async def test_el_rag_tiene_los_links_de_reserva(monkeypatch):
-    """Ronda B del paso 6: "no sé cómo se haga la reserva" acababa en "no lo tengo" porque el LLM
-    escribía un link que no estaba en el contexto y el guard de URLs lo rechazaba."""
+async def test_el_escritor_no_recibe_los_links_de_reserva_y_si_escribe_uno_se_rehace(monkeypatch):
+    """Ronda B del paso 6 (antes): el escritor tenía los links para no inventarlos. Bloque 4R (Plan Gadea, C2 y la puerta): el
+    enlace lo decide y lo pinta el código, así que el escritor no recibe ninguno; si aun así escribe uno, se rehace (norma 5:
+    nunca se recorta) y, si vuelve, la respuesta segura."""
     from src.flows.catalog import SERVICES
 
     seen = []
@@ -154,7 +155,8 @@ async def test_el_rag_tiene_los_links_de_reserva(monkeypatch):
     monkeypatch.setattr(rag_agent, "AsyncOpenAI", _Cli)
     monkeypatch.setattr(rag_agent, "is_grounded", _judge)
     answer = await rag_agent.rag_answer("¿cómo hago la reserva?", lang="es", extra_context="Cliente certificado.")
-    assert url in answer
+    assert "book.divingplanet.org" not in str(seen[0]["messages"])  # nada de lo que lee lleva un enlace de reserva
+    assert len(seen) == 2 and url not in answer and answer == rag_agent.FALLBACK_ES
 
 
 def test_ida_y_vuelta_solo_si_se_sabe_que_el_plan_es_de_un_dia():

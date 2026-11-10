@@ -57,4 +57,6 @@ async def test_las_politicas_las_ve_el_juez_y_no_el_escritor(monkeypatch, lang):
     assert _POLITICAS[lang] not in sistema
     assert _POLITICAS[lang] in juez
     primera_del_catalogo = catalog_facts(lang).splitlines()[0]
-    assert primera_del_catalogo in sistema and _ENLACES[lang] in sistema
+    assert primera_del_catalogo in sistema
+    # Bloque 4R (C2): la lista de enlaces de reserva ya no va al escritor (los pinta el código); la guarda la sigue viendo.
+    assert _ENLACES[lang] not in sistema and "book.divingplanet.org" not in sistema and _ENLACES[lang] in juez
