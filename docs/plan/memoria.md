@@ -14,8 +14,13 @@ secciones 1 a 3 por el Claude de Gadea, con su OK, el 10-nov.
   son de plan, importe y moneda. El resto lo pone la vara: reglas posteriores, guiones que no contestan, fricción, el juez.
 - **Bloques, en orden:** 0 la vara · 0,5 lo ya escrito · 2a plan e importe, lo determinista · 1 lo que recibe el escritor · 2b plan,
   importe y moneda que dependen de leer · 4 el momento de reservar y el pase · 3 horas y fechas · 5 reglas que faltan.
-- **En curso:** el 0 (Claude de Gadea) y el 0,5 (Claude de Álvaro); el 2a (Gonzalo) puede empezar ya con bancos sin saldo. Nada sube a
-  PRE hasta cerrar el bloque.
+- **En curso (10-nov, noche):** el 0 tiene la vara montada (reloj fijo, juez con la hora y la huella, marcador, `panel-vara`,
+  tanda de la vara) y medida su partida; el 0,5, el enlace con un dueño (Álvaro); el 2a, tres piezas en `bloque2a-gadea` (Claude de
+  Gadea, Gonzalo no se ha conectado). Nada sube a PRE hasta cerrar el bloque.
+- **Línea base (10-nov):** Luna sola saca lo mismo que el bot en graves (10,7 frente a 10,3 de 40), más corta y con 1 llamada
+  por turno frente a 4: según la regla, deciden coste, latencia y control. Lo habla Gadea con el equipo; el plan sigue.
+- **Por revisar con Gadea:** con la vara nueva la partida es 9-10 de 40; la meta de 5 y el punto de parada se fijaron con el panel
+  viejo (21-25).
 - **Cierre del 0,5:** la tercera pregunta y el grupo a cero en su tanda y en el panel, y el saldo de código del bloque negativo.
 - **Metas:** al acabar el plan, 5 o menos clientes con grave de 40, de media. La de 2 en 60 queda por debajo del ruido del juez.
 - **Punto de parada:** tras el 0,5 y el 2a, el panel debería quedar en 8 a 11 por vuelta (antes del plan, 21 a 25). Si no baja de 16,
@@ -83,5 +88,6 @@ secciones 1 a 3 por el Claude de Gadea, con su OK, el 10-nov.
 
 | Fecha | Versión | Bloque | Graves por vuelta | Líneas de src | Llamadas de IA por turno | Respuesta: caracteres · con pregunta |
 |---|---|---|---|---|---|---|
-| 10-nov | `bloque05-alvaro` 2e77937a | 0,5, sin cerrar | 16,7 (A, antes del 0,5: 24,5; 6 juicios por lado) | 27.165 (−13) | 4,20 | 679 · 74 % |
+| 10-nov | caln34 frente a 0,5+2a | 0,5 y 2a en `panel-vara` (una pasada) | 9,0 → 9,7 (no cuenta) | +38 en el 2a | 3,99 → 3,93 | 571 · 67 % → 575 · 67 % |
+
 
