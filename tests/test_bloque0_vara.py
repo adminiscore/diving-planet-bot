@@ -33,14 +33,14 @@ def test_sin_reloj_va_la_hora_real_y_sin_zona_no_vale():
     assert relojes_de(["x"], None) == {}
     assert relojes_de(["x"], "antes") == {"x": RELOJ_ANTES}
     with pytest.raises(SystemExit):
-        relojes_de(["x"], "2026-11-12T10:30")
+        relojes_de(["x"], "2026-11-05T10:30")
 
 
 def test_el_juez_recibe_la_hora_y_sin_reloj_el_mensaje_no_cambia():
     sin = [{"turn": 1, "msg": "hola", "reply": "hola"}]
     con = [{**sin[0], "reloj": RELOJ_DESPUES}]
     assert hora_de_la_charla(sin) == ""
-    assert "jueves 2026-11-12, 20:30" in hora_de_la_charla(con)
+    assert "jueves 2026-11-05, 20:30" in hora_de_la_charla(con)
     dialogo = {"id": "d", "category": "sparring"}
     assert mensaje_del_dialogo(dialogo, sin, []).startswith("CONVERSACION")  # la caché de lo ya juzgado sigue valiendo
     assert mensaje_del_dialogo(dialogo, con, []).startswith("HORA DE LA CHARLA")
@@ -132,5 +132,5 @@ def test_la_linea_base_lleva_la_referencia_fija_y_la_hora_al_final():
 
     antes, despues = sistema_para("REF", RELOJ_ANTES), sistema_para("REF", RELOJ_DESPUES)
     assert antes.split("Ahora es")[0] == despues.split("Ahora es")[0]  # la parte que se cachea es la misma
-    assert despues.endswith("Ahora es jueves 2026-11-12, 20:30, hora de Colombia.")
+    assert despues.endswith("Ahora es jueves 2026-11-05, 20:30, hora de Colombia.")
     assert "REFERENCIA:\nREF" in antes

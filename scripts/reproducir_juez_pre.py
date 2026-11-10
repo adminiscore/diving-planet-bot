@@ -123,8 +123,8 @@ asyncio.run(main())
 
 # Bloque 0 (10-nov): dos horas fijas de un jueves, antes y después del cierre de las 4:30 p. m. para el día siguiente. Un jueves,
 # para que «next Friday» sea mañana (decisión de Gadea del 9-nov) y se vea si el bot sabe que ya cerró.
-RELOJ_ANTES = "2026-11-12T10:30:00-05:00"
-RELOJ_DESPUES = "2026-11-12T20:30:00-05:00"
+RELOJ_ANTES = "2026-11-05T10:30:00-05:00"
+RELOJ_DESPUES = "2026-11-05T20:30:00-05:00"
 
 
 def relojes_de(ids: list[str], modo: str | None) -> dict[str, str | None]:
