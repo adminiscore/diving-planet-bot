@@ -82,3 +82,25 @@ código, se adopta: eso es lo que pide el objetivo del plan.
 - **El contexto es largo** (~50.000 tokens por llamada). Con la caché de OpenAI sale barato, pero hay que medir la latencia.
 - **La salida en JSON puede romperse.** Si no se lee, cuenta como fallo del turno y se registra.
 - **Los reales ya se usaron para esta comparación.** No se diseña nada mirándolos, y su texto no entra en ningún banco ni documento.
+
+## Resultado de V1 (10-nov, 17:10)
+
+Medido con los criterios de arriba. Panel: 3 tiradas juzgadas dos veces cada una, misma huella y mismo árbol que B. Reales:
+3 tiradas por lado, cada una juzgada dos veces.
+
+| Criterio | V1 | B (bot de ahora) | ¿Cumple? |
+|---|---|---|---|
+| Panel, graves de 40 (≤ +1,5) | 7,5 (8/10, 8/7, 6/6) | 7,5 | Sí, empate |
+| Ciegos (≤ +1,5) | 3,0 | 3,0 | Sí |
+| Reales, graves de 75 (≤ +2,5) | 5,0 (5,5 · 4,5 · 5,0) | 5,5 (5,5 · 8,5 · 2,5) | Sí |
+| Clientes que pasan con una persona (≤ B) | 71 de 120 | 45 de 120 | **No** |
+| Importes fuera del catálogo (≤ B) | 13 de 272 (descuentos aplicados y totales) | 0 de 623 | **No** |
+| Estilo, reales (≤ 300 caracteres y ≤ 50 % con pregunta) | 182 · 76 % | 597 · 96 % | **El largo sí; la pregunta no** |
+| Estilo, panel | 227 · 22 % | 597 · 70 % | Como la persona (119 · 23 %) |
+| Latencia, p90 (≤ 7,5 s) | 4,04 s | 5,76 s | Sí |
+| Llamadas por turno | 1 | 3,76 | — |
+
+**Lectura.** V1 empata con el bot en graves (panel, ciegos y reales) con una llamada, respuestas 2,5 veces más cortas y menos
+latencia, y sin el circuito de piezas. No se adopta tal cual: pasa de más, calcula importes (descuentos y totales) y pregunta
+en el 76 % de las primeras respuestas. Las tres cosas son deterministas: es la puerta de V2 (Claude de Álvaro). Siguiente:
+V2, medida igual. El control de Luna sola, con el reloj del 5, queda pendiente de juzgar (luna5-*.jsonl).
