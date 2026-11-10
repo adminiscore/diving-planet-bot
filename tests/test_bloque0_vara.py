@@ -125,3 +125,12 @@ def test_el_panel_de_la_vara_son_los_vistos_y_veinte_ciegos_cortos():
     assert largos[len(largos) // 2] <= 40  # como los reales: unos 31 caracteres de mediana
     horas = relojes_de([d["id"] for d in nuevos], "alterno")
     assert set(horas.values()) == {RELOJ_ANTES, RELOJ_DESPUES}
+
+
+def test_la_linea_base_lleva_la_referencia_fija_y_la_hora_al_final():
+    from scripts.linea_base_luna import sistema_para
+
+    antes, despues = sistema_para("REF", RELOJ_ANTES), sistema_para("REF", RELOJ_DESPUES)
+    assert antes.split("Ahora es")[0] == despues.split("Ahora es")[0]  # la parte que se cachea es la misma
+    assert despues.endswith("Ahora es jueves 2026-11-12, 20:30, hora de Colombia.")
+    assert "REFERENCIA:\nREF" in antes
