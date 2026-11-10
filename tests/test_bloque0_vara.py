@@ -141,3 +141,11 @@ def test_la_linea_base_lleva_la_referencia_fija_y_la_hora_al_final():
     assert antes.split("Ahora es")[0] == despues.split("Ahora es")[0]  # la parte que se cachea es la misma
     assert despues.endswith("Ahora es jueves 2026-11-05, 20:30, hora de Colombia.")
     assert "REFERENCIA:\nREF" in antes
+
+
+def test_un_enlace_no_cuenta_como_pregunta(tmp_path):
+    f = tmp_path / "e.jsonl"
+    filas = [{"reply": "Reserva aquí: https://book.divingplanet.org/x?language=es", "metricas": []},
+             {"reply": "¿Desde dónde sales?", "metricas": []}]
+    f.write_text("".join(json.dumps(x) + "\n" for x in filas), encoding="utf-8")
+    assert marcador.estilo([f])["con_pregunta"] == 50
