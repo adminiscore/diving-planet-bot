@@ -273,3 +273,57 @@ def test_c0_reproducir_juez_pre_guarda_y_recarga_el_estado_entre_turnos():
     remoto = _remoto("reproducir_juez_pre.py")
     assert "st = deserialize_state(serialize_state(st), st.conversation_id)" in remoto
     assert remoto.index("st.pending_escalation_reason = None") < remoto.index("deserialize_state(serialize_state(st)")
+
+
+# ── C5: un texto de pase que ya salió no se repite (el del cambio, con su política, también) ─────────────────────────
+
+_CAMBIO = ("Los cambios de fecha están sujetos a disponibilidad.\n\nTe paso ahora con un asesor de Diving Planet para "
+           "gestionar el cambio de fecha; enseguida se pone en contacto contigo por aquí. 🙌")
+_CANCELACION = ("Las cancelaciones con 48 horas de antelación se reembolsan.\n\nTe paso ahora con un asesor de Diving Planet "
+                "para gestionar la cancelación; enseguida se pone en contacto contigo por aquí. 🙌")
+
+
+async def _turno_con_texto(monkeypatch, motivo, texto, anterior, paso_antes=Step.ESCALATE, senales=None):
+    from src.agents import supervisor
+
+    async def _grafo(state, message):
+        from src.agents.lead_summary import pasar_a_persona
+
+        state._senales_router = senales if senales is not None else {"asks_question": False}
+        pasar_a_persona(state, motivo)
+        return texto
+    monkeypatch.setattr("src.orchestration.graph.run_turn_via_graph", _grafo)
+    st = _estado(step=paso_antes)
+    st.history = [{"role": "user", "content": "se puede cambiar a domingo?"}, {"role": "assistant", "content": anterior}]
+    return st, await supervisor.route_message(st, "ok, quedo atento")
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("anterior", [_CAMBIO, "Claro, el domingo hay salidas.\n\n" + _CAMBIO])
+async def test_c5_el_mismo_cambio_repetido_no_repite_la_politica(monkeypatch, lo_demas, anterior):
+    from src.agents.escalation_agent import YA_LO_TIENE
+
+    st, resp = await _turno_con_texto(monkeypatch, "cambio de fecha de una reserva: lo gestiona una persona", _CAMBIO,
+                                      anterior)
+    assert resp == YA_LO_TIENE["es"]
+    assert st.pending_note and st.step == Step.ESCALATE  # la nota al asesor sale igual (decisión del 10-nov)
+
+
+@pytest.mark.asyncio
+async def test_c5_una_cancelacion_tras_un_cambio_sale_con_su_politica(monkeypatch, lo_demas):
+    _, resp = await _turno_con_texto(monkeypatch, "cancelación de reserva: la gestiona una persona", _CANCELACION, _CAMBIO)
+    assert _CANCELACION in resp
+
+
+@pytest.mark.asyncio
+async def test_c5_el_primer_pase_no_cambia_aunque_el_texto_ya_saliera(monkeypatch, lo_demas):
+    _, resp = await _turno_con_texto(monkeypatch, "cambio de fecha de una reserva: lo gestiona una persona", _CAMBIO,
+                                     _CAMBIO, paso_antes=Step.FREE_TEXT)
+    assert resp.endswith(_CAMBIO)
+
+
+@pytest.mark.asyncio
+async def test_c5_una_urgencia_repetida_va_sola(monkeypatch, lo_demas):
+    urgente = "Te paso ahora con el equipo por esta situación urgente."
+    _, resp = await _turno_con_texto(monkeypatch, "complaints_or_emergencies", urgente, urgente)
+    assert resp == urgente

@@ -197,12 +197,17 @@ async def route_message(state: ConversationState, message: str) -> str:
             YA_LO_TIENE,
             lo_contestable_en_cualquier_pase,
             pase_que_no_se_repite,
+            texto_ya_dado,
         )
         from src.observability import hechos_del_turno
 
-        # Bloque 4P (C3): un pase de texto fijo con la conversación ya en manos de una persona no se repite.
+        # Bloque 4P (C3 y C5): un pase de texto fijo con la conversación ya en manos de una persona no se repite: el que
+        # solo dice el pase, y cualquiera cuyo texto ya salió en la última respuesta de antes de este turno.
+        motivo = state.pending_escalation_reason
         repetido = (paso_antes == Step.ESCALATE and getattr(state, "_pase_del_turno", None) is not None
-                    and not getattr(state, "_escenario_nuevo", None) and pase_que_no_se_repite(state.pending_escalation_reason))
+                    and not getattr(state, "_escenario_nuevo", None)
+                    and (pase_que_no_se_repite(motivo)
+                         or texto_ya_dado(motivo, response, (state.history or [])[:historial_al_empezar])))
         if ((state.pending_escalation_reason not in (None, escalation_before) or repetido) and isinstance(response, str)
                 and not hechos_del_turno().get("rag_used")):
             # gen-13: el turno acaba de pasar a un asesor; las OTRAS preguntas del mensaje se contestan delante. CALN-6:
