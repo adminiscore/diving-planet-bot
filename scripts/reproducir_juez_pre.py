@@ -33,6 +33,7 @@ import asyncio, json, time
 from src.agents import rag_agent, supervisor
 from src.config import settings
 from src.flows.state import ConversationState
+from src.state_store import deserialize_state, serialize_state
 DIALOGOS, REPS = json.loads(DIALOGOS_JSON), N_REPS
 # Bloque 0 (10-nov): reloj fijo por diálogo. La hora del bot solo se lee en contexto_rag (`datetime.now`); se sustituye ahí,
 # sin tocar src. Sin reloj (None) va la hora real, como antes.
@@ -121,6 +122,9 @@ async def main():
             # producción no pasa (51 de 384 turnos del panel del bloque 1).
             st.pending_note = None
             st.pending_escalation_reason = None
+            # y el estado se guarda y se recarga, como hace producción en cada turno (`state_store`): lo que no es un
+            # campo (`_jev_lugar`…) no pasa al turno siguiente.
+            st = deserialize_state(serialize_state(st), st.conversation_id)
 
 asyncio.run(main())
 '''
