@@ -287,9 +287,10 @@ _ASKS_RECALL_Q = {
 
 # s4-20 (paso 6, 27-sep): lo que solo puede resolver una PERSONA del equipo porque el
 # bot no ve reservas, pagos ni correos, o porque es trato de empresa: una reserva o un pago YA hechos
-# ("ya hice una reserva, ¿la recibieron?", "¿está todo ok con mis reservas?"), una agencia o empresa que
-# coordina tarifas, o que el staff apruebe o revise algo (logs de PADI, un correo enviado). Hoy seguia
-# vendiendo o preguntaba el origen. Calibrado con `scripts/sonda_necesita_persona.py`.
+# ("ya hice una reserva, ¿la recibieron?", "¿está todo ok con mis reservas?"), o que el staff apruebe o revise algo
+# (logs de PADI, un correo enviado). Hoy seguia vendiendo o preguntaba el origen. Calibrado con
+# `scripts/sonda_necesita_persona.py`. Bloque 4P (10-nov, decisión «por-otros» de Gadea del 9-nov): la agencia o
+# empresa que pide tarifas ya NO va aquí; recibe el mismo trato que un cliente (precio por persona y su enlace).
 NEEDS_STAFF = "needs_staff"
 NEEDS_STAFF_MIN = 0.7
 _NEEDS_STAFF_Q = {
@@ -297,11 +298,13 @@ _NEEDS_STAFF_Q = {
     "instructions": (
         "The message is about something only a PERSON from the dive center's staff can handle, because the "
         "assistant cannot see bookings, payments or emails: a booking or payment the customer ALREADY made "
-        "(checking it was received, its status, 'is everything ok with my reservations?'), a travel agency, tour "
-        "operator or company writing as a business (introducing their agency, asking for rates or group deals), an email they already sent that is waiting for an answer, or "
-        "asking the staff to approve or review documents (dive logs, certifications). It is FALSE for questions "
-        "about how booking or paying works, prices, policies (cancellation, refunds), availability, what to "
-        "bring, or when the customer is still planning or making a new booking."
+        "(checking it was received, its status, 'is everything ok with my reservations?'), an email they already "
+        "sent that is waiting for an answer, or asking the staff to approve or review documents (dive logs, "
+        "certifications). It is FALSE for questions about how booking or paying works, prices, policies "
+        "(cancellation, refunds), availability, what to bring, or when the customer is still planning or making a "
+        "new booking. It is ALSO FALSE when a travel agency, tour operator, an instructor from another center or "
+        "someone booking for other people asks for prices, rates, commissions or how to book: they are treated like "
+        "any other customer."
     ),
 }
 
@@ -1053,11 +1056,13 @@ def activity_affirmed(p_affirms: float, p_hypothesis: float | None) -> bool:
 # para que sus clientes paguen) no era "algo que solo puede hacer una persona" para la señal, así que el bot explicaba
 # que no existe y nombraba al asesor sin ofrecer el pase (cal-29). Decisión de Gadea del 16-oct: quien necesita algo
 # que el sistema no da, o hablar con alguien, se pasa a un asesor. Es la frontera de la clase, no el caso.
+# Bloque 4P (10-nov, «por-otros» del 9-nov): salen «for several customers, for an agency» y «special rates». El enlace
+# de cada plan ya deja elegir cuántas personas, y no hay tarifas de agencia: eso se contesta como a cualquier cliente.
+# El enlace especial, que el sistema no da, sigue pasando (CAL-E3).
 _FUERA_DEL_SISTEMA = (
     "It is ALSO true when the customer asks for something the online booking cannot give and only a person can "
-    "arrange: a custom or 'special' payment link (for several customers, for an agency, or one that skips choosing "
-    "the date), an invoice or special rates, a closed/private departure to be quoted, or coordinating the booking "
-    "outside the website."
+    "arrange: a custom or 'special' payment link (for example one that skips choosing the date), an invoice, a "
+    "closed/private departure to be quoted, or coordinating the booking outside the website."
 )
 
 

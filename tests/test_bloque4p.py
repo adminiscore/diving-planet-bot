@@ -32,3 +32,35 @@ def test_c0_charla_rama_borra_el_pase_antes_de_guardar_el_estado():
     assert remoto.index("st.pending_escalation_reason = None") < remoto.index("serialize_state(st)")
     assert remoto.index("st.pending_note = None") < remoto.index("serialize_state(st)")
     assert 'estado["pending_escalation_reason"]' in remoto
+
+
+# ── C1: la agencia, como un cliente (decisión «por-otros», 9-nov) ───────────────────────────────────────────────────
+
+def test_c1_needs_staff_ya_no_pasa_a_la_agencia():
+    from src.agents import jev_router as jr
+
+    q = jr._questions_for_turn()[jr.NEEDS_STAFF]["instructions"]
+    assert "ALSO FALSE when a travel agency" in q
+    assert "for an agency" not in q and "special rates" not in q
+    assert "writing as a business" not in q
+    # sigue en el pase lo que solo hace una persona: la factura, el enlace especial y lo de una reserva ya hecha
+    for palabra in ("invoice", "'special' payment link", "ALREADY made"):
+        assert palabra in q
+
+
+def test_c1_el_escritor_recibe_por_otros_en_los_dos_idiomas():
+    from src.domain.decisiones import instruccion
+    from src.prompts.info import reglas_del_escritor
+
+    for lang in ("es", "en"):
+        assert instruccion("por-otros", lang) in reglas_del_escritor(lang)
+    assert "comisión" in instruccion("por-otros", "es") and "commission" in instruccion("por-otros", "en")
+
+
+def test_c1_el_juez_no_ve_la_instruccion_y_su_huella_no_cambia():
+    from scripts.judge_golden_set import decisiones_del_negocio
+    from src.domain.decisiones import instruccion
+
+    juez = decisiones_del_negocio()
+    assert "«por-otros»" in juez
+    assert instruccion("por-otros", "es") not in juez

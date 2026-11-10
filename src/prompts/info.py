@@ -462,7 +462,8 @@ def reglas_del_escritor(lang: str) -> str:
         RAG_SIN_GENERO_ES if es else RAG_SIN_GENERO_EN,
         RAG_CONDICIONES_ES if es else RAG_CONDICIONES_EN,
         RAG_PASE_OFRECIDO_ES if es else RAG_PASE_OFRECIDO_EN,
-        *(_instruccion(decision, lang) for decision in ("moneda", "origen-y-precio", "sin-totales")),
+        # Bloque 4P (10-nov): «por-otros», la agencia como un cliente; antes la sabía el juez y el bot no (norma 7).
+        *(_instruccion(decision, lang) for decision in ("moneda", "origen-y-precio", "sin-totales", "por-otros")),
     ]
     return "\n\n".join(partes)
 
