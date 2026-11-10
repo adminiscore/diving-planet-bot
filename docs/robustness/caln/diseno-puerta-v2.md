@@ -1,123 +1,152 @@
-# Simplificar, V2: la puerta del código sobre V1 (diseño, 10-nov; v1, antes de la revisión)
+# Simplificar, V2: la puerta del código sobre V1 (diseño, 10-nov; v2 tras la revisión)
 
 **Ficha:**
 - **Rama:** `feature/puerta-v2-alvaro`, sobre `simple-gadea` 0209842a. Prototipo fuera de src: `scripts/simple_v2.py` envuelve
   `scripts/simple_v1.py` sin cambiarlo, para que V1 se pueda repetir tal como se midió (#3763).
-- **Mecanismo:** Luna escribe en una llamada (V1). El código **comprueba y decide** sobre lo que Luna dice que entendió:
-  - el pase;
-  - los importes;
-  - el enlace;
-  - si toca una pregunta.
-  Lo que no cumple se rehace una vez con el motivo. Si vuelve a fallar, el código pone lo suyo (norma 5: nunca se recorta).
+- **Mecanismo:** Luna escribe en una llamada (V1) y dice qué entendió. El código **comprueba y decide** cuatro cosas sobre eso:
+  el pase, los importes, el enlace y la pregunta.
+  - Lo que no cumple se rehace una vez con el motivo.
+  - Si vuelve a fallar, manda la decisión del código (norma 5: nunca se recorta).
 - **Lo que arregla de V1** (#3761):
   - pasa de más (71 de 120 charlas frente a 45);
-  - importes fuera del catálogo (13 de 272: cuentas suyas, descuentos aplicados, totales);
+  - importes fuera del catálogo (cuentas suyas, descuentos aplicados, totales);
   - pregunta en el 76 % de las primeras respuestas a reales (criterio: ≤ 50 %).
-- **Reutiliza, sin tocarlos:**
-  - `como_reserva.entrega` (4R-1);
-  - `grounding_check.currency_amounts_grounded`;
-  - `que_preguntar.trae_pregunta` y `tapar_enlaces`;
-  - los enlaces del catálogo (`cart_render._resolve_service_booking_url`).
-- **Contador:** cada turno guarda `puerta`: lo que rechazó, si rehízo y lo que puso el código.
+- **Contador:** cada turno guarda `puerta`: qué falló, si rehízo y qué puso el código.
 
-## 1. Lo entendido, en estado
+**v2 (10-nov):** un agente revisó la v1 contra el código y las 384 respuestas de V1, sin mi conclusión. Lo que cambia:
+- **La decisión es propia, pequeña y sobre lo entendido**, en el script. No se pasa a `ConversationState` ni se usa `entrega` del
+  4R: esa está en otra rama, no en simple-gadea, y src está congelado. Además el paso a estado perdía el idioma, las edades y el
+  plan.
+- **Faltaban reglas:** el equipo propio y la reserva a nombre de otro van con un asesor (`equipo-propio-por-el-asesor`,
+  `temas-3nov`).
+- **El orden manda:** el hotel y el origen van antes que un plan sin enlace (`hotel-antes-de-reservar`, P5).
+- **Los importes, con un extractor propio.** `currency_amounts_grounded` no ve «USD 999» (Luna lo escribe así 53 veces) y no sabe
+  de plan, origen ni moneda.
+- **La pregunta, por tema y contando.** La v1 prohibía preguntas que las decisiones piden (el hotel, la nacionalidad, las edades, el
+  refresher, «4 diurnas o salidas sueltas»).
+- **Si el pase se rechaza dos veces, se deja pasar y se cuenta.** Mandar «te paso» sin pase se contradecía.
+- **Criterios de rehacer fijados antes de medir:** la revisión estima que se reharía el 31 % de los turnos.
 
-Para que la puerta use `entrega`, V2 cambia en su envoltorio el esquema de «entendido»:
-- `nacionalidad` admite **«mixta»**: el grupo mixto paga en USD con el enlace (`pago-y-reserva`).
-- `actividad` deja de ser texto libre. Pasa a ser `reparto`: `{id del tipo: personas}`, con los tipos de la tarjeta
-  (`certified_diving`, `minicourse`, `snorkel`, `companion`, `padi_course`…). `GRUPO` (5 o más con descuento) y `PARTE_SIN_ENLACE`
-  necesitan saber quién hace qué.
-- `plan` sigue siendo el id del catálogo. Si el plan no tiene enlace (`contact_only` o sin `booking_url`), lo reserva un asesor.
+## 1. Lo que Luna devuelve (cambio del esquema, solo en el envoltorio de V2)
 
-Se pasa a un `ConversationState` de prueba:
+A lo que ya da V1 se añade:
+- `nacionalidad`: también «mixta» (el grupo mixto paga en USD con el enlace).
+- `reparto`: `{id: personas}`, con los ids de la tarjeta (`certified_diving`, `minicourse`, `snorkel`, `companion`,
+  `padi_open_water`…; la lista sale de `cart_activity_ids()`).
+- `equipo_propio` y `a_nombre_de_otro`: `true` | `false`.
+- `idioma`: `es` | `en`.
+- `pasar`: `{"si", "motivo", "tema"}`, con `motivo` de la lista de C1.
+- `pregunta`: `{"tema"}` de la pregunta que hace el texto, o null. Los temas son origen, fecha, personas, certificado, hotel,
+  nacionalidad, edades, refresher, plan u otra.
 
-| Entendido | Estado |
+Un `plan` que no es un id del catálogo cuenta como no dicho, no como plan sin enlace.
+
+## 2. La decisión del momento de reservar, sobre lo entendido
+
+En este orden (como `entrega` del 4R):
+1. `ya_reservo` → la posventa (C1).
+2. Sale desde las islas sin hotel → **HOTEL_PRIMERO**: ni enlace ni asesor.
+3. Origen sin saber → **ORIGEN_PRIMERO**: ningún enlace (#3738), y primero el origen (P5).
+4. Va con un asesor (**ASESOR**, con su motivo) si se da alguna de estas:
+   - colombiana o residente;
+   - casa, Airbnb u hotel fuera de la lista de recogida (`lugares.recogida_conocida`);
+   - 5 o más en actividades con descuento de grupo;
+   - una parte del plan sin enlace (Bubble Makers por las edades, el acompañante…);
+   - el plan no tiene enlace;
+   - equipo propio;
+   - a nombre de otro.
+5. Si no → **ENLACE**: el del plan y su origen. El origen va en el id del servicio (`*_already_on_island`).
+
+## 3. Las cuatro comprobaciones
+
+**C1. El pase.** Se acepta según el motivo:
+
+| Motivo | Se acepta si |
 |---|---|
-| `origen` cartagena / islas | `location` cartagena / island |
-| `hotel` | `hotel` |
-| `nacionalidad` colombiana o residente | `is_colombian=True` |
-| `nacionalidad` mixta | `is_colombian=True` y `mixed_nationality_notice=True` |
-| `nacionalidad` extranjera | `is_colombian=False` |
-| `personas` | `detected_group_size` |
-| `reparto` | `detected_group_allocation` |
-| `ya_reservo` | `ya_reservado` |
+| `reservar_con_asesor` | la decisión es ASESOR **y** `quiere_reservar` (P3) |
+| `ya_reservo` | `ya_reservo` y quiere cambiar, cancelar o cambiar el número, o lo que pregunta no está en la base (`ya-reservado`) |
+| `salud` | una condición médica para bucear; no el mareo ni lo que la base contesta (`salud`) |
+| `clima_del_dia` | siempre (`fuera-de-la-base`) |
+| `recogida_fuera` | sale desde las islas y su alojamiento no está en la lista (`fuera-de-la-base`) |
+| `pide_persona` | el mensaje del cliente pide una persona; un «sí» a una oferta de Luna no cuenta (#3765) |
+| `horario` | pide mover la hora de salida o de recogida; no el cierre de las 4:30 (`cierre-para-manana`) |
+| `origen_sin_saber` | quiere reservar y el origen sigue sin decirse después de la pregunta con su motivo (P1b) |
+| `la_base_no_lo_tiene` | el tema no es de los que contesta la base: hoteles, puntos de inmersión, qué llevar, comida, precio, horario, disponibilidad (P-a) |
 
-## 2. Las cuatro comprobaciones, en este orden
+- **Un pase que no se acepta** se rehace con el motivo («no lo pases: aún no quiere reservar; di una vez que lo reserva un asesor»).
+  Si Luna insiste, se deja pasar y se cuenta: el cliente llega a una persona, que es lo menos malo.
+- **Un pase que el código exige y Luna no marcó** (quiere reservar y la decisión es ASESOR; P1b sin origen): lo marca el código.
+  Si el texto no lo dice, añade la línea del pase.
+- **Luna no ofrece el pase:** una oferta («¿quieres que te pase…?») es una pregunta que no toca (C4).
 
-**C1. El pase lo decide el código.** `pasar` lleva un motivo de una lista cerrada (va en el esquema):
+**C2. Los importes** (extractor propio):
+- Lee «N USD», «USD N», «N COP», «COP N», «$N» y «N mil pesos», y los porcentajes.
+- Cada importe tiene que ser un precio del catálogo (online o normal, de `pricing.json`):
+  - del plan o del reparto, si se saben;
+  - en la moneda que toca (`moneda`): COP a colombianos y residentes, USD a extranjeros y grupos mixtos, las dos si no se sabe;
+  - del origen sabido, o de los dos si no se sabe (`origen-y-precio`).
+- Cada porcentaje tiene que estar en `discounts.json`.
+- No caben cuentas, descuentos aplicados ni totales (`sin-totales`).
 
-| Motivo | Se acepta si | Decisión |
-|---|---|---|
-| `reservar_con_asesor` | `entrega` da ASESOR, GRUPO, PARTE_SIN_ENLACE o RECOGIDA, o el plan no tiene enlace, **y** `quiere_reservar` | P3 (#3741), P9/P10 |
-| `ya_reservo` | `ya_reservo` (cambiar, cancelar, el número, o lo que la base no tiene) | `ya-reservado` |
-| `salud` | siempre (lo médico de verdad) | `salud` |
-| `clima_del_dia` | siempre | `fuera-de-la-base` |
-| `recogida_fuera` | sale desde las islas y `recogida_por_confirmar` (4R-1) | `fuera-de-la-base` |
-| `pide_persona` | siempre | — |
-| `horario` | siempre: pide otro horario | P4 (#3741) |
-| `origen_sin_saber` | quiere reservar y el origen sigue sin saberse tras pedirlo una vez con su motivo | P1b (#3742) |
-| `otro` | **P-a, la decide Gadea** | `fuera-de-la-base` |
+**C3. El enlace:**
+- Solo puede ir el de ENLACE.
+- Con otra decisión, ningún enlace de reserva.
+- Si quiere reservar, la decisión es ENLACE y no lo lleva, lo añade el código. Si la nacionalidad no se sabe, con la línea de P2
+  (#3741).
 
-- Si Luna marca un pase que no se acepta, se rehace con el motivo. Ejemplos: «no lo pases: el grupo aún no quiere reservar; dile una
-  vez que lo reserva un asesor»; «no lo pases: los hoteles los contesta la base».
-- Si el código decide un pase y Luna no lo marcó (grupo que quiere reservar), el código lo marca. Si su texto no lo dice, añade
-  la línea del pase (la de `nucleo/entrega.py`).
-- En el panel de V1, la mayoría de los pases sobrantes son de este tipo. Pasa al grupo, al equipo propio, al colombiano, al Airbnb
-  y al paquete sin enlace en su primer mensaje, sin que pidan reservar: visto-6898, 6901, 6929, 6930 y 6940. También el precio de un
-  hotel y el alojamiento barato, que contesta la base: visto-6942.
+**C4. La pregunta.** Se permite una si se cumplen las tres:
+- su tema (`pregunta.tema`) es un dato que la reserva necesita y falta;
+- el cliente quiere reservar, o pregunta precio o plan;
+- ese tema se ha preguntado menos de 2 veces (`sin-tercera-pregunta`), salvo el origen al reservar, una vez más con su motivo
+  (P1b).
 
-**C2. Los importes.**
-- Cada cifra con moneda del texto tiene que estar en el catálogo: online o normal, USD o COP, del plan. La comprobación es
-  `currency_amounts_grounded` contra el catálogo.
-- Fuera: las cuentas, los descuentos aplicados («160,20 USD») y los totales («356 USD en total», `sin-totales`).
-- Si no cumple, se rehace con el motivo: «solo el precio por persona del catálogo, sin aplicar descuentos ni sumar».
+No caben las preguntas para seguir la charla («¿algo más?», «¿te interesa?»). El envoltorio guarda las veces de cada tema entre
+turnos.
 
-**C3. El enlace** (`entrega` sobre el estado de C1):
-- **ENLACE:** el texto solo puede llevar el enlace de su plan y de su origen. Si quiere reservar y no lo lleva, lo añade el
-  código.
-- **ORIGEN_PRIMERO, ASESOR, GRUPO, PARTE_SIN_ENLACE, RECOGIDA o HOTEL_PRIMERO:** ningún enlace de reserva. Si lleva uno, se
-  rehace.
-- Un enlace de otro plan o del otro origen, también se rehace.
+**Rehacer:**
+- Una vez por turno, con todos los motivos juntos.
+- Si la segunda tampoco cumple:
+  - **C1:** se deja pasar y se cuenta.
+  - **C2 y C3:** la plantilla. Es la pieza de precios del plan con su origen y su moneda y la línea de la entrega, sin el texto de
+    Luna. Si no se sabe el plan, la línea de la entrega sola.
+  - **C4:** se deja pasar y se cuenta.
 
-**C4. La pregunta.** Se permite una, y solo si la reserva la necesita:
-- quiere reservar y falta un dato (origen, fecha, personas, certificado);
-- o se habla de precio sin saber el origen (`origen-y-precio`).
+## 4. Lo que decide Gadea
 
-Si no toca y el texto pregunta (`trae_pregunta`), o pregunta dos veces, se rehace con el motivo: «contesta sin preguntar».
+- P-a: decidida (#3766). Lo que la base no tiene y no está en la lista pasa con una persona.
+- P-b: decidida (#3765). El cierre de las 4:30 no se comprueba. El vuelo, después, si V2 pasa.
 
-**Rehacer:** una sola vez por turno, con todos los motivos juntos. Si la segunda tampoco cumple:
-- **C1:** manda la decisión del código, y el texto que no la cumple va con la línea fija.
-- **C2 y C3:** la plantilla. Es lo que pinta el código (la pieza de precios del plan por origen y moneda, y la línea de la entrega),
-  sin el texto de Luna.
-- **C4:** se deja pasar y se cuenta.
+## 5. Cómo se mide (fijado antes de medir)
 
-## 3. Lo que decide Gadea
-
-- **P-a.** Lo que la base no tiene y no es de la lista (guardar maletas, quién vigila a una niña mientras bucean): ¿pasa con una
-  persona, o lo dice y sigue sin pasar? `fuera-de-la-base` solo nombra el clima del día y la recogida.
-- **P-b.** ¿El reloj y la línea del cierre de las 4:30 (3.1) se comprueban también, o basta con que V1 los reciba?
-
-## 4. Cómo se mide
-
-- Los criterios de `diseno-simple.md`, fijados antes de medir, frente a B (7,5) y V1:
+- **Los criterios de `diseno-simple.md`, frente a B (7,5) y V1:**
   - panel-vara ×3 juzgado dos veces;
   - los 75 reales ×3;
   - pases ≤ B;
   - importes fuera del catálogo ≤ B;
   - estilo ≤ 300 caracteres y ≤ 50 % con pregunta;
   - p90 ≤ 7,5 s.
-- **Además:**
-  - el porcentaje de turnos rehechos;
-  - el de turnos con plantilla;
-  - el p90 con el rehacer: la segunda llamada cuesta ~3 s.
+- **V1 se repite a la misma hora que V2.**
+- **Los importes los cuenta un contador independiente**, no el extractor de C2. Si no, la medida sería circular.
+- **Topes de la puerta:**
+  - rehechos ≤ 25 % de los turnos;
+  - plantilla ≤ 3 %;
+  - p90 de los primeros mensajes ≤ 7,5 s.
+  - Si se pasan, V2 no se adopta tal cual.
 - **Banco sin IA** (`tests/test_simple_v2.py`):
-  - las cuatro comprobaciones con salidas de Luna grabadas, de V1;
-  - el paso de entendido a estado;
-  - que V1 no cambia: mismo texto de esquema y mismas salidas sin la puerta.
+  - la decisión del §2 en sus combinaciones;
+  - C1-C4 con salidas grabadas de V1;
+  - el extractor de importes con sus formatos;
+  - que V1 no cambia: mismo esquema y mismas salidas sin la puerta.
+- Con 3 tiradas, los graves solo dicen si V2 no es peor que B (no-inferioridad). Lo que la puerta cambia (pases, importes, preguntas)
+  se ve en sus contadores, que en V1 son estables entre tiradas.
 
-## 5. Riesgos
+## 6. Riesgos
 
-- Rehacer suma una llamada: si pasa en más de 1 de cada 4 turnos, el p90 sube. Se mide.
-- Luna puede marcar mal lo entendido (el origen o la nacionalidad). La puerta decide sobre lo que Luna dice, así que no arregla
-  lecturas malas. Se mide comparando con lo que el cliente dijo en los bancos de origen y nacionalidad.
-- La lista de motivos del pase puede quedarse corta. `otro` existe para eso, y su regla la decide Gadea (P-a).
+- **La puerta decide sobre lo que Luna dice que entendió.** Si Luna marca mal el origen, la nacionalidad o el motivo del pase, la
+  puerta no lo arregla.
+  - La revisión estima que, aun con la puerta, las charlas con pase bajarían de 71 a ~49 de 120, por encima de las 45 de B.
+  - Se mide; si no baja, el pase pide algo más que la etiqueta de Luna.
+- **Rehacer suma una llamada.** En los primeros mensajes, el p90 puede pasar de 7,5 s. Se mide contra el tope.
+- **La plantilla pierde lo demás que contestaba Luna.** Se cuenta; se espera muy rara.
+- **La puerta no debe crecer hasta parecerse a lo que queremos quitar.** Si para pasar los criterios hace falta mucho más que esto,
+  se dice y se para.
