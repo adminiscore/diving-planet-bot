@@ -114,7 +114,9 @@ class Entrega:
 def entrega(state) -> Entrega:
     """Bloque 4R (C1): lo que se le da a este cliente en el momento de reservar. Pura: decide, no pinta ni pasa a nadie."""
     forma = como_reserva(state)
-    if forma == ENLACE and not origen_sabido(state):
+    if forma != HOTEL_PRIMERO and not origen_sabido(state):
+        # P5 (Gadea, 10-nov, #3747): primero el origen, también para el colombiano y el grupo; después, el asesor o el hotel primero.
+        # Si se le está confirmando que sale desde las islas, ya es HOTEL_PRIMERO (sin enlace ni asesor), como hoy.
         return Entrega(ORIGEN_PRIMERO)
     sin_saber = forma == ENLACE and getattr(state, "is_colombian", None) is None
     return Entrega(forma, nacionalidad_por_saber=sin_saber and not getattr(state, "mixed_nationality_notice", False))

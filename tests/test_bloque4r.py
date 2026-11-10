@@ -67,7 +67,10 @@ def _estado(**campos) -> ConversationState:
     ({"location": "cartagena", "is_colombian": False}, Entrega(ENLACE)),
     ({"location": "cartagena", "is_colombian": True, "mixed_nationality_notice": True}, Entrega(ENLACE)),  # grupo mixto: USD
     ({"location": "cartagena", "is_colombian": True}, Entrega(ASESOR)),
-    ({"is_colombian": True}, Entrega(ASESOR)),  # sin origen: el asesor, hasta que Gadea decida P5
+    ({"is_colombian": True}, Entrega(ORIGEN_PRIMERO)),  # P5 (#3747): primero el origen, también para el colombiano
+    ({"detected_activity": "certified_diving", "detected_group_size": 6}, Entrega(ORIGEN_PRIMERO)),  # y para el grupo
+    ({"location": "cartagena", "detected_activity": "certified_diving", "detected_group_size": 6, "is_colombian": False},
+     Entrega("grupo")),
     ({"location": "island"}, Entrega(HOTEL_PRIMERO)),
     ({"pending_correction": {"location": "island"}}, Entrega(HOTEL_PRIMERO)),
     ({"location": "island", "hotel": "Casa Azul", "is_colombian": False}, Entrega(RECOGIDA_POR_CONFIRMAR)),
