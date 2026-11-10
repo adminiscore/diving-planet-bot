@@ -242,19 +242,9 @@ def _asks_about_availability(msg_lower: str) -> bool:
 
 
 def _booking_change_response(state: ConversationState, message: str, kind: str) -> str:
-    """Copy + efecto de estado compartido para cancelación/reprogramación/
-    modificación de headcount (Bloque 2.1 + hallazgo G): texto de política de la
-    KB + oferta asesor/menú + botones + historial. `kind` ∈ {"cancellation",
-    "reschedule", "modify_headcount"}. Extraído (Fase 2.3) para que el nodo
-    `changes` del grafo y la cascada usen una única fuente de copy/estado — sin
-    duplicar los strings (garantiza la equivalencia por construcción).
-
-    `effective_lang` (hallazgo G, batería sintética contra PRE, 2026-08-26,
-    portado de pre_gadea v0.21.13): en el mensaje de APERTURA
-    `state.detected_language` todavía no está fijado — usar `state.language`
-    directo hacía que "hi, I need to cancel my booking" cayera en la
-    respuesta en español pese a ser el primer mensaje en inglés. Mismo patrón
-    que la deflexión de contacto/identidad IA."""
+    """Cancelar, reprogramar o cambiar el número de personas de una reserva (`kind`, de `TIPOS_DE_CAMBIO`): la política
+    de la KB y el pase directo a un asesor (gen-3b), con el historial; para el nodo de cambios y la cascada. En la apertura
+    el idioma aún no está fijado y se estima del mensaje (hallazgo G: «hi, I need to cancel my booking» salía en español)."""
     effective_lang = state.language if state.detected_language else _infer_language(message, state.language)
     policy_kind = {"modify_headcount": "modify_booking"}.get(kind, kind)
     policy_text = (politicas().get(policy_kind) or {}).get(effective_lang, "")

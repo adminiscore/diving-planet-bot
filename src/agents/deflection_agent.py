@@ -93,8 +93,9 @@ async def deflection_node(state: BotState) -> dict:
         response = await _shared_turn_handler(conv, message, routing_signals=signals)
         return {"reply": response}
 
-    # Mismo efecto de estado que los handlers de deflexión de la cascada.
-    conv.step = Step.FREE_TEXT
+    # Mismo efecto de estado que los handlers de deflexión de la cascada; un pase ya hecho no se deshace (4P, C3).
+    if conv.step != Step.ESCALATE:
+        conv.step = Step.FREE_TEXT
     conv.quick_replies = []
     conv.history.append({"role": "user", "content": message})
     conv.history.append({"role": "assistant", "content": response})

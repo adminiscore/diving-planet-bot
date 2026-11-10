@@ -184,6 +184,7 @@ async def route_message(state: ConversationState, message: str) -> str:
 
     escalation_before = state.pending_escalation_reason
     paso_antes = state.step
+    state._pase_del_turno = None  # 4P (C3): lo marca `pasar_a_persona`
     state._senales_router = None
     state._preguntas_del_turno = []  # CALN-6: las preguntas de la reserva de ESTE turno (`ask_slot`)
     state._sugerida_al_empezar = state.suggested_activity  # CALN-6 paso 2: si su pregunta no sale, se deshace
@@ -192,24 +193,35 @@ async def route_message(state: ConversationState, message: str) -> str:
         note_turn(language=state.language, greeting=_is_greeting_only(message))
         from src.orchestration.graph import run_turn_via_graph
         response = await run_turn_via_graph(state, message)
+        from src.agents.escalation_agent import (
+            YA_LO_TIENE,
+            lo_contestable_en_cualquier_pase,
+            pase_que_no_se_repite,
+        )
         from src.observability import hechos_del_turno
 
-        if (state.pending_escalation_reason not in (None, escalation_before) and isinstance(response, str)
+        # Bloque 4P (C3): un pase de texto fijo con la conversación ya en manos de una persona no se repite.
+        repetido = (paso_antes == Step.ESCALATE and getattr(state, "_pase_del_turno", None) is not None
+                    and pase_que_no_se_repite(state.pending_escalation_reason))
+        if ((state.pending_escalation_reason not in (None, escalation_before) or repetido) and isinstance(response, str)
                 and not hechos_del_turno().get("rag_used")):
             # gen-13: el turno acaba de pasar a un asesor; las OTRAS preguntas del mensaje se contestan delante. CALN-6:
             # no si el escritor ya contestó este turno (sparring b1 t3: el pago en pesos tras la tarjeta y la respuesta
             # entera dos veces, con «Tienes razón…» en medio).
             from src.agents.conversational_core import _greeting
-            from src.agents.escalation_agent import lo_contestable_en_cualquier_pase
 
             # Con el paso ya en ESCALATE el RAG recibe «la conversación ya está con una persona» y dice «el asesor ya
-            # tiene tu caso» encima de «te paso ahora» (lo mismo que gen-1): contesta con el paso de antes del turno.
-            paso_del_pase, state.step = state.step, paso_antes
+            # tiene tu caso» encima de «te paso ahora» (lo mismo que gen-1): contesta con el paso de antes del pase.
+            paso_del_pase, state.step = state.step, (Step.FREE_TEXT if repetido else paso_antes)
             try:
                 antes = await lo_contestable_en_cualquier_pase(state, message)
             finally:
                 state.step = paso_del_pase
-            if antes:
+            if repetido:
+                linea = YA_LO_TIENE["es" if _reply_language(state, message) == "es" else "en"]
+                logger.info("[CORE][4P] pase repetido: sin el texto fijo; la nota al asesor, con el motivo nuevo")
+                response = f"{antes}\n\n{linea}" if antes else linea
+            elif antes:
                 saludo = _greeting(state)
                 if saludo and response.startswith(saludo):
                     response = f"{saludo}{antes}\n\n{response[len(saludo):]}"
@@ -453,7 +465,8 @@ async def _shared_turn_handler(
     if pregunta_si_es_ia(msg_lower, routing_signals):
         effective_lang = state.language if state.detected_language else _infer_language(message, state.language)
         response = _ai_identity_deflection(effective_lang)
-        state.step = Step.FREE_TEXT
+        if state.step != Step.ESCALATE:  # 4P (C3): un pase ya hecho no se deshace
+            state.step = Step.FREE_TEXT
         state.quick_replies = []
         logger.info("[SUPERVISOR] AI/model-identity meta-question -> in-persona redirect (no reveal)")
         state.history.append({"role": "user", "content": message})
@@ -618,7 +631,6 @@ from src.agents.rutas.changes import (  # noqa: E402, F401
     _detect_modify_booking_request,
     _detect_reschedule_request,
     _in_active_cart_building,
-    _jev_changes_date,
 )
 from src.agents.rutas.contexto_rag import (  # noqa: E402, F401
     _CERTIFIED_MENTION_RE,

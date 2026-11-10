@@ -151,3 +151,88 @@ async def test_c2_el_router_el_nodo_de_cambios_y_la_cascada_deciden_lo_mismo(kw,
         assert st_cascada.step == Step.ESCALATE and "asesor" in respuesta_cascada
     else:
         assert "No puedo compartir" in respuesta_cascada and st_cascada.step != Step.ESCALATE
+
+
+# ── C3: el pase que vuelve no se repite (decisiones «salud» y «ya-reservado») ───────────────────────────────────────
+
+_PASE_FIJO = "Te paso ahora con alguien del equipo, que te escribe por aquí enseguida."
+_LO_DEMAS = "Con la última inmersión el sábado, puedes volar desde las 7:00 del domingo."
+
+
+def _turno_que_pasa(motivo: str, senales: dict):
+    """Un turno del grafo que pasa a una persona con `motivo`, por la función del pase, y responde con el texto fijo."""
+    async def _grafo(state, message):
+        from src.agents.lead_summary import pasar_a_persona
+
+        state._senales_router = senales
+        pasar_a_persona(state, motivo)
+        return _PASE_FIJO
+    return _grafo
+
+
+@pytest.fixture
+def lo_demas(monkeypatch):
+    from src.agents import escalation_agent
+
+    llamadas = []
+
+    async def _contestar(conv, message, tema, key, reason):
+        llamadas.append({"paso": conv.step, "reason": reason})
+        return _LO_DEMAS
+    monkeypatch.setattr(escalation_agent, "_contestar_lo_demas", _contestar)
+    return llamadas
+
+
+async def _turno(monkeypatch, motivo, paso_antes, mensaje="¿y puedo volar el domingo a las 10?", senales=None):
+    from src.agents import supervisor
+
+    senales = {"asks_question": True} if senales is None else senales
+    monkeypatch.setattr("src.orchestration.graph.run_turn_via_graph", _turno_que_pasa(motivo, senales))
+    st = _estado(step=paso_antes)
+    return st, await supervisor.route_message(st, mensaje)
+
+
+@pytest.mark.asyncio
+async def test_c3_un_pase_que_vuelve_contesta_lo_demas_sin_repetir_el_texto_fijo(monkeypatch, lo_demas):
+    from src.agents.escalation_agent import YA_LO_TIENE
+
+    st, resp = await _turno(monkeypatch, "medical_questions", Step.ESCALATE)
+    assert _PASE_FIJO not in resp
+    assert resp.startswith(_LO_DEMAS) and resp.endswith(YA_LO_TIENE["es"])
+    # el escritor contesta con un paso que no es ESCALATE (no añade su propio «el asesor ya tiene tu caso»)
+    assert lo_demas[0]["paso"] == Step.FREE_TEXT
+    # la nota al asesor sale con el motivo nuevo (decisión de Gadea del 10-nov) y el pase sigue hecho
+    assert st.pending_escalation_reason == "medical_questions" and st.pending_note and st.step == Step.ESCALATE
+
+
+@pytest.mark.asyncio
+async def test_c3_sin_nada_mas_que_contestar_queda_solo_la_linea_corta(monkeypatch, lo_demas):
+    from src.agents.escalation_agent import YA_LO_TIENE
+
+    _, resp = await _turno(monkeypatch, "post-venta o empresa: lo revisa una persona", Step.ESCALATE, mensaje="ok",
+                           senales={"asks_question": False})
+    assert resp == YA_LO_TIENE["es"]
+
+
+@pytest.mark.asyncio
+async def test_c3_el_primer_pase_no_cambia(monkeypatch, lo_demas):
+    _, resp = await _turno(monkeypatch, "medical_questions", Step.FREE_TEXT)
+    assert resp.startswith(_LO_DEMAS) and resp.endswith(_PASE_FIJO)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("motivo", ["complaints_or_emergencies", "cambio de fecha de una reserva: lo gestiona una persona"])
+async def test_c3_las_urgencias_y_el_cambio_de_reserva_mantienen_su_texto(monkeypatch, lo_demas, motivo):
+    # las urgencias van solas a propósito; el texto del cambio de una reserva lleva la política
+    _, resp = await _turno(monkeypatch, motivo, Step.ESCALATE)
+    assert resp.endswith(_PASE_FIJO)
+
+
+@pytest.mark.asyncio
+async def test_c3_preguntar_si_es_un_bot_no_deshace_el_pase():
+    from src.agents.deflection_agent import deflection_node
+    from src.agents.jev_router import PREGUNTA_SI_ES_IA
+
+    st = _estado(step=Step.ESCALATE)
+    await deflection_node({"conv_state": st, "message": "¿eres un bot?", "signals": {PREGUNTA_SI_ES_IA: True}})
+    assert st.step == Step.ESCALATE

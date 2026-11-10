@@ -91,6 +91,18 @@ _SOLO_LO_DEMAS = {
 _PASE_QUE_VA_SOLO = ("datos sensibles", "complaints_or_emergencies", "FALLO TÉCNICO")
 _TEMA_DEL_PASE = {"es": "lo que va a gestionar una persona del equipo (motivo del pase: {motivo})",
                   "en": "what a person from the team will handle (handoff reason: {motivo})"}
+# Bloque 4P (C3, 10-nov): un pase con la conversación YA en manos de una persona no repite su texto fijo; se contesta lo
+# demás con esta línea, y la nota al asesor sale con el motivo nuevo. No en los que van solos ni en un cambio de reserva,
+# cuyo texto lleva la política.
+YA_LO_TIENE = {"es": "Tu caso ya lo tiene el equipo y te escribe por aquí. 🙌",
+               "en": "The team already has your case and will write to you here. 🙌"}
+
+
+def pase_que_no_se_repite(reason: str | None) -> bool:
+    from src.agents.rutas.changes import _PASE_POR_CAMBIO  # lazy
+
+    return bool(reason) and not any(m in reason for m in _PASE_QUE_VA_SOLO) and reason not in {
+        motivo for motivo, _, _ in _PASE_POR_CAMBIO.values()}
 
 
 async def lo_contestable_en_cualquier_pase(conv, message: str) -> str | None:

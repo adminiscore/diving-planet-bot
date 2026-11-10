@@ -162,5 +162,6 @@ def pasar_a_persona(state: ConversationState, motivo: str, *, con_nota: bool = T
     if sin_botones:
         state.quick_replies = []
     state.pending_escalation_reason = motivo
+    state._pase_del_turno = motivo  # 4P (C3): el cierre del turno sabe que este turno pasó, aunque ya estuviera pasado
     if con_nota:
         state.pending_note = build_lead_summary(state, escalation_reason=motivo)
