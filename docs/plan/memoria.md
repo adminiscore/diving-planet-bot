@@ -61,6 +61,7 @@ secciones 1 a 3 por el Claude de Gadea, con su OK, el 10-nov.
   (norma 8). El 4R, propuesto a Álvaro (#3721); si no está, se da por bueno.
 - **10-nov, 4R (#3736):** nacionalidad sin saber tras 2 preguntas → el enlace y «si eres colombiano o tienes cédula, dímelo y te paso
   con un asesor»; un plan con asesor se dice una vez y pasa al reservar; otro horario → pase directo. Sin reserva hecha, cambiar la fecha no pasa a un asesor.
+  Origen sin saber al reservar: se pide UNA vez con su motivo y, si no, asesor (excepción de sin-tercera-pregunta).
 - **Pendientes de decidir:** pedir a Andrés más conversaciones reales; la norma de 5 de 5 en los clientes «a veces»; el vuelo con el
   lector de notas (3.2); quitar la segunda lectura de la nacionalidad (CALN-30).
 
