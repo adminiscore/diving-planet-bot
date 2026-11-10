@@ -69,7 +69,7 @@ def test_el_codigo_lee_las_horas_de_los_valores():
     from src.flows.state import ConversationState
     from src.prompts import info
 
-    assert f"cierra a las {valores.hora('cierre_reservas')} PM" in info.RAG_BODY_ES
+    assert f"el cierre de las {valores.hora('cierre_reservas')} p. m." in info.RAG_BODY_ES  # bloque 3.1
     st = ConversationState(conversation_id="valores", language="es")
     st.mixed_cart = [{"type": "snorkel", "qty": 1, "label": "Snorkel"}]
     assert f"Bodeguita, {valores.hora('salida_cartagena')} a.m." in cart_render.goto_final_summary(st)

@@ -626,6 +626,7 @@ def _con_la_espera_antes_de_volar(answer: str, bloques: list[dict], intenciones:
     if not vuelo:
         return answer
     aviso = " ".join(re.split(r"(?<=\.)\s+", vuelo)[:2])
+    logger.info("[CORE][3.1] espera antes de volar añadida por el código")  # cuenta para borrarlo en el 3.2 (norma 6)
     partes = answer.rstrip().split("\n\n")
     cierre = [partes.pop()] if len(partes) > 1 and "?" in partes[-1] else []
     return "\n\n".join([*partes, aviso, *cierre])

@@ -812,16 +812,17 @@ def test_system_prompt_has_no_duplicated_currency_section_en():
 
 
 def test_system_prompt_has_booking_cutoff_time_guard_es():
-    """Regression: the bot must not assert a time cutoff 'already passed' without real time data."""
+    """Regression: the bot must not assert a time cutoff 'already passed' on its own. Bloque 3.1 (10-nov): the cutoff is worked
+    out by the code (`contexto_rag._el_cierre`); the writer uses it and does not compare the time itself."""
     prompt = rag_agent.build_system_prompt("es")
-    assert "COMPARA la hora actual con ese corte" in prompt
-    assert "NO afirmes que el corte" in prompt
+    assert "no hagas tú la cuenta con la hora" in prompt and "Sin urgencia inventada" in prompt
+    assert "COMPARA la hora actual" not in prompt
 
 
 def test_system_prompt_has_booking_cutoff_time_guard_en():
     prompt = rag_agent.build_system_prompt("en")
-    assert "COMPARE the current time against that cutoff" in prompt
-    assert 'do NOT claim the cutoff "has already passed"' in prompt
+    assert "do not work it out yourself from the time" in prompt and "No invented urgency" in prompt
+    assert "COMPARE the current time" not in prompt
 
 
 def test_system_prompt_has_partial_equipment_discount_guard_es():

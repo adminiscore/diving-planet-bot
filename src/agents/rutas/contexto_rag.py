@@ -5,6 +5,7 @@ través de `supervisor._build_extra_context`.
 s4-2 (19-oct): movido tal cual desde `supervisor.py`, que lo re-exporta. Ver `src/agents/rutas/__init__.py`.
 """
 
+import logging
 import re
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
@@ -13,6 +14,8 @@ from src.domain import activities as dom
 from src.flows import cart_render, eligibility
 from src.flows.como_reserva import hotel_conocido
 from src.flows.state import ConversationState
+
+logger = logging.getLogger("uvicorn.error")
 
 # Cliente aclarando explicitamente que, dentro de una conversacion DIVE TO
 # HEAL, la pregunta actual es sobre el programa NORMAL/no adaptado -- ver
@@ -109,6 +112,27 @@ def _edad(actividad: str, maxima: bool = False) -> int | None:
     return (registro.max_age if maxima else registro.min_age) if registro else None
 
 
+def _el_cierre(ahora: datetime, lang: str) -> str:
+    """Bloque 3.1 (10-nov, decisión del 9-nov: el cierre de las 4:30 es firme): si mañana aún se puede reservar y, si no, el
+    primer día que se puede, contado por el código (`calendario.primer_dia_reservable`). El escritor solo lo dice: antes
+    comparaba él la hora con el cierre, y unas veces acertaba y otras no (visto-6914)."""
+    from src.domain.calendario import cerrado, nombre_del_dia, primer_dia_reservable
+    from src.domain.valores import hora
+
+    manana, primero = ahora.date() + timedelta(days=1), primer_dia_reservable(ahora)
+    m, p, es, h = nombre_del_dia(manana, lang), nombre_del_dia(primero, lang), lang == "es", hora("cierre_reservas")
+    if primero == manana:
+        return (f"Mañana, {m}, todavía se puede reservar, hasta hoy a las {h} p. m." if es
+                else f"Tomorrow, {m}, can still be booked, until {h} p.m. today.")
+    logger.info(f"[CORE][3.1] mañana no se puede reservar: el primer día es el {primero.isoformat()}")
+    if cerrado(manana):
+        return (f"Mañana, {m}, no operamos; el primer día que se puede reservar es el {p}." if es
+                else f"Tomorrow, {m}, we are closed; the first day that can be booked is {p}.")
+    return (f"Mañana, {m}, ya no se puede reservar: el cierre fue hoy a las {h} p. m. El primer día que se puede reservar es "
+            f"el {p}." if es else f"Tomorrow, {m}, can no longer be booked: booking closed today at {h} p.m. The first day that "
+            f"can be booked is {p}.")
+
+
 def _build_extra_context(state: ConversationState) -> str | None:
     """Build a compact natural-language summary of the current state to help RAG.
 
@@ -129,9 +153,7 @@ def _build_extra_context(state: ConversationState) -> str | None:
 
     parts: list[str] = []
 
-    # Fecha/hora real (Colombia) — sin esto el LLM no tiene forma de saber si
-    # un corte de horario ("cierra a las 4:30 PM del día anterior") ya pasó o
-    # no, y termina inventando urgencia/cierre que no puede verificar.
+    # Fecha/hora real (Colombia). Si el cierre de las 4:30 ya pasó lo cuenta el código (bloque 3.1, `_el_cierre`).
     now = datetime.now(ZoneInfo("America/Bogota"))
     # arq-4b (G10 nº 4, g10-036): «mañana, jueves 23 de octubre» un jueves 22: el modelo calculaba mal el día de la
     # semana. Se le da el de hoy y el de mañana (las dos fechas que más se nombran).
@@ -143,6 +165,7 @@ def _build_extra_context(state: ConversationState) -> str | None:
     else:
         parts.append(f"Current date and time: {now.strftime('%A %Y-%m-%d %H:%M')} (Cartagena/Colombia time; "
                      f"tomorrow is {manana.strftime('%A %Y-%m-%d')}).")
+    parts.append(_el_cierre(now, state.language))
 
     # Idioma actual de la conversación
     if state.language == "es":
