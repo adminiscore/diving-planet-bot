@@ -63,7 +63,8 @@ def estilo(jsonl: list[Path]) -> dict:
     n = len(respuestas) or 1
     return {"turnos": len(filas), "llamadas_por_turno": round(statistics.mean(llamadas), 2) if llamadas else None,
             "caracteres": statistics.median(len(r) for r in respuestas) if respuestas else None,
-            "con_pregunta": round(100 * sum("?" in r for r in respuestas) / n),
+            # 10-nov (aviso del Claude de Álvaro, #3775): sin los enlaces, que llevan «?language=es» y contaban como pregunta
+            "con_pregunta": round(100 * sum("?" in re.sub(r"https?://\S+", "", r) for r in respuestas) / n),
             "con_precio": round(100 * sum(bool(_PRECIO.search(r)) for r in respuestas) / n),
             "con_enlace": round(100 * sum("http" in r for r in respuestas) / n)}
 
