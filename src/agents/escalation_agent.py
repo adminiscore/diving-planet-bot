@@ -99,9 +99,8 @@ YA_LO_TIENE = {"es": "Tu caso ya lo tiene el equipo y te escribe por aquí. 🙌
 
 
 def texto_ya_dado(reason: str | None, respuesta, historial: list[dict]) -> bool:
-    """Bloque 4P (C5): el texto fijo de este pase ya salió en la última respuesta del bot de antes del turno (dentro de
-    ella, aunque llevara algo delante) y no es de los que van solos. Así tampoco se repite el de un cambio, con su
-    política: tras ese pase, «ok, quedo atento» vuelve a leerse como un cambio (Jev ve los últimos mensajes)."""
+    """Bloque 4P (C5): el texto fijo de este pase ya está en la última respuesta de antes del turno y no va solo; así
+    tampoco se repite el de un cambio («ok, quedo atento» tras su pase vuelve a leerse como un cambio)."""
     if not isinstance(respuesta, str) or not respuesta.strip() or any(m in (reason or "") for m in _PASE_QUE_VA_SOLO):
         return False
     anterior = next((h.get("content") or "" for h in reversed(historial) if h.get("role") == "assistant"), "")

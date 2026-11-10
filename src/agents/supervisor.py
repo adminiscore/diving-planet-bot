@@ -201,8 +201,7 @@ async def route_message(state: ConversationState, message: str) -> str:
         )
         from src.observability import hechos_del_turno
 
-        # Bloque 4P (C3 y C5): un pase de texto fijo con la conversación ya en manos de una persona no se repite: el que
-        # solo dice el pase, y cualquiera cuyo texto ya salió en la última respuesta de antes de este turno.
+        # Bloque 4P (C3 y C5): con la conversación ya pasada, no se repite el pase que solo dice el pase ni uno ya dado.
         motivo = state.pending_escalation_reason
         repetido = (paso_antes == Step.ESCALATE and getattr(state, "_pase_del_turno", None) is not None
                     and not getattr(state, "_escenario_nuevo", None)
