@@ -1,13 +1,16 @@
 """Bloque 4R (Plan Gadea): el momento de reservar. Banco sin IA (docs/robustness/caln/diseno-bloque4r.md)."""
+import json
+
 import pytest
 
 from src.agents import conversational_core as core
-from src.agents import redactor_hechos
+from src.agents import rag_agent, redactor_hechos
 from src.agents.compositor import _una_oferta_del_asesor
 from src.agents.nucleo import entrega as pintor
 from src.agents.nucleo.slotfill_close import _OFERTA_DEL_ASESOR
 from src.agents.rag_agent import build_system_prompt
 from src.agents.redactor_hechos import con_la_pieza
+from src.flows import hechos as hechos_mod
 from src.flows.como_reserva import (
     ASESOR,
     ENLACE,
@@ -17,9 +20,10 @@ from src.flows.como_reserva import (
     Entrega,
     entrega,
     recogida_por_confirmar,
+    sin_enlaces_de_reserva,
 )
 from src.flows.que_preguntar import destapar_enlaces, tapar_enlaces
-from src.flows.state import ConversationState
+from src.flows.state import ConversationState, Step
 from src.prompts.info import RAG_PASE_OFRECIDO_EN, RAG_PASE_OFRECIDO_ES
 
 URL = "https://book.divingplanet.org/book/salidas-de-buceo/1?language=es"
@@ -178,7 +182,7 @@ async def test_el_grupo_que_aun_no_reserva_lo_oye_una_vez_sin_pregunta(monkeypat
     _con_hechos(monkeypatch, {"asesor": True})
     st = _grupo_de_seis(_intenciones=["disponibilidad"])
     primera = await _pintar(st)
-    assert "descuento de grupo" in primera and "díganmelo y les paso con un asesor" in primera and "?" not in primera
+    assert "descuento de grupo" in primera and "Cuando quieran reservar, díganmelo." in primera and "?" not in primera
     assert st.pending_escalation_reason is None
     assert await _pintar(st) == "Respuesta del escritor."  # la segunda vez, nada
 
@@ -222,3 +226,90 @@ def test_cuenta_si_el_escritor_ofrece_el_pase(monkeypatch, texto, esperado):
     monkeypatch.setattr("src.observability.note_turn", lambda **kw: vistos.append(kw))
     core.contar_si_el_escritor_pregunta({"sin_ofrecer_el_pase": True}, texto)
     assert ({"escritor_ofrece_el_pase": True} in vistos) is esperado
+
+
+# --- Tras la revisión del código (paso 5): los defectos que encontró, cada uno con su prueba --------------------------------------
+
+
+
+
+@pytest.mark.parametrize("clave", ["es_uno", "es_grupo", "en"])
+def test_las_lineas_del_pintor_no_cuentan_como_oferta_del_pase(clave):
+    # D1: «ok» tras ellas no debe pasar al asesor (`acepta_la_oferta_del_asesor` busca «asesor» y un verbo de oferta).
+    for texto in (pintor._SI_ERES_COLOMBIANO[clave], pintor._CUANDO_QUIERAS[clave],
+                  *(pintor._POR_QUE[f][clave] for f in pintor._POR_QUE)):
+        assert not core.ofrece_el_pase(texto), texto
+
+
+def test_el_grupo_mixto_no_oye_que_pagara_en_pesos():
+    # D8 (pago-y-reserva): un grupo mixto paga en USD con el enlace; solo si todos son colombianos, en pesos.
+    assert "todos" in pintor._SI_ERES_COLOMBIANO["es_grupo"]
+
+
+@pytest.mark.parametrize("campos", [
+    {"step": Step.ESCALATE},  # D2: ya pasado
+    {"pending_escalation_reason": "núcleo conversacional - otro"},
+    {"_tarjeta_del_turno": True},  # D3: la tarjeta del turno pinta lo suyo
+])
+async def test_no_pinta_en_un_pase_ni_con_la_tarjeta(monkeypatch, campos):
+    _con_hechos(monkeypatch, {"cartagena": URL})
+    st = _estado(location="cartagena", is_colombian=True, _intenciones=["pago"], **campos)
+    antes = st.pending_escalation_reason
+    assert await _pintar(st) == "Respuesta del escritor." and st.pending_escalation_reason == antes
+
+
+async def test_no_pinta_sobre_la_respuesta_segura(monkeypatch):
+    _con_hechos(monkeypatch, {"cartagena": URL})  # D5
+    st = _estado(location="cartagena", is_colombian=False, _intenciones=["enlace"])
+    assert await _pintar(st, rag_agent.FALLBACK_ES) == rag_agent.FALLBACK_ES
+
+
+async def test_un_plan_sin_enlace_va_con_el_asesor(monkeypatch):
+    _con_hechos(monkeypatch, {"asesor": True})  # D7 (s03g): el Divemaster, las 4 diurnas…
+    st = _estado(location="cartagena", is_colombian=False, _intenciones=["enlace"])
+    salida = await _pintar(st)
+    assert "no se reserva por la web" in salida and "Te paso con un asesor" in salida and st.pending_escalation_reason
+    st2 = _estado(location="cartagena", is_colombian=False, _intenciones=["disponibilidad"])
+    salida2 = await _pintar(st2)
+    assert "no se reserva por la web" in salida2 and st2.pending_escalation_reason is None
+
+
+async def test_si_la_respuesta_ya_pregunta_el_origen_no_va_otra(monkeypatch):
+    _con_hechos(monkeypatch, {})  # D6
+    st = _estado(is_colombian=False, _intenciones=["enlace"])
+    con_pregunta = "Precios. ¿Saldrías *desde Cartagena* o ya estás *en las Islas del Rosario*? 🌊"
+    assert await _pintar(st, con_pregunta) == con_pregunta
+    assert "Te paso con un asesor" in await _pintar(st)  # la siguiente vez, el asesor
+
+
+async def test_en_ingles_y_en_grupo(monkeypatch):
+    _con_hechos(monkeypatch, {})
+    st = _estado(is_colombian=False, language="en", _intenciones=["enlace"])
+    assert "where you're leaving from" in await _pintar(st)
+    st = _estado(is_colombian=False, detected_group_size=3, _intenciones=["enlace"])
+    assert "Para darles el enlace" in await _pintar(st)
+
+
+def test_los_hechos_sin_enlaces_siguen_siendo_json():
+    # D4: el patrón se comía la comilla de cierre y el escritor recibía un JSON roto.
+    texto = json.dumps({"enlace": {"cartagena": URL, "island": URL_ISLAS}}, ensure_ascii=False, indent=1)
+    assert json.loads(sin_enlaces_de_reserva(texto)) == {"enlace": {"cartagena": "", "island": ""}}
+
+
+async def test_los_hechos_de_verdad_llegan_al_pintor(monkeypatch):
+    # Sin simular los hechos: lo que da `hechos.hechos` con el origen sabido es lo que pinta el pintor.
+    st = _estado(location="cartagena", is_colombian=False, detected_activity="certified_diving", _intenciones=["enlace"])
+    bloques = hechos_mod.hechos(st, ["enlace"], ["certified_diving"])
+    assert any(isinstance(u, str) and u.startswith("https://book.divingplanet.org") for b in bloques for u in b["enlace"].values())
+
+    async def _hechos(state, message, history):
+        return bloques, ["enlace"]
+    monkeypatch.setattr(redactor_hechos, "hechos_del_turno", _hechos)
+    salida = await _pintar(st)
+    assert salida.count("https://book.divingplanet.org") == 1
+
+
+def test_la_pieza_no_parte_un_enlace_en_el_parrafo_de_la_pregunta():
+    # Revisión del paso 5: el caso que rompía (el enlace y la pregunta final en el mismo párrafo).
+    salida = con_la_pieza(f"Aquí tienes los planes.\n\nReserva en {URL} ¿Te ayudo con algo más?", "PIEZA")
+    assert URL in salida and salida.endswith("¿Te ayudo con algo más?")

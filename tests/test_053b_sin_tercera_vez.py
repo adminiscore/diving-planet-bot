@@ -25,7 +25,8 @@ def test_a_la_tercera_sin_nada_que_decir_van_las_dos_salidas():
     estado = _estado()
     texto = componer(estado, f"¡Perfecto! 🙌\n\n{PREGUNTA}", escribio=False)
     assert "Desde dónde" not in texto and "Desde Cartagena" in texto and "Ya en las islas" in texto
-    assert "book.divingplanet.org" in texto and core.SIN_ENLACE_DE_LAS_ISLAS_ES in texto
+    # Bloque 4R (Gadea, 10-nov, #3738): sin saber el origen, ningún enlace (antes iban los dos, y el de las islas faltaba hasta el hotel).
+    assert "book.divingplanet.org" not in texto and core.SIN_ENLACE_DE_LAS_ISLAS_ES not in texto
     assert estado.core_pending_slot == "location"  # sigue pendiente, por si contesta
 
 

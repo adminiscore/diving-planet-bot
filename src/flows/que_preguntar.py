@@ -87,7 +87,7 @@ def tapar_enlaces(texto: str) -> tuple[str, list[str]]:
 
 # Sin el punto, la coma o el cierre de negrita que lo siguen: son de la frase, no del enlace (si no, la frase del enlace y la pregunta de
 # detrás parecían una sola y se iban juntas).
-_ENLACE_SIN_PUNTO_RE = re.compile(r"https?://\S+?(?=[.,;:!?)\]*_]*(?:\s|$))")
+_ENLACE_SIN_PUNTO_RE = re.compile(r"https?://[^\s\"'<>]+?(?=[.,;:!?)\]*_\"'<>]*(?:[\s\"'<>]|$))")
 
 
 def destapar_enlaces(texto: str, enlaces: list[str]) -> str:

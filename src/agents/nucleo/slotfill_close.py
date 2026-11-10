@@ -42,6 +42,7 @@ from src.flows.como_reserva import (
     GRUPO,
     HOTEL_PRIMERO,
     PARTE_SIN_ENLACE,
+    POR_EL_ASESOR,
     RECOGIDA_POR_CONFIRMAR,
     clave_de_idioma_y_grupo,
     como_reserva,
@@ -90,9 +91,11 @@ def _tras_la_tarjeta_ya_vista(state: ConversationState) -> str:
     if _veces_preguntada(state, SLOT_SAFETY) < _VECES_MAX:
         _contar_la_pregunta(state, SLOT_SAFETY)
         return _nota_seguridad(state).strip()
-    if como_reserva(state) != ENLACE:
+    if como_reserva(state) in POR_EL_ASESOR:  # bloque 4R: con HOTEL_PRIMERO, ni enlace ni asesor (hotel-antes-de-reservar)
         lang = state.language if state.language != "es" else ("es_grupo" if (state.detected_group_size or 1) > 1 else "es_uno")
         return _OFERTA_DEL_ASESOR.get(lang, _OFERTA_DEL_ASESOR["en"])
+    if como_reserva(state) == HOTEL_PRIMERO:
+        return cuando_tenga_el_hotel(state)
     return ("Cuando quieras, reservas con el enlace de arriba: ahí eliges la fecha y las personas. 🌊" if state.language == "es"
             else "Whenever you're ready, book with the link above: you choose the date and the number of people there. 🌊")
 
@@ -166,7 +169,8 @@ def _refresher_note(state: ConversationState) -> str:
     if not state.refresher_interested:
         return ""
     price = cart_render.refresher_price_text(state, una_moneda=True)  # G3-07a
-    url = None if state.is_colombian else cart_render.refresher_booking_url(state)
+    # Bloque 4R (C1): el enlace del refresher, solo si el plan va por la web (no al colombiano, al grupo ni a la recogida por confirmar).
+    url = cart_render.refresher_booking_url(state) if como_reserva(state) == ENLACE else None
     if state.language == "es":
         how = f" Resérvalo aquí: {url}" if url else " El asesor te lo confirma junto con el pago."
         return (
@@ -268,6 +272,7 @@ def _finalize(state: ConversationState, *, pasar_al_asesor: bool = True, ofrecer
 
     lang = state.language
     state.core_pending_slot = None
+    state._tarjeta_del_turno = True  # bloque 4R: la tarjeta pinta su enlace o su pase; el pintor de la entrega no repite nada
     # Siempre desde el estado (tarea 7b, 2026-09-15): con el carrito congelado tras
     # el primer cierre, "espera, en realidad no somos colombianos" re-emitia el mismo
     # resumen en COP. Las altas post-cierre ya estan en el reparto, asi que no se pierden.

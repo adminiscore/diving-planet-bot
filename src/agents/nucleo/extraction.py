@@ -758,7 +758,13 @@ async def _extraction_phase_body(
     # re-emitir el resumen completo — el buceo original nunca se pierde.
     if prev_cart_types:
         if _rehacer_la_tarjeta_si_no_cuadra(state):
-            response = cart_render.goto_final_summary(state)
+            from src.agents.nucleo.slotfill_close import _finalize  # lazy
+            from src.flows.como_reserva import ENLACE, como_reserva  # lazy
+
+            # Bloque 4R (C1): la tarjeta rehecha pasa por la misma decisión que la del cierre (el grupo que llega a 5, el colombiano):
+            # sin enlaces y con el porqué, sin pasar todavía; antes salía con los enlaces y el compositor los quitaba.
+            response = (cart_render.goto_final_summary(state) if como_reserva(state) == ENLACE
+                        else _finalize(state, pasar_al_asesor=False, ofrecer=False))
             state.core_pending_slot = None
             supervisor._maybe_build_pending_note(state)
             state.history.append({"role": "assistant", "content": response})

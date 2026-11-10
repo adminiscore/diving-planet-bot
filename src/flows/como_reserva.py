@@ -113,7 +113,7 @@ class Entrega:
 
 
 # Bloque 4R (C2 y la puerta): un enlace de reserva, sin el punto o la coma de la frase que lo sigue.
-_ENLACE_DE_RESERVA_RE = re.compile(r"https?://book\.divingplanet\.org/\S+?(?=[.,;:!?)\]*_]*(?:\s|$))")
+_ENLACE_DE_RESERVA_RE = re.compile(r"https?://book\.divingplanet\.org/[^\s\"'<>]+?(?=[.,;:!?)\]*_\"'<>]*(?:[\s\"'<>]|$))")
 
 
 def sin_enlaces_de_reserva(texto: str) -> str:

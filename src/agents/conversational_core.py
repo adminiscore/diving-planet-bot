@@ -896,6 +896,9 @@ async def _rag_answer(
     await await_pending_notes(state)
     if not sin_precio and (con_hechos := await _con_hechos(state, message,
                                                             state.history if history is None else history)):
+        if puerta_al_recoger:
+            state._entrega_al_recoger = message  # bloque 4R: en paralelo, se pinta al recoger (si la respuesta se tira, nada cambia)
+            return con_hechos
         return await _con_la_entrega(state, message, con_hechos, history)
     if state.is_colombian is None:
         # gen-14 (21-oct): «Somos de Cali… ¿cuánto vale la salida?» se cotizaba en USD porque el RAG se escribía antes de
@@ -999,6 +1002,8 @@ def marcar_turno_de_la_reserva(state: ConversationState) -> None:
     La pregunta la decide la tabla (`src/flows/que_preguntar.py`) después de leer el mensaje y la pone el código, una vez y al final. Sin
     la reserva en marcha (ni el idioma ni el pase), el escritor contesta como siempre."""
     state._turno_de_la_reserva = bool(state.core_pending_slot) and state.step == Step.FREE_TEXT
+    state._tarjeta_del_turno = False  # bloque 4R: la pone `_finalize`; con ella, el pintor de la entrega no pinta
+    state._entrega_al_recoger = None
 
 
 def contar_si_el_escritor_pregunta(entradas: dict, answer: str | None) -> None:
@@ -1137,11 +1142,18 @@ async def _take_parallel_answer(state: ConversationState) -> str | None:
     except Exception as exc:  # noqa: BLE001 — si el RAG falla, el turno sigue sin respuesta
         logger.warning(f"[CORE][U3-4] la respuesta en paralelo falló, sigue la reserva: {exc}")
         return None
+    al_recoger = getattr(state, "_entrega_al_recoger", None)
+    state._entrega_al_recoger = None
     if puerta := getattr(state, "_puerta_al_recoger", None):
         # La puerta del origen, con lo que la extracción de este mensaje ya guardó (`_con_la_puerta`).
         state._puerta_al_recoger = None
         answer = _puerta_del_origen(state, puerta[0], answer, sin_precio=puerta[1], pieza_pedida=puerta[2])
-        answer = await _con_la_entrega(state, puerta[0], answer, None)  # bloque 4R (C3), ya con lo guardado
+        al_recoger = puerta[0]
+    if al_recoger:
+        try:
+            answer = await _con_la_entrega(state, al_recoger, answer, None)  # bloque 4R (C3), ya con lo guardado
+        except Exception as exc:  # noqa: BLE001 — si el pintor falla, el turno sigue con la respuesta del escritor
+            logger.warning(f"[CORE][4R] el pintor de la entrega falló al recoger: {exc}")
     return answer
 
 

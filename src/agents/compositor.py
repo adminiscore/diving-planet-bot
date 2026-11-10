@@ -22,7 +22,7 @@ import re
 import unicodedata
 
 from src.flows import que_preguntar
-from src.flows.como_reserva import ENLACE, como_reserva, hotel_conocido
+from src.flows.como_reserva import ENLACE, como_reserva
 
 logger = logging.getLogger("uvicorn.error")
 
@@ -157,18 +157,17 @@ def _contar_la_pregunta(state, slot: str | None) -> None:
 
 def _las_dos_salidas(state, cuerpo: str) -> str | None:
     """Mini 0.53: el freno dejaba salir la 3.ª y la 4.ª vez cuando no quedaba nada más que decir («Frances» → «¿Desde dónde
-    saldrías?»). Si el plan tiene una salida por origen, en vez de la misma pregunta van las dos, con su precio y su enlace, y el
-    cliente elige. Sin eso (varios planes por origen), None: se pregunta."""
+    saldrías?»). Si el plan tiene una salida por origen, en vez de la misma pregunta van las dos, con su precio, y el cliente elige. Sin
+    enlaces (bloque 4R, Gadea #3738: sin saber el origen, ninguno; si quiere reservar, el pintor de la entrega le pide el origen con su
+    motivo). Sin eso (varios planes por origen), None: se pregunta."""
     from src.agents import conversational_core as core  # lazy
 
-    salidas = core._dos_variantes(state, con_enlace=como_reserva(state) == ENLACE)
+    salidas = core._dos_variantes(state, con_enlace=False)
     if not salidas:
         return None
     logger.info(f"[CORE][053B] compositor: el origen ya salió {_VECES_MAX} veces: van las dos salidas en vez de la pregunta")
     _aplazar(state)
-    # Con enlaces, el de las islas falta hasta que diga su hotel (CALN-35).
-    cola = core.SIN_ENLACE_DE_LAS_ISLAS_ES if state.language == "es" else core.SIN_ENLACE_DE_LAS_ISLAS_EN
-    return _PARRAFO.join(x for x in (cuerpo.strip(), salidas, cola if "http" in salidas and not hotel_conocido(state) else "") if x)
+    return _PARRAFO.join(x for x in (cuerpo.strip(), salidas) if x)
 
 
 def _con_el_freno_del_origen(state, respuesta: str) -> str:
