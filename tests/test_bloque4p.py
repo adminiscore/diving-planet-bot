@@ -123,6 +123,13 @@ _CASOS = [
      {"booking_change_topic": "cancellation"}, "cancellation"),
     ({"ya_reservado": True}, "ahora somos 4, ¿pueden sumar a uno?", {"booking_change_topic": "modify_headcount"},
      "modify_headcount"),
+    # F1 (revisión del 10-nov): quien ya reservó y nombra lo reservado (affirms_activity incluye «have already booked»)
+    ({"ya_reservado": True, "detected_activity": "snorkel"}, "¿podemos pasar el snorkel al domingo?",
+     {"changes_date": True, "booking_change_topic": "reschedule", "affirms_activity": True}, "reschedule"),
+    ({"ya_reservado": True, "detected_activity": "snorkel"}, "¿podemos pasar el snorkel al domingo?",
+     {"changes_date": True, "affirms_activity": True, "needs_staff": True}, "reschedule"),
+    ({"ya_reservado": True, "detected_activity": "snorkel"}, "ahora somos 4, ¿pueden sumar a uno?",
+     {"booking_change_topic": "modify_headcount", "affirms_activity": True}, "modify_headcount"),
     ({}, "¿me confirman que recibieron mi pago?", {"needs_staff": True}, "persona"),
     ({}, "pásame los nombres de los que reservaron mañana", {"pide_datos_ajenos": True}, "privacidad"),
 ]
@@ -208,8 +215,9 @@ async def test_c3_un_pase_que_vuelve_contesta_lo_demas_sin_repetir_el_texto_fijo
 @pytest.mark.asyncio
 async def test_c3_sin_nada_mas_que_contestar_queda_solo_la_linea_corta(monkeypatch, lo_demas):
     from src.agents.escalation_agent import YA_LO_TIENE
+    from src.agents.rutas.safety import MOTIVO_NEEDS_STAFF
 
-    _, resp = await _turno(monkeypatch, "post-venta o empresa: lo revisa una persona", Step.ESCALATE, mensaje="ok",
+    _, resp = await _turno(monkeypatch, MOTIVO_NEEDS_STAFF, Step.ESCALATE, mensaje="ok",
                            senales={"asks_question": False})
     assert resp == YA_LO_TIENE["es"]
 
@@ -221,9 +229,13 @@ async def test_c3_el_primer_pase_no_cambia(monkeypatch, lo_demas):
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("motivo", ["complaints_or_emergencies", "cambio de fecha de una reserva: lo gestiona una persona"])
-async def test_c3_las_urgencias_y_el_cambio_de_reserva_mantienen_su_texto(monkeypatch, lo_demas, motivo):
-    # las urgencias van solas a propósito; el texto del cambio de una reserva lleva la política
+@pytest.mark.parametrize("motivo", [
+    "complaints_or_emergencies", "cambio de fecha de una reserva: lo gestiona una persona", "weather_conditions",
+    "grupo privado o evento de empresa: cotización a medida", "🚨 LINK ROTO reportado por el cliente — revisar URLs",
+    "el cliente pide un número o contacto directo: lo atiende una persona", "datos sensibles detectados"])
+async def test_c3_los_pases_que_dicen_algo_mantienen_su_texto(monkeypatch, lo_demas, motivo):
+    # F2 (revisión del 10-nov): las urgencias van solas; el cambio lleva la política, el clima el «operamos todos los
+    # días…», el grupo privado que no tiene precio fijo, el enlace roto su acuse y el contacto que no hay números
     _, resp = await _turno(monkeypatch, motivo, Step.ESCALATE)
     assert resp.endswith(_PASE_FIJO)
 
@@ -236,3 +248,28 @@ async def test_c3_preguntar_si_es_un_bot_no_deshace_el_pase():
     st = _estado(step=Step.ESCALATE)
     await deflection_node({"conv_state": st, "message": "¿eres un bot?", "signals": {PREGUNTA_SI_ES_IA: True}})
     assert st.step == Step.ESCALATE
+
+
+@pytest.mark.asyncio
+async def test_c3_un_escenario_nuevo_no_es_un_pase_que_vuelve(monkeypatch, lo_demas):
+    """F3 (revisión del 10-nov): «Hola, soy Ana, somos 6…» reinicia la conversación; el pase de ese turno es el primero."""
+    from src.agents import supervisor
+    from src.agents.rutas.router import _reset_to_fresh_scenario
+
+    async def _grafo(state, message):
+        from src.agents.lead_summary import pasar_a_persona
+
+        _reset_to_fresh_scenario(state)
+        state._senales_router = {"asks_question": True}
+        pasar_a_persona(state, "solicitó asesor")
+        return _PASE_FIJO
+    monkeypatch.setattr("src.orchestration.graph.run_turn_via_graph", _grafo)
+    st = _estado(step=Step.ESCALATE)
+    resp = await supervisor.route_message(st, "Hola, soy Ana, somos 6 y queremos hablar con alguien")
+    assert resp.endswith(_PASE_FIJO)
+
+
+def test_c0_reproducir_juez_pre_guarda_y_recarga_el_estado_entre_turnos():
+    remoto = _remoto("reproducir_juez_pre.py")
+    assert "st = deserialize_state(serialize_state(st), st.conversation_id)" in remoto
+    assert remoto.index("st.pending_escalation_reason = None") < remoto.index("deserialize_state(serialize_state(st)")

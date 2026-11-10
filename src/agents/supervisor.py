@@ -184,7 +184,7 @@ async def route_message(state: ConversationState, message: str) -> str:
 
     escalation_before = state.pending_escalation_reason
     paso_antes = state.step
-    state._pase_del_turno = None  # 4P (C3): lo marca `pasar_a_persona`
+    state._pase_del_turno = state._escenario_nuevo = None  # 4P (C3): los marcan `pasar_a_persona` y el reinicio
     state._senales_router = None
     state._preguntas_del_turno = []  # CALN-6: las preguntas de la reserva de ESTE turno (`ask_slot`)
     state._sugerida_al_empezar = state.suggested_activity  # CALN-6 paso 2: si su pregunta no sale, se deshace
@@ -202,7 +202,7 @@ async def route_message(state: ConversationState, message: str) -> str:
 
         # Bloque 4P (C3): un pase de texto fijo con la conversación ya en manos de una persona no se repite.
         repetido = (paso_antes == Step.ESCALATE and getattr(state, "_pase_del_turno", None) is not None
-                    and pase_que_no_se_repite(state.pending_escalation_reason))
+                    and not getattr(state, "_escenario_nuevo", None) and pase_que_no_se_repite(state.pending_escalation_reason))
         if ((state.pending_escalation_reason not in (None, escalation_before) or repetido) and isinstance(response, str)
                 and not hechos_del_turno().get("rag_used")):
             # gen-13: el turno acaba de pasar a un asesor; las OTRAS preguntas del mensaje se contestan delante. CALN-6:
@@ -211,8 +211,9 @@ async def route_message(state: ConversationState, message: str) -> str:
             from src.agents.conversational_core import _greeting
 
             # Con el paso ya en ESCALATE el RAG recibe «la conversación ya está con una persona» y dice «el asesor ya
-            # tiene tu caso» encima de «te paso ahora» (lo mismo que gen-1): contesta con el paso de antes del pase.
-            paso_del_pase, state.step = state.step, (Step.FREE_TEXT if repetido else paso_antes)
+            # tiene tu caso» encima de «te paso ahora» (lo mismo que gen-1): contesta con el paso de antes del pase, y
+            # nunca con ESCALATE (4P: tampoco cuando la conversación ya estaba pasada).
+            paso_del_pase, state.step = state.step, (Step.FREE_TEXT if paso_antes == Step.ESCALATE else paso_antes)
             try:
                 antes = await lo_contestable_en_cualquier_pase(state, message)
             finally:

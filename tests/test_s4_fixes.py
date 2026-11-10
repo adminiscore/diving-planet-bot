@@ -94,7 +94,11 @@ def test_post_venta_va_al_nodo_de_escalado():
 def test_cambio_de_fecha_con_el_carrito_abierto_va_a_cambios_solo_con_reserva(monkeypatch):
     """3-nov (decisión de Gadea): sin una reserva hecha, cambiar el día no pasa al asesor; con ella, sí (s4-6)."""
     st = _state(detected_activity="snorkel", detected_group_size=3, location="cartagena")
-    monkeypatch.setattr(supervisor, "_in_active_cart_building", lambda s: True)
+    from src.agents.rutas import (
+        changes as rutas_changes,  # 4P (C2): la decisión vive ahí, no en supervisor
+    )
+
+    monkeypatch.setattr(rutas_changes, "_in_active_cart_building", lambda s: True)
     signals = {"booking_change_topic": "reschedule", "changes_date": True}
     assert router.classify_route(st, "espera, mejor cambiemos la fecha", signals) != router.ROUTE_CHANGE
     st.ya_reservado = True
@@ -104,9 +108,12 @@ def test_cambio_de_fecha_con_el_carrito_abierto_va_a_cambios_solo_con_reserva(mo
     # el ya_reservado de Jev no basta, como en la posventa (`_modo_posventa`): manda lo que se está reservando. Antes este
     # turno pasaba al asesor con la señal cruda.
     assert router.classify_route(st, "mejor el sábado", {**signals, "ya_reservado": True}) != router.ROUTE_CHANGE
-    # sin una reserva nueva en curso (no hay actividad elegida), la señal de Jev sí vale
+    # sin una reserva nueva en curso (no hay actividad elegida), la señal de Jev sí vale; sin ella, cambiar el día no pasa
+    # al asesor (Gadea, 10-nov). Solo con la pregunta del día: el tema del router sin carrito valdría por sí solo.
     st_sin_carrito = _state()
-    assert router.classify_route(st_sin_carrito, "mejor el sábado", {**signals, "ya_reservado": True}) == router.ROUTE_CHANGE
+    solo_el_dia = {"changes_date": True}
+    assert router.classify_route(st_sin_carrito, "mejor el sábado", {**solo_el_dia, "ya_reservado": True}) == router.ROUTE_CHANGE
+    assert router.classify_route(st_sin_carrito, "mejor el sábado", solo_el_dia) != router.ROUTE_CHANGE
     # sin la pregunta de Jev, la señal del router sigue sin valer con el carrito abierto
     assert router.classify_route(st, "hazlo para 3 días", {"booking_change_topic": "reschedule"}) != router.ROUTE_CHANGE
 

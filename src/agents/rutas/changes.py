@@ -148,14 +148,15 @@ def _jev_changes_date(signals: dict, state: ConversationState | None = None) -> 
 
 
 def tiene_reserva_hecha(state: ConversationState, signals: dict) -> bool:
-    """Bloque 4P (C2): ¿ya tiene una reserva hecha? Lo mismo que la posventa (`availability._modo_posventa`), sin tocar el
-    estado; antes el cambio de fecha miraba la señal cruda de Jev y la posventa no (manda la reserva nueva en curso)."""
+    """Bloque 4P (C2): ¿ya tiene una reserva hecha? Lo recordado cuenta siempre, también si nombra lo que reservó
+    (`affirms_activity` incluye «have already booked»); la señal de Jev de este turno, salvo con una reserva nueva en curso,
+    como en la posventa (`availability._modo_posventa`). Antes el cambio de fecha miraba la señal cruda."""
     from src.agents.nucleo.availability import (
         _reserva_nueva_en_curso,  # lazy: el núcleo importa de las rutas
     )
 
     if getattr(state, "ya_reservado", False):
-        return signals.get("ya_reservado") is True or signals.get("affirms_activity") is not True
+        return True
     return signals.get("ya_reservado") is True and not _reserva_nueva_en_curso(state)
 
 

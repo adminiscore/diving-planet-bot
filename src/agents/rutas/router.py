@@ -78,6 +78,7 @@ def _reset_to_fresh_scenario(state: ConversationState) -> None:
     automatically."""
     fresh = ConversationState(conversation_id=state.conversation_id, language=state.language)
     state.__dict__.update(fresh.__dict__)
+    state._escenario_nuevo = True  # 4P (C3): un pase en este turno no es un pase que vuelve
 
 
 def _normalize_for_menu_match(text: str) -> str:

@@ -147,6 +147,9 @@ def _broken_link_escalation_response(state: ConversationState, message: str) -> 
     )
 
 
+MOTIVO_NEEDS_STAFF = "post-venta: lo revisa una persona (reserva o pago ya hechos, correos, documentos, factura)"
+
+
 def decidir_pase(state: ConversationState, message: str, signals: dict) -> str | None:
     """Bloque 4P (C2): el pase fuera de la reserva, en UN sitio para el router y la cascada y sin tocar el estado:
     `privacidad` (antes solo con `needs_staff`), un cambio de una reserva (`TIPOS_DE_CAMBIO`: política y pase), `persona`
@@ -190,8 +193,7 @@ def _needs_staff_handoff(state: ConversationState, message: str, routing_signals
         )
     if routing_signals.get("needs_staff") is not True:
         return None
-    reason = "post-venta o empresa: lo revisa una persona (reserva/pago ya hechos, agencia, documentos)"
-    pasar_a_persona(state, reason)
+    pasar_a_persona(state, MOTIVO_NEEDS_STAFF)
     logger.info("[SUPERVISOR] needs_staff (Jev) -> pase a una persona")
     if _reply_language(state, message) == "es":
         return (
