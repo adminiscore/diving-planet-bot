@@ -21,3 +21,5 @@ tocar nada más (`docs/plan/memoria.md`, norma 9). La última línea se copia en
 | 10-nov | `caln34-gadea` frente a 0,5+2a (`bloque2a-gadea` ab255db5) | 0,5 y 2a (`panel-vara`, reloj del jueves 5; una pasada de momento) | Rescue (visto-6916) 1/3 → 0/3; tercera oferta del pase (visto-6940) 3/3 → 1/3 | 11, 10, 6 → 9,0 frente a 11, 9, 9 → 9,7 | 9-nov (huella 9326257c) | 2a: +38 | test_bloque2a | 3,99 → 3,93 | 571 · 67 % → 575 · 67 % | Claude de Gadea |
 
 | 10-nov | caln34 frente a 0,5+2a, tanda de la vara (10 clientes que reaccionan por lado) | 0, 0,5 y 2a | graves del 2a: agencia al asesor y enlace sin hotel (bloque 4) | 0/1 → 2/2 de 10 (no cuenta) | 9-nov (huella 9326257c) | — | — | — | — | Claude de Gadea |
+
+| 10-nov (2.ª pasada) | caln34 frente a 0,5+2a (`bloque2a-gadea`) | 0,5 y 2a en `panel-vara`, reloj del jueves 5, 6 juicios por lado | Rescue y tercera oferta del pase, caídos | 11/8, 10/12, 6/8 → **9,2** frente a 11/9, 9/5, 9/9 → **8,7** (−0,5, no cuenta) | 9-nov (huella 9326257c) | 2a: +38 | test_bloque2a | 3,99 → 3,93 | 571 · 67 % → 575 · 67 % | Claude de Gadea |
