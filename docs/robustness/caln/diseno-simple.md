@@ -57,7 +57,7 @@ V1 o V2 pasa a ser la base nueva, y el plan se dedica a quitar piezas, si frente
 |---|---|
 | Panel, graves de 40 | V1 − B ≤ +1,5. Con el ruido medido (desviación de la diferencia, 0,76): si son iguales, pasa el 98 %; si V1 es 3 peor, el 2 % |
 | Ciegos del panel | V1 − B ≤ +1,5. **Es el que más pesa**, con los reales: V1 lee el 99 % de lo que lee el juez y las decisiones salen de los vistos |
-| Reales, graves de 75 | El umbral se fija con el ruido de B en 3 tiradas, antes de juzgar V1, y se apunta aquí |
+| Reales, graves de 75 | **V1 − B ≤ +2,5.** Fijado el 10-nov a las 16:30, antes de juzgar V1: B en 3 tiradas, 5,5 · 8,5 · 2,5 (media 5,5; desviación entre tiradas 3,0; la de la diferencia con 3+3 tiradas, ~2,45). Si son iguales, pasa ~84 %; si V1 es 5 peor, ~16 % |
 | Clientes que pasan con una persona | V1 ≤ B (en V1 el pase es texto, y pasar de más casi nunca es grave para el juez). Y «pasar.si» coincide con el texto |
 | Importes que no están en el catálogo | Contados por código: V1 ≤ B |
 | Estilo en los reales | Caracteres de mediana ≤ 300 y con pregunta ≤ 50 % |
