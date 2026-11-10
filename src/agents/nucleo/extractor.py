@@ -1086,23 +1086,21 @@ async def datos_del_extractor(state: ConversationState, message: str) -> dict | 
     llamada falló o no hay extractor: el turno sigue con lo de hoy."""
     from src.agents.extractor_turno import extraer_turno  # lazy
 
+    # Bloque 1 (10-nov): la tarea sigue colgada del estado hasta que se publica la lectura. Antes se soltaba al empezar y,
+    # mientras se esperaba (y el lector del grupo), `lectura_del_extractor` no veía ni la tarea ni la lectura: relanzaba
+    # el extractor y vaciaba el lector del grupo (23 a 29 de cada 117 turnos con dos lecturas; visto-6926).
     tarea = getattr(state, "_extraccion_adelantada", None)
-    state._extraccion_adelantada = None
+    if tarea is None:
+        tarea = state._extraccion_adelantada = asyncio.ensure_future(extraer_turno(
+            message, history=list(state.history or []), sabido=_sabido_para_extractor(state), lang=state.language or "es"))
     try:
-        if tarea is not None:
-            datos = await tarea
-        else:
-            sabido = _sabido_para_extractor(state)
-            datos = await extraer_turno(message, history=list(state.history or []), sabido=sabido,
-                                        lang=state.language or "es")
+        datos = await tarea
     except (asyncio.CancelledError, Exception) as exc:  # noqa: BLE001
         logger.warning(f"[EXTRACT][EX5] el extractor falló, se sigue con lo de hoy: {exc!r}")
         datos = None
     datos = _sin_los_cursos_que_ya_tienen(state, await _con_el_lector_del_grupo(state, message, datos))
-    # lat-6 (24-oct): lo que lea después este mismo turno (`lectura_del_extractor`: el redactor, el enrutado) sale de
-    # aquí. Antes la tarea se soltaba y se pedía OTRA extracción en serie (~1 s; en real-1, 13 % de los turnos y antes
-    # de que empezara el redactor).
-    state._lectura_del_turno = (message, datos)
+    # lat-6 (24-oct): lo que lea después este mismo turno (`lectura_del_extractor`: el redactor, el enrutado) sale de aquí.
+    state._extraccion_adelantada, state._lectura_del_turno = None, (message, datos)
     return datos  # None = la llamada falló (degradado)
 
 
