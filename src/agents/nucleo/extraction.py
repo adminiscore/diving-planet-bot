@@ -56,6 +56,7 @@ from src.agents.llm_extractor import (
 from src.agents.nucleo.extractor import (
     _CAMPOS_LISTA_CERRADA,
     _aplicar_extractor,
+    marcar_guardado,
 )
 from src.agents.nucleo.huecos import ask_slot
 from src.agents.nucleo.reparto import (
@@ -734,6 +735,7 @@ async def _extraction_phase_body(
         # (sparring s07). Queda el efecto y el turno sigue; la regla la dicen el escritor y, si hace falta, el aviso
         # «grupo-mixto-todo-usd».
         state.is_colombian = False
+    marcar_guardado(state)  # bloque 1: lo de este mensaje ya está guardado; la respuesta en paralelo lo esperaba
 
     # Circuit-breaker (portado 2026-09-01, hallazgo en vivo, batería de
     # grupos mixtos contra PRE, lote 8): corre SIEMPRE, incluso en el turno

@@ -927,8 +927,8 @@ def mezclado_del_mensaje(state: ConversationState, datos: dict) -> bool:
     venezolano con cédula y su esposa colombiana, que pagan los dos en pesos y el extractor daba por mezclados). Si Jev calla, lo
     que diga el extractor. Su «no» solo manda sin nacionalidad guardada (revisión de Álvaro, #3170): Jev mira el último mensaje,
     y «somos dos colombianos» + «se nos suma una amiga alemana» habla de una sola persona; ahí vale el extractor, que tiene lo
-    sabido. Lo usan también las copias del estado de quien contesta antes de que se guarde (gen-14, `lectura.foto_del_turno`):
-    con la marca del extractor a secas, la pieza del venezolano salía en USD (banco-graves g-venezolano-cedula, 0/3)."""
+    sabido. Con la marca del extractor a secas, la pieza del venezolano salía en USD (banco-graves g-venezolano-cedula,
+    0/3); desde el bloque 1, quien contesta lee lo que la extracción guarda con esta regla (`con_lo_guardado`)."""
     from src.agents.jev_router import GRUPO_MIXTO  # lazy
 
     mezclado = (getattr(state, "_senales_router", None) or {}).get(GRUPO_MIXTO)
@@ -983,6 +983,7 @@ def lanzar_extraccion_adelantada(state: ConversationState, message: str) -> None
     """ex-5 (fase EX): el extractor "LLM primero" arranca con el turno, a la vez que el enrutador (no depende de
     Jev), como el RAG adelantado. `_understand` lo espera (`datos_del_extractor`); si el turno no llega, se cancela."""
     state._lectura_del_turno = None  # lat-6: la lectura del turno anterior ya no vale
+    state._guardado = asyncio.Event()  # bloque 1: lo de este mensaje aún no está guardado (`con_lo_guardado`)
     state._lector_grupo = None
     state._segunda_nacionalidad = state._args_nacionalidad = None  # CALN-10b: las de este turno, abajo
     if not campos_del_extractor():
@@ -1102,6 +1103,26 @@ async def datos_del_extractor(state: ConversationState, message: str) -> dict | 
     # lat-6 (24-oct): lo que lea después este mismo turno (`lectura_del_extractor`: el redactor, el enrutado) sale de aquí.
     state._extraccion_adelantada, state._lectura_del_turno = None, (message, datos)
     return datos  # None = la llamada falló (degradado)
+
+
+def marcar_guardado(state: ConversationState) -> None:
+    """Bloque 1: lo que dice este mensaje ya está en el estado, o ya no se va a guardar antes de contestar."""
+    if (guardado := getattr(state, "_guardado", None)) is not None:
+        guardado.set()
+
+
+async def con_lo_guardado(state: ConversationState, message: str) -> None:
+    """Bloque 1 (10-nov): quien contesta lo hace con lo que la extracción guardó de este mensaje, y no con una copia del
+    estado que repetía sus reglas (`lectura.foto_del_turno` y la de gen-14). La respuesta en paralelo espera a que la
+    extracción del núcleo guarde (`marcar_guardado`); un turno que contesta sin el núcleo guarda antes de contestar lo
+    mismo que guardaba al final (`_guardar_lo_dicho`)."""
+    guardado = getattr(state, "_guardado", None)
+    if guardado is None or guardado.is_set():
+        return
+    if asyncio.current_task() is getattr(state, "_pending_answer", None):
+        await guardado.wait()
+    else:
+        await _guardar_lo_dicho(state, "ANTES_DE_CONTESTAR", message)
 
 
 # CALN-8 (lo delgado): con qué confianza de Jev en que el mensaje mete a otra persona sale el lector del grupo. En la
@@ -1252,17 +1273,27 @@ async def guardar_lo_dicho_sin_nucleo(state: ConversationState) -> None:
     await _guardar_lo_dicho(state, "SIN_NUCLEO")
 
 
-async def _guardar_lo_dicho(state: ConversationState, motivo: str) -> None:
+async def _guardar_lo_dicho(state: ConversationState, motivo: str, message: str | None = None) -> None:
     """Espera la extracción adelantada del turno y guarda sus datos (cita comprobada) solo en los campos que la
-    conversación aún no sabe: nunca se pisa nada."""
+    conversación aún no sabe: nunca se pisa nada. Con `message` (bloque 1: antes de contestar), la lectura queda
+    publicada para lo que lea después este turno, como en `datos_del_extractor`."""
+    try:
+        await _guardar_y_publicar(state, motivo, message)
+    finally:
+        marcar_guardado(state)
+
+
+async def _guardar_y_publicar(state: ConversationState, motivo: str, message: str | None) -> None:
     tarea = getattr(state, "_extraccion_adelantada", None)
     if tarea is None:
         return
-    state._extraccion_adelantada = None
     try:
         datos = await asyncio.wait_for(tarea, timeout=4)
     except (TimeoutError, asyncio.CancelledError, Exception):  # noqa: BLE001 — el pase no se rompe por esto
         datos = None
+    state._extraccion_adelantada = None  # bloque 1: hasta aquí sigue colgada, como en `datos_del_extractor`
+    if message is not None:
+        state._lectura_del_turno = (message, datos)
     if datos is None:
         _el_extractor_no_leyo(state)
         return

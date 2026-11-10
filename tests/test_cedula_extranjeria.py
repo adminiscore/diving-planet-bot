@@ -1,10 +1,8 @@
 """Mini de la 0.52 (4-nov; Gadea #3202): «Yo tengo extrangeria» tras una charla que ya habla de colombianos y extranjeros lo
 leía el extractor como «soy extranjero» y el bot cobraba en USD a un residente. Jev afirma que tiene la cédula de extranjería
 (`tiene_cedula_extranjeria`); el grupo mixto manda sobre ella."""
-import asyncio
 from types import SimpleNamespace
 
-from src.agents import conversational_core as core
 from src.agents.jev_router import GRUPO_MIXTO, TIENE_CEDULA, _questions_for_turn, answers_to_signals
 from src.agents.nucleo import extractor as nx
 from src.agents.nucleo.extractor import _poner_nacionalidad, con_la_cedula
@@ -56,25 +54,3 @@ def test_lo_ya_guardado_de_otra_manera_se_confirma_no_se_pisa(monkeypatch):
     estado.is_colombian = False
     _poner_nacionalidad(intent, estado, "Bueno, en realidad tengo la extranjería", {"is_colombian": False})
     assert confirmados == [{"is_colombian": True}] and intent.is_colombian is None
-
-
-def test_el_escritor_del_turno_ya_recibe_la_nacionalidad_de_la_cedula(monkeypatch):
-    async def lectura(state, message):
-        return {"is_colombian": False}
-
-    monkeypatch.setattr(nx, "lectura_del_extractor", lectura)
-    estado = _estado({TIENE_CEDULA: True, GRUPO_MIXTO: False})
-    copia = asyncio.run(core._con_la_nacionalidad_del_mensaje(estado, "Yo tengo extrangeria"))
-    assert copia.is_colombian is True and estado.is_colombian is None
-
-
-def test_los_hechos_del_codigo_tambien_cotizan_al_residente_con_cedula():
-    # banco-graves g-venezolano-cedula: el estado quedaba en True, pero el escritor con los hechos daba la pieza en USD.
-    from src.agents import redactor_hechos
-
-    # El extractor lo daba además por mezclado (venezolano + esposa colombiana); Jev dice que no, y sin nada guardado manda Jev.
-    datos = {"is_colombian": None, "mixed_nationality": True}
-    foto = redactor_hechos._foto(_estado({TIENE_CEDULA: True, GRUPO_MIXTO: False}), datos, None)
-    assert foto.is_colombian is True and not foto.mixed_nationality_notice
-    mixto = redactor_hechos._foto(_estado({TIENE_CEDULA: True, GRUPO_MIXTO: True}), {"is_colombian": None}, None)
-    assert mixto.is_colombian is None and mixto.mixed_nationality_notice is True

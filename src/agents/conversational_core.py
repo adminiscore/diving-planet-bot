@@ -852,33 +852,6 @@ async def _answer_question(
     return answer
 
 
-async def _con_la_nacionalidad_del_mensaje(state: ConversationState, message: str) -> ConversationState:
-    """gen-14 (21-oct, flag `rag_espera_la_nacionalidad`): el RAG de un turno con pregunta se escribe
-    ANTES de que la extracción apunte lo que dice ESE mensaje, así que «Somos de Cali… ¿cuánto vale la salida?» se
-    cotizaba en USD con la regla de «sin nacionalidad, USD» (banco dialogos-gen14-moneda: is_colombian True y la
-    respuesta en USD 2/2). Con el
-    flag, el RAG recibe una COPIA del estado con la nacionalidad que la extracción del turno ya leyó (no se gasta ni
-    se lanza otra: es la tarea adelantada del extractor); el estado de verdad lo sigue escribiendo la extracción."""
-    if state.is_colombian is not None:
-        return state
-    from src.agents.nucleo.extractor import (  # lazy
-        con_la_cedula,
-        lectura_del_extractor,
-        mezclado_del_mensaje,
-    )
-
-    datos = await lectura_del_extractor(state, message)
-    valor = con_la_cedula(state, (datos or {}).get("is_colombian"))  # «Yo tengo extrangeria»: residente, en pesos
-    if valor is None or mezclado_del_mensaje(state, datos or {}):
-        return state
-    import copy
-
-    copia = copy.copy(state)
-    copia.is_colombian = valor
-    logger.info(f"[CORE][GEN14] el RAG ya sabe la nacionalidad de este mensaje: is_colombian={valor}")
-    return copia
-
-
 async def _con_hechos(state: ConversationState, message: str, history: list) -> str | None:
     """ARQ-1d: si el mensaje solo pide intenciones que el código sabe contestar, la respuesta del redactor de hechos
     (src/agents/redactor_hechos.py); si no, None y contesta el RAG de siempre."""
@@ -924,8 +897,13 @@ async def _rag_answer(
     if not sin_precio and (con_hechos := await _con_hechos(state, message,
                                                             state.history if history is None else history)):
         return con_hechos
-    entradas = _entradas_rag(await _con_la_nacionalidad_del_mensaje(state, message),
-                             state.history if history is None else history, message)
+    if state.is_colombian is None:
+        # gen-14 (21-oct): «Somos de Cali… ¿cuánto vale la salida?» se cotizaba en USD porque el RAG se escribía antes de
+        # que la extracción guardara la nacionalidad. Bloque 1: espera a lo guardado, en vez de una copia del estado.
+        from src.agents.nucleo.extractor import con_lo_guardado  # lazy
+
+        await con_lo_guardado(state, message)
+    entradas = _entradas_rag(state, state.history if history is None else history, message)
     if hechos := await _hechos_para_el_rag(state, message, state.history if history is None else history):
         entradas["hechos"] = hechos  # arq-1g
         entradas["hechos_bloques"] = state._hechos_del_rag
@@ -1121,6 +1099,9 @@ async def _take_parallel_answer(state: ConversationState) -> str | None:
     state._pending_answer = None
     if task is None:
         return None
+    from src.agents.nucleo.extractor import marcar_guardado  # lazy
+
+    marcar_guardado(state)  # bloque 1: quien recoge la respuesta ya no va a guardar antes; que no espere
     try:
         answer = await task
     except Exception as exc:  # noqa: BLE001 — si el RAG falla, el turno sigue sin respuesta

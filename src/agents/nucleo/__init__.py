@@ -12,9 +12,8 @@ módulo, con su fase y lo que solo usa esa fase:
 - `extractor.py`      → el extractor del turno (ex-5) visto desde el núcleo: lanzarlo adelantado, aplicar sus
                         datos al estado (`_aplicar_extractor`, `_poner_*`) y guardar lo dicho en el pase. Es la
                         capa de abajo de `extraction.py`.
-- `lectura.py`       → lo que dice ESTE mensaje, para quien contesta antes de que la extracción lo guarde: la
-                        copia del estado con el origen, la nacionalidad, el grupo, la duración y el plan del
-                        mensaje (`foto_del_turno`; CALN-8 (5) paso 1, 4-nov).
+- `lectura.py`       → lo que dice ESTE mensaje y la extracción no guarda (el origen, Barú, el plan que pregunta),
+                        sobre lo ya guardado (`foto_del_turno`; CALN-8 (5) paso 1, 4-nov; bloque 1, 10-nov).
 - `origen_precio.py`  → el origen antes del precio: la puerta que no cotiza sin saber desde dónde sale el cliente,
                         las dos variantes del catálogo, la pieza de precios por código y la pregunta del origen que
                         se guarda (CALN-8 (5), 5-nov).

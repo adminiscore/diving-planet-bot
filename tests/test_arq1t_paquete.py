@@ -57,10 +57,3 @@ def test_controles_como_antes(monkeypatch, campos):
     assert any("inmersiones guiadas" in x for x in b["incluye"]["cartagena"])
 
 
-def test_la_foto_del_turno_lleva_los_varios_dias_del_mensaje(monkeypatch):
-    """El redactor contesta antes de que la extracción guarde la duración (como el origen y la nacionalidad)."""
-    from src.agents import redactor_hechos
-
-    st = ConversationState(conversation_id="arq1t")
-    foto = redactor_hechos._foto(st, {"paquete_varios_dias": True}, None)
-    assert foto.detected_duration == "multi_day" and st.detected_duration is None

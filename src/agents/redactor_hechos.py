@@ -150,8 +150,9 @@ async def hechos_del_turno(state: ConversationState, message: str, history: list
         # de Jev son las del mensaje de ahora, no las suyas.
         note_turn(hechos_por_codigo="pregunta_guardada")
         return None
-    from src.agents.nucleo.extractor import lectura_del_extractor  # lazy
+    from src.agents.nucleo.extractor import con_lo_guardado, lectura_del_extractor  # lazy
 
+    await con_lo_guardado(state, message)  # bloque 1: los hechos salen de lo guardado de este mensaje, no de una copia
     leida = await lectura_del_extractor(state, message)
     datos, leido = leida or {}, leida is not None
     actividades = _actividades(state, datos) or _del_reparto_del_mensaje(datos)

@@ -283,19 +283,19 @@ def test_con_el_precio_la_nota_corta_del_de_grupo_y_con_la_pregunta_la_descripci
 
 
 def test_los_dias_de_buceo_de_este_mensaje_llegan_a_los_hechos():
-    """Sparring s04b: «un plan de 2 días» en ESTE mensaje, aún sin guardar, daba los planes de un día y no el de 5."""
+    """Sparring s04b: «un plan de 2 días» en ESTE mensaje daba los planes de un día y no el de 5. Bloque 1 (10-nov): los
+    días los guarda la extracción (`_poner_duracion`) antes de que contesten los hechos; la copia ya no los repite."""
     from src.agents import redactor_hechos
     from src.flows import hechos
 
     st = _st(detected_activity="certified_diving", is_certified=True, is_colombian=True)
+    st.detected_duration, st.duracion_de_buceo = "multi_day", True  # lo guardado de «un plan de 2 días»
     foto = redactor_hechos._foto(st, {"dias_de_buceo": 2, "group_size": 5}, "cartagena", "un plan de 2 días")
-    assert foto.detected_duration == "multi_day" and foto.duracion_de_buceo is True
-    assert st.detected_duration is None  # el estado de verdad lo escribe la extracción
     pieza = cotizar.pieza_de_precios(hechos.hechos(foto, ["precio"], ["certified_diving"]), "es")
     assert "Paquete de 5 inmersiones" in pieza  # y la salida de un día, por si son días sueltos (s04j, s04l)
-    # sin días en el mensaje, como hoy
-    foto = redactor_hechos._foto(st, {"group_size": 5}, "cartagena", "¿cuánto cuesta?")
-    assert foto.detected_duration is None
+    # lo que la extracción no guardó no lo pone la copia
+    sin = _st(detected_activity="certified_diving", is_certified=True, is_colombian=True)
+    assert redactor_hechos._foto(sin, {"dias_de_buceo": 2}, "cartagena", "¿cuánto cuesta?").detected_duration is None
 
 
 def test_caln19_el_escritor_recibe_las_opciones_de_quien_no_ha_elegido():

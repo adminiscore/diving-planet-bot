@@ -142,9 +142,10 @@ def test_la_nacionalidad_del_mensaje_pone_la_moneda(llamadas, monkeypatch):
     monkeypatch.setattr(extractor, "lectura_del_extractor", lectura)
     llamadas.estado["texto"] = "El minicurso sale desde Cartagena."
     st = _conv()
+    st.is_colombian = True  # bloque 1 (10-nov): lo guarda la extracción antes de que contesten los hechos; no hay copia
     answer = asyncio.run(redactor_hechos.responder(st, MENSAJE, st.history))
     assert "655.000 COP · 727.000 COP" in answer and "USD" not in answer  # la pieza, en la moneda del mensaje
-    assert "COP" in llamadas.hechas[0][0][-1]["content"] and st.is_colombian is None  # el estado no se toca
+    assert "COP" in llamadas.hechas[0][0][-1]["content"]
 
 
 def test_otra_cosa_cuenta_como_si_salvo_un_no_seguro():

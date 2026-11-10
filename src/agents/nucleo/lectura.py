@@ -1,12 +1,12 @@
 """CALN-8 (5) paso 1 (4-nov, #3300): lo que dice ESTE mensaje, en un sitio.
 
-Quien contesta lo hace antes de que la extracción guarde lo que trae el mensaje, así que trabaja con una copia del
-estado con lo que el mensaje dice (`foto_del_turno`): el origen (`origen_del_mensaje`), la nacionalidad y el grupo
-mezclado, la duración, el paquete y el plan nombrados, el nocturno, el tamaño del grupo y el reparto. Vivía en
-`redactor_hechos` (`_foto`), y gen-14 hace otra copia solo con la nacionalidad: el venezolano con cédula y esposa
-colombiana necesitó tres arreglos (9e464ce5, aa6a45ed, 79a2bf1c), uno por copia. Las reglas de cada dato son las de la
-extracción (`con_la_cedula`, `mezclado_del_mensaje`, `duracion_del_extractor`, `paquete_nocturno_pedido`); el estado de
-verdad lo sigue escribiendo ella (`nucleo/extractor._poner_*`).
+Bloque 1 (10-nov): quien contesta espera a que la extracción guarde lo que trae el mensaje (`extractor.con_lo_guardado`)
+y trabaja con lo guardado. Antes contestaba antes de que se guardara, con una copia del estado que repetía las reglas de
+la extracción (la nacionalidad con la cédula, el grupo mezclado, la duración, las edades, el grupo y el reparto) y otra
+copia de gen-14 solo con la nacionalidad: el venezolano con cédula y esposa colombiana necesitó tres arreglos (9e464ce5,
+aa6a45ed, 79a2bf1c), uno por copia. Aquí queda lo que la extracción no guarda: el plan que el mensaje pregunta sin
+elegirlo (`_paquete_nombrado`, el nocturno), la salida desde Barú y el origen, que tiene reglas que la extracción aún no
+cubre (los hoteles de la base, el cambio de origen que dicen los dos lectores, Jev sin extractor).
 """
 from __future__ import annotations
 
@@ -77,48 +77,21 @@ def hotel_de_las_islas(nombre: str) -> bool:
 
 def foto_del_turno(state: ConversationState, datos: dict, origen: str | None, message: str = "",
           history: list[dict] | None = None) -> ConversationState:
-    """Una copia del estado con lo que dice ESTE mensaje (origen y nacionalidad): la extracción aún no lo ha guardado
-    cuando se contesta (como gen-14 en el RAG). El estado de verdad lo sigue escribiendo la extracción."""
-    from src.agents.nucleo.extractor import con_la_cedula, mezclado_del_mensaje  # lazy
-
+    """Lo guardado (`extractor.con_lo_guardado`, bloque 1) con lo que la extracción no guarda de ESTE mensaje: el origen,
+    la salida desde Barú y el plan que pregunta sin elegirlo. Es una copia para no escribir eso en el estado."""
     foto = copy.copy(state)
     foto.location = origen
-    # La nacionalidad y el grupo mezclado como los guarda la extracción (la cédula y el mixto de Jev): con los del extractor a
-    # secas, el venezolano con cédula y esposa colombiana quedaba residente en el estado, pero los hechos y su pieza salían
-    # en USD (banco-graves g-venezolano-cedula, 0/3).
-    if foto.is_colombian is None and (nacional := con_la_cedula(state, datos.get("is_colombian"))) is not None:
-        foto.is_colombian = nacional
-    if mezclado_del_mensaje(state, datos):
-        foto.mixed_nationality_notice = True
-    if datos.get("paquete_varios_dias") is True:
-        foto.detected_duration = "multi_day"  # arq-1t: «el paquete de varios días» en ESTE mensaje
-    # Sparring s04b (conv 6844): «un plan de 2 días» en ESTE mensaje no llegaba a los hechos, que daban los planes de un día
-    # (2, 3 y 4 inmersiones) y no el de 5; en el turno siguiente, ya guardado, sí. Lo que dice la extracción (`_poner_duracion`).
-    from src.agents.nucleo.extractor import duracion_del_extractor  # lazy
-
-    duracion, de_buceo = duracion_del_extractor(datos, foto)
-    if duracion is not None:
-        foto.detected_duration = duracion
-        foto.duracion_de_buceo = foto.duracion_de_buceo or de_buceo
     if origen == "cartagena":
         # arq-5f: el extractor deja Barú como Cartagena (gen-6) sin otra marca; los hechos dicen por qué sale de allí.
         from src.agents.extractor_turno import _solo_baru  # lazy
 
         dicho = [message, *(m.get("content") or "" for m in (history or []) if m.get("role") == "user")]
         foto._aloja_en_baru = any(_solo_baru(t) for t in dicho)
-    if edades := [e for e in (datos.get("edades") or []) if isinstance(e, int) and not isinstance(e, bool) and 1 <= e <= 99]:
-        foto.detected_ages = sorted({*(foto.detected_ages or []), *edades})  # Tanda s05d: «hijos de 11 y 7» en ESTE mensaje
-    if isinstance(datos.get("group_size"), int) and datos["group_size"] > (foto.detected_group_size or 0):
-        foto.detected_group_size = datos["group_size"]  # CALN-3: «somos 5» en ESTE mensaje, para el descuento de grupo
     if not foto.selected_service and (plan := _paquete_nombrado(message, None) or _paquete_nocturno(foto, datos, message)
                                       or _paquete_nombrado(message, history)):
         # CALN-3 paso 3 «A» (p11, p12): «¿cuánto cuesta el paquete de 5 inmersiones?» no dejaba el plan en el estado y los
         # hechos daban la salida de 2; con el catálogo delante el escritor lo arreglaba, con la pieza ya no.
         foto.detected_service_id = plan
-    reparto = datos.get("group_allocation")
-    if isinstance(reparto, dict) and not foto.detected_group_allocation:
-        # arq-5f: «dos bucean y dos hacen snorkel» en ESTE mensaje (la extracción aún no lo ha guardado): la misma lancha.
-        foto.detected_group_allocation = {k: v for k, v in reparto.items() if isinstance(v, int) and v > 0}
     return foto
 
 
