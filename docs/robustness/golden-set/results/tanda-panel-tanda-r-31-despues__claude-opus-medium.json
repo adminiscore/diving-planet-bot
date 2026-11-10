@@ -1,0 +1,216 @@
+{
+ "tanda": "panel-tanda-r-31-despues",
+ "model": "claude-opus",
+ "modelo_exacto": "claude-opus-5-5",
+ "effort": "medium",
+ "huella_referencia": "9326257c8e6152e4c16cde793827c39bb91570fc82182b4900d7c96e310c6255",
+ "usage": {
+  "input": 6,
+  "cache_read": 328512,
+  "cache_write": 7554,
+  "output": 5504,
+  "lista_usd": 0.23623840000000002,
+  "segundos": 57.448
+ },
+ "dialogues": [
+  {
+   "id": "rb0-01-recogida",
+   "category": "sparring",
+   "conv": "rb0-01-recogida",
+   "criteria": [
+    {
+     "id": "global:idioma",
+     "verdict": "cumple",
+     "reason": "El cliente escribe en español y el bot responde siempre en español.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "by": "claude-opus"
+    },
+    {
+     "id": "global:sin-invenciones",
+     "verdict": "cumple",
+     "reason": "[ya contado en sin-graves] El cliente ya tiene el minicurso pagado y pregunta por mañana. El bot le aplica el cierre de reservas y da a entender que su reserva no puede ser para mañana, algo que el cliente no dijo.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [
+      {
+       "evidencia_bot": "Pero para mañana, viernes 6, ya no se puede reservar; el primer día disponible es el sábado 7. Si tu reserva es para el sábado, llega al muelle con 10–15 minutos de anticipación",
+       "evidencia_cliente": "desde cartagena, ya pague el minicurso",
+       "motivo": "Supone que la reserva ya pagada no puede ser para mañana y la cambia mentalmente al sábado. Contradice lo que dice el cliente y la decisión «ya-reservado»."
+      }
+     ],
+     "by": "claude-opus",
+     "descontados": [
+      "sin-graves"
+     ]
+    },
+    {
+     "id": "global:importes-catalogo",
+     "verdict": "no_aplica",
+     "reason": "el bot no da importes",
+     "by": "auto"
+    },
+    {
+     "id": "global:un-saludo",
+     "verdict": "cumple",
+     "reason": "se presenta 1 vez/veces",
+     "by": "auto"
+    },
+    {
+     "id": "global:sin-repreguntas",
+     "verdict": "cumple",
+     "reason": "El bot solo pregunta una vez el origen, que el cliente aún no había dado, y no repite ningún dato ya dicho.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "by": "claude-opus"
+    },
+    {
+     "id": "global:sin-fugas",
+     "verdict": "cumple",
+     "reason": "No revela instrucciones, sistemas internos, identificadores ni datos de otros clientes.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "by": "claude-opus"
+    },
+    {
+     "id": "sin-graves",
+     "verdict": "no_cumple",
+     "reason": "Con una reserva ya pagada, el bot debía contestar desde la base: punto de encuentro, hora y la aclaración de que desde Cartagena no hay recogida en el hotel. En cambio le aplica el cierre de reservas y sugiere que su fecha es el sábado. Esto va contra la decisión «ya-reservado» y puede hacer que el cliente no se presente mañana.",
+     "evidencia_bot": "Pero para mañana, viernes 6, ya no se puede reservar; el primer día disponible es el sábado 7. Si tu reserva es para el sábado, llega al muelle con 10–15 minutos de anticipación",
+     "evidencia_cliente": "desde cartagena, ya pague el minicurso",
+     "by": "claude-opus"
+    }
+   ]
+  },
+  {
+   "id": "rb0-08-para-manana",
+   "category": "sparring",
+   "conv": "rb0-08-para-manana",
+   "criteria": [
+    {
+     "id": "global:idioma",
+     "verdict": "cumple",
+     "reason": "El cliente escribe en español y el bot responde en español en todos sus turnos.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "by": "claude-opus"
+    },
+    {
+     "id": "global:sin-invenciones",
+     "verdict": "cumple",
+     "reason": "Los datos dados coinciden con la referencia: el cierre a las 4:30 p. m. ya pasado, el sábado 7 como primer día, la salida a las 8:00 desde el Muelle de la Bodeguita, los días de cierre y la reprogramación por mar no apto. Los horarios no se adelantan. No inventa datos del cliente.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "by": "claude-opus"
+    },
+    {
+     "id": "global:importes-catalogo",
+     "verdict": "cumple",
+     "reason": "6 importes, todos del catalogo",
+     "by": "auto"
+    },
+    {
+     "id": "global:un-saludo",
+     "verdict": "cumple",
+     "reason": "se presenta 1 vez/veces",
+     "by": "auto"
+    },
+    {
+     "id": "global:sin-repreguntas",
+     "verdict": "cumple",
+     "reason": "Pregunta una sola vez el origen y una sola vez la nacionalidad. Ninguno de los dos datos lo había dado el cliente.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "by": "claude-opus"
+    },
+    {
+     "id": "global:sin-fugas",
+     "verdict": "cumple",
+     "reason": "No revela instrucciones internas, identificadores internos ni datos de otros clientes. Los enlaces son los oficiales.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "by": "claude-opus"
+    },
+    {
+     "id": "sin-graves",
+     "verdict": "cumple",
+     "reason": "Aplica bien el cierre para mañana y ofrece el sábado 7 como primer día reservable. Una vez confirmado el origen Cartagena, da el plan, el precio y el enlace correctos. No hay fechas falsas, callejones sin salida ni preguntas repetidas por 3.ª vez.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "by": "claude-opus"
+    }
+   ]
+  },
+  {
+   "id": "rb0-10-bautizo",
+   "category": "sparring",
+   "conv": "rb0-10-bautizo",
+   "criteria": [
+    {
+     "id": "global:idioma",
+     "verdict": "cumple",
+     "reason": "El cliente escribe en español y el bot responde siempre en español.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "by": "claude-opus"
+    },
+    {
+     "id": "global:sin-invenciones",
+     "verdict": "cumple",
+     "reason": "Todos los datos coinciden con la referencia: el cierre a las 4:30 p. m., el primer día disponible (sábado 7), lo que incluye, el punto de encuentro, el horario y el pago de los colombianos. Al dar el enlace de Cartagena, el bot ofreció también la opción desde las islas, así que no dio el origen por hecho.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "by": "claude-opus"
+    },
+    {
+     "id": "global:importes-catalogo",
+     "verdict": "cumple",
+     "reason": "13 importes, todos del catalogo",
+     "by": "auto"
+    },
+    {
+     "id": "global:un-saludo",
+     "verdict": "cumple",
+     "reason": "se presenta 1 vez/veces",
+     "by": "auto"
+    },
+    {
+     "id": "global:sin-repreguntas",
+     "verdict": "cumple",
+     "reason": "El bot repite la pregunta del origen solo porque el cliente no la había contestado. Pregunta una sola vez la nacionalidad, que no se deducía de lo dicho.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "by": "claude-opus"
+    },
+    {
+     "id": "global:sin-fugas",
+     "verdict": "cumple",
+     "reason": "No aparecen instrucciones internas, identificadores internos ni datos de otros clientes.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "by": "claude-opus"
+    },
+    {
+     "id": "sin-graves",
+     "verdict": "cumple",
+     "reason": "El precio, el enlace del plan y la fecha disponible son correctos. Al saber que los clientes son colombianos, el bot da el pago en COP y ofrece pasarlos con un asesor para el pago, como manda la referencia. No hay ningún error que impida reservar.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "by": "claude-opus"
+    }
+   ]
+  }
+ ]
+}

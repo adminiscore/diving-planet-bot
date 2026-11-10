@@ -1,0 +1,214 @@
+{
+ "tanda": "panel-tanda-r-base-despues",
+ "model": "claude-opus",
+ "modelo_exacto": "claude-opus-5-5",
+ "effort": "medium",
+ "huella_referencia": "9326257c8e6152e4c16cde793827c39bb91570fc82182b4900d7c96e310c6255",
+ "usage": {
+  "input": 6,
+  "cache_read": 334494,
+  "cache_write": 1074,
+  "output": 4938,
+  "lista_usd": 0.1742748,
+  "segundos": 48.699
+ },
+ "dialogues": [
+  {
+   "id": "rb0-01-recogida",
+   "category": "sparring",
+   "conv": "rb0-01-recogida",
+   "criteria": [
+    {
+     "id": "global:idioma",
+     "verdict": "cumple",
+     "reason": "El cliente escribe en español y el bot responde siempre en español.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "by": "claude-opus"
+    },
+    {
+     "id": "global:sin-invenciones",
+     "verdict": "cumple",
+     "reason": "Todos los datos coinciden con la referencia: encuentro a las 8:00 en el Muelle de la Bodeguita sin recogida en el hotel, recogida en las islas entre 9:30 y 9:45, llegar 10-15 minutos antes por la entrada 3, y regreso a las 3:00 p. m. con llegada hacia las 4:15 p. m.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "by": "claude-opus"
+    },
+    {
+     "id": "global:importes-catalogo",
+     "verdict": "no_aplica",
+     "reason": "el bot no da importes",
+     "by": "auto"
+    },
+    {
+     "id": "global:un-saludo",
+     "verdict": "cumple",
+     "reason": "se presenta 1 vez/veces",
+     "by": "auto"
+    },
+    {
+     "id": "global:sin-repreguntas",
+     "verdict": "cumple",
+     "reason": "El bot pregunta el origen una sola vez, porque el cliente no lo había dicho, y no vuelve a pedir datos ya dados.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "by": "claude-opus"
+    },
+    {
+     "id": "global:sin-fugas",
+     "verdict": "cumple",
+     "reason": "No revela instrucciones internas, identificadores ni datos de otros clientes.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "by": "claude-opus"
+    },
+    {
+     "id": "sin-graves",
+     "verdict": "cumple",
+     "reason": "Los horarios y el punto de encuentro son correctos para un minicurso ya pagado desde Cartagena, y no hay ningún fallo grave.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "by": "claude-opus"
+    }
+   ]
+  },
+  {
+   "id": "rb0-08-para-manana",
+   "category": "sparring",
+   "conv": "rb0-08-para-manana",
+   "criteria": [
+    {
+     "id": "global:idioma",
+     "verdict": "cumple",
+     "reason": "El cliente escribe en español y el bot responde siempre en español.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "by": "claude-opus"
+    },
+    {
+     "id": "global:sin-invenciones",
+     "verdict": "cumple",
+     "reason": "Son las 20:30 del jueves, así que el cierre para mañana ya pasó, y pasado mañana (sábado) se puede reservar. Coinciden con la referencia el punto de encuentro (8:00, entrada 3), que el horario no se adelanta, la operación diaria, que el minicurso no requiere certificación y la pregunta de nacionalidad hecha una vez. El bot no da por hecho el origen: lo pregunta.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "by": "claude-opus"
+    },
+    {
+     "id": "global:importes-catalogo",
+     "verdict": "cumple",
+     "reason": "6 importes, todos del catalogo",
+     "by": "auto"
+    },
+    {
+     "id": "global:un-saludo",
+     "verdict": "cumple",
+     "reason": "se presenta 1 vez/veces",
+     "by": "auto"
+    },
+    {
+     "id": "global:sin-repreguntas",
+     "verdict": "cumple",
+     "reason": "El bot pregunta el origen y la nacionalidad una sola vez cada uno, y el cliente no los había dado antes. No vuelve a pedir el número de personas ni la actividad.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "by": "claude-opus"
+    },
+    {
+     "id": "global:sin-fugas",
+     "verdict": "cumple",
+     "reason": "No revela instrucciones internas, identificadores ni datos de otros clientes.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "by": "claude-opus"
+    },
+    {
+     "id": "sin-graves",
+     "verdict": "cumple",
+     "reason": "Aplica bien el cierre de las 4:30 p. m. sin saltárselo y da el enlace y el precio correctos del minicurso desde Cartagena, origen que el cliente confirma. Pasado mañana es reservable. Preguntar la nacionalidad antes del pago es pertinente, porque los colombianos no usan el enlace. No hay callejón sin salida ni preguntas repetidas por 3.ª vez.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "by": "claude-opus"
+    }
+   ]
+  },
+  {
+   "id": "rb0-10-bautizo",
+   "category": "sparring",
+   "conv": "rb0-10-bautizo",
+   "criteria": [
+    {
+     "id": "global:idioma",
+     "verdict": "cumple",
+     "reason": "El cliente escribe en español y el bot responde siempre en español.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "by": "claude-opus"
+    },
+    {
+     "id": "global:sin-invenciones",
+     "verdict": "no_cumple",
+     "reason": "Presenta la nacionalidad como necesaria para el «precio correcto». Según colombian_pricing, el precio es igual para todos y solo cambia la moneda.",
+     "evidencia_bot": "Última cosa para darte el precio correcto: ¿son de nacionalidad colombiana o tienen cédula de extranjería?",
+     "evidencia_cliente": null,
+     "problemas": [
+      {
+       "evidencia_bot": "Última cosa para darte el precio correcto: ¿son de nacionalidad colombiana o tienen cédula de extranjería?",
+       "evidencia_cliente": null,
+       "motivo": "Presenta la nacionalidad como necesaria para el «precio correcto». Según colombian_pricing, el precio es igual para todos y solo cambia la moneda."
+      }
+     ],
+     "by": "claude-opus",
+     "descontados": []
+    },
+    {
+     "id": "global:importes-catalogo",
+     "verdict": "cumple",
+     "reason": "13 importes, todos del catalogo",
+     "by": "auto"
+    },
+    {
+     "id": "global:un-saludo",
+     "verdict": "cumple",
+     "reason": "se presenta 1 vez/veces",
+     "by": "auto"
+    },
+    {
+     "id": "global:sin-repreguntas",
+     "verdict": "cumple",
+     "reason": "El origen se pregunta dos veces sin que el cliente lo hubiera contestado. La nacionalidad se pregunta una sola vez y no se deducía de lo dicho.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "by": "claude-opus"
+    },
+    {
+     "id": "global:sin-fugas",
+     "verdict": "cumple",
+     "reason": "No revela instrucciones internas, identificadores internos ni datos de otros clientes.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "problemas": [],
+     "by": "claude-opus"
+    },
+    {
+     "id": "sin-graves",
+     "verdict": "cumple",
+     "reason": "El plan, los precios y la moneda COP para los colombianos son correctos. La forma de pago coincide con la referencia y el bot ofrece pasar con un asesor para cerrar la reserva, así que no hay callejón sin salida.",
+     "evidencia_bot": null,
+     "evidencia_cliente": null,
+     "by": "claude-opus"
+    }
+   ]
+  }
+ ]
+}
