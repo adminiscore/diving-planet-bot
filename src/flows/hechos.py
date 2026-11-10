@@ -28,6 +28,7 @@ from src.flows.catalog import (
     RAW_SERVICES,
     SERVICES,
     descuentos_de_la_base,
+    no_sale_de_las_islas,
     requisitos_de_politica,
 )
 from src.flows.como_reserva import (
@@ -142,6 +143,14 @@ _SIN_PLAN_DESDE_LAS_ISLAS = {
     "en": ("This course only has a price and a link departing from Cartagena (they include the boat from Cartagena). The customer says they will "
            "already be on the islands: do not say this price is for someone on the islands; how to do it from there is confirmed by a team advisor."),
 }
+# Bloque 2a (10-nov): si la base dice que el plan NO se ofrece desde las islas (`no_se_ofrece`, el Rescue), no hay nada que confirmar:
+# solo sale desde Cartagena (visto-6916: «un asesor confirmará cómo hacerlo desde allí», contra la decisión mej-2).
+_SOLO_DESDE_CARTAGENA = {
+    "es": ("Este plan no se ofrece desde las islas: solo sale desde Cartagena, y su precio y su enlace incluyen la lancha desde "
+           "Cartagena. El cliente dice que ya estará en las islas: díselo así."),
+    "en": ("This plan is not offered from the islands: it only departs from Cartagena, and its price and link include the boat from "
+           "Cartagena. The customer says they will already be on the islands: tell them so."),
+}
 
 
 def _lo_que_puede_cada_edad(state: ConversationState, lang: str) -> list[str]:
@@ -194,7 +203,8 @@ def _hechos_por_actividad(state: ConversationState, intenciones: list[str], acti
             elegido = plan_de_buceo.servicio_del_plan(plan_de_buceo.plan_del_estado(state))
         bloque: dict = {"actividad": actividad, "nombre": dom.label(actividad, lang), "origen": origen}
         if solo_cartagena:
-            bloque["sin_plan_desde_las_islas"] = _SIN_PLAN_DESDE_LAS_ISLAS[lang]
+            no_se_ofrece = any(no_sale_de_las_islas(s) for s in dom.service_ids(actividad, "cartagena"))
+            bloque["sin_plan_desde_las_islas"] = (_SOLO_DESDE_CARTAGENA if no_se_ofrece else _SIN_PLAN_DESDE_LAS_ISLAS)[lang]
         if registro.cart_type == "companion":
             bloques.append(_acompanante(bloque, pedidas, origen, origenes, moneda, lang, _dos_monedas(state)))
             continue

@@ -269,7 +269,9 @@ def test_el_curso_sin_plan_desde_las_islas_da_el_de_cartagena_y_lo_dice():
     st.hotel = "cocoliso"
     [b] = hechos.hechos(st, ["precio", "enlace"], ["padi_rescue"])
     assert b["precio"]["cartagena"]["online"] == "796 USD" and "curso-de-rescate" in b["enlace"]["cartagena"]
-    assert "advisor" in b["sin_plan_desde_las_islas"] and b["origen"] == "cartagena"
+    # Bloque 2a: la base dice que el Rescue no se ofrece desde las islas (mej-2): solo sale desde Cartagena, sin asesor que confirme.
+    assert "only departs from Cartagena" in b["sin_plan_desde_las_islas"] and b["origen"] == "cartagena"
+    assert "advisor" not in b["sin_plan_desde_las_islas"]
     [c] = hechos.hechos(st, ["precio"], ["padi_advanced"])  # el Advanced sí tiene plan desde las islas
     assert "island" in c["precio"] and "sin_plan_desde_las_islas" not in c
 

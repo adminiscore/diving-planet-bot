@@ -208,6 +208,17 @@ def _load_raw_services() -> dict:
 
 RAW_SERVICES = _load_raw_services()
 
+
+def no_sale_de_las_islas(service_id: str) -> bool:
+    """Bloque 2a (10-nov; decisión de Gadea, mej-2): el plan desde Cartagena cuya fila de las islas en `pricing.json` lleva
+    `no_se_ofrece` no sale desde las islas (el Rescue). El único sitio que lee ese campo: lo usan el catálogo y los hechos."""
+    ruta = (RAW_SERVICES.get(service_id) or {}).get("tarifa") or ""
+    try:
+        return ruta.startswith("from_cartagena.") and bool(
+            fila_de_la_tarifa("from_islands." + ruta.removeprefix("from_cartagena.")).get("no_se_ofrece"))
+    except KeyError:
+        return False
+
 # Etiquetas de la ficha de servicio. Vienen de `scripts/kb_v2.py` (rag-2), donde nacieron para
 # construir la base curada; viven aqui desde rag-3 porque ahora la ficha se usa en DOS sitios
 # (la base v2 y el contexto del turno) y tienen que ser el mismo texto.
@@ -455,6 +466,9 @@ def _parte_ficha(service_id: str, lang: str) -> list[str]:
     metros = svc.get("max_depth_m")
     if metros:
         partes.append(f"certifica para bucear hasta {metros} m" if es else f"certifies you to dive down to {metros} m")
+    if no_sale_de_las_islas(service_id):
+        partes.append("solo sale desde Cartagena: no se ofrece desde las islas" if es
+                      else "only departs from Cartagena: not offered from the islands")
     return partes
 
 
