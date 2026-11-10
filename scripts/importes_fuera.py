@@ -37,7 +37,7 @@ def numeros_del_catalogo() -> set[int]:
             for v in x:
                 recoge(v)
         elif isinstance(x, (int, float)) and x >= 20:
-            num.add(int(round(x)))
+            num.update({int(x), int(round(x))})  # «125.57» de la respuesta se lee 125 (como `_entero`); su redondeo, 126
         elif isinstance(x, str):
             for m in re.findall(r"\d[\d.,]*", x):
                 if (n := _entero(m)) is not None:
