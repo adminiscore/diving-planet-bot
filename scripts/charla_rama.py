@@ -58,6 +58,12 @@ async def main():
     except Exception as exc:  # noqa: BLE001
         reply = f"ERROR {type(exc).__name__}: {exc}"
     estado = {c: getattr(st, c, None) for c in CAMPOS if getattr(st, c, None) not in (None, "", [], {})}
+    # C0 (bloque 4P, 10-nov): como `finalize_chatwoot_delivery` (chatwoot.py:283-290), la nota y el motivo del pase se
+    # entregan y se borran antes de guardar el estado; si no, el pase se arrastraba al turno siguiente.
+    if st.pending_escalation_reason:
+        estado["pending_escalation_reason"] = st.pending_escalation_reason
+    st.pending_note = None
+    st.pending_escalation_reason = None
     print(json.dumps({"reply": reply, "segundos": round(time.perf_counter() - t0, 2), "estado": estado,
                       "traza": _TRAZA, "guardado": serialize_state(st)}, ensure_ascii=False, default=str), flush=True)
 
