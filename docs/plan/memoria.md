@@ -52,7 +52,9 @@ secciones 1 a 3 por el Claude de Gadea, con su OK, el 10-nov.
 - **9-nov, plan:** meta intermedia de 5 o menos de 40. Referencia del juez con las decisiones del 9-nov: c7c7268a, en
   `feature/caln34-gadea` desde el 10-nov. Ruido del juez: la misma vuelta juzgada dos veces da 20 y 23; cambian 5 de 40 clientes.
 - **10-nov:** el 0,5 de Álvaro, aceptado. Su cierre: el enlace con un solo dueño, y solo con el origen conocido, con diseño antes (#3702).
-- **Pendientes de decidir:** la línea base (2 vueltas); pedir a Andrés más conversaciones reales; la norma de 5 de 5 en los clientes «a
+- **10-nov, línea base:** sí. Luna sola con lo que lee el juez y la hora fija, sin nuestras piezas, sobre el panel de la vara (3 tiradas
+  × 2 juicios); frente a la versión actual en el mismo panel, umbral de 4. Solo medida; la lleva el Claude de Gadea.
+- **Pendientes de decidir:** pedir a Andrés más conversaciones reales; la norma de 5 de 5 en los clientes «a
   veces»; leer el vuelo con el lector de notas; quitar la segunda lectura de la nacionalidad (CALN-30, Gonzalo).
 
 ## 4. Quién lleva qué · cada uno su línea · tope 2 líneas por persona
@@ -82,3 +84,4 @@ secciones 1 a 3 por el Claude de Gadea, con su OK, el 10-nov.
 | Fecha | Versión | Bloque | Graves por vuelta | Líneas de src | Llamadas de IA por turno | Respuesta: caracteres · con pregunta |
 |---|---|---|---|---|---|---|
 | 10-nov | `bloque05-alvaro` 2e77937a | 0,5, sin cerrar | 16,7 (A, antes del 0,5: 24,5; 6 juicios por lado) | 27.165 (−13) | 4,20 | 679 · 74 % |
+
