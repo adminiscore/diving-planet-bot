@@ -43,10 +43,10 @@ def main(carpeta: str) -> None:
             errores = sum(1 for r in turnos if (r["reply"] or "").startswith("ERROR"))
             marcas = sorted({x.split("]")[2].strip()[:50] for r in turnos for x in (r.get("traza") or []) if "[CORE][4P]" in x})
             extra = ""
-            if dialogo.endswith("agencia") or dialogo == "ciego-n09":
+            if dialogo.endswith("agencia"):
                 t4 = next((r for r in turnos if "tarifa" in (r["msg"] or "").lower() or "rate" in (r["msg"] or "").lower()), None)
                 extra = f" | tarifa: {'dice que no hay' if t4 and NO_HAY_TARIFA.search(t4['reply'] or '') else 'NO lo dice'}"
-            if dialogo.endswith("cambio") or dialogo == "ciego-n06":
+            if dialogo.endswith("cambio"):
                 con_politica = [r["turn"] for r in turnos if politica and politica in (r["reply"] or "")]
                 extra = f" | turnos con la política: {con_politica}"
             if dialogo == "visto-6937":
