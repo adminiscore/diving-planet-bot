@@ -336,6 +336,8 @@ def turn_metrics_line(conversation_id: str, facts: dict, started_at: str, second
         payload["regex"] = facts["regex"]  # CALN-8 (6): las ramas del detector de regex que decidieron (marca_regex)
     if facts.get("escritor_pregunta"):
         payload["escritor_pregunta"] = True  # CALN-43, bloque 0,5: el escritor preguntó en un turno de la reserva (contador)
+    if facts.get("pregunta_final"):
+        payload["pregunta_final"] = facts["pregunta_final"]  # bloque 1: «quitada» o «conservada» (`_sin_la_pregunta_final`)
     if facts.get("lector"):
         # CALN-8 (lo delgado): qué fue del lector del grupo, si cambió algo, lo que dijo Jev de otra persona y si ya se
         # sabía que era un grupo (`nucleo.extractor._apunta_lector`).

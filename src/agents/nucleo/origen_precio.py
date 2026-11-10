@@ -446,6 +446,18 @@ def _answer_already_asks(answer: str) -> bool:
 
 def _sin_la_pregunta_final(answer: str) -> str:
     """El texto del escritor sin su último párrafo si es una pregunta (lat-9 paso 2: la de la reserva la escribe ahí,
-    aparte): cuando la pregunta que toca es otra, el código pone la buena."""
+    aparte): cuando la pregunta que toca es otra, el código pone la buena. Bloque 1 (10-nov): se cuenta (`[CORE][B1]` en
+    la traza y `pregunta_final` en [TURN_METRICS]) y un párrafo con un importe o un enlace se queda: con la pregunta se
+    iba el precio o el enlace (el «?» de un enlace también contaba como pregunta)."""
     partes = answer.rstrip().split("\n\n")
-    return "\n\n".join(partes[:-1]) if len(partes) > 1 and "?" in partes[-1] else answer
+    if len(partes) < 2 or "?" not in partes[-1]:
+        return answer
+    from src.observability import note_turn  # lazy
+
+    if _IMPORTE_RE.search(partes[-1]) or "://" in partes[-1]:
+        note_turn(pregunta_final="conservada")
+        logger.info("[CORE][B1] la pregunta final del escritor lleva un importe o un enlace: se queda")
+        return answer
+    note_turn(pregunta_final="quitada")
+    logger.info(f"[CORE][B1] fuera la pregunta final del escritor: {partes[-1][:80]!r}")
+    return "\n\n".join(partes[:-1])
