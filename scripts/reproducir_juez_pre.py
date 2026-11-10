@@ -116,6 +116,11 @@ async def main():
                               "segundos": round(time.perf_counter() - t0, 2), "estado": estado,
                               "traza": list(_TRAZA), "metricas": list(_METRICAS), "reloj": RELOJES.get(dialogo)},
                              ensure_ascii=False, default=str), flush=True)
+            # C0 (bloque 4P, 10-nov): lo que hace `finalize_chatwoot_delivery` al entregar cada turno (chatwoot.py:283-290):
+            # la nota y el motivo del pase salen y se borran. Sin esto el pase se arrastraba al turno siguiente, que en
+            # producción no pasa (51 de 384 turnos del panel del bloque 1).
+            st.pending_note = None
+            st.pending_escalation_reason = None
 
 asyncio.run(main())
 '''
