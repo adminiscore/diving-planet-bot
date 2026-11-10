@@ -95,12 +95,15 @@ Medido con los criterios de arriba. Panel: 3 tiradas juzgadas dos veces cada una
 | Reales, graves de 75 (≤ +2,5) | 5,0 (5,5 · 4,5 · 5,0) | 5,5 (5,5 · 8,5 · 2,5) | Sí |
 | Clientes que pasan con una persona (≤ B) | 71 de 120 | 45 de 120 | **No** |
 | Importes fuera del catálogo (≤ B) | 13 de 272 (descuentos aplicados y totales) | 0 de 623 | **No** |
-| Estilo, reales (≤ 300 caracteres y ≤ 50 % con pregunta) | 182 · 76 % | 597 · 96 % | **El largo sí; la pregunta no** |
-| Estilo, panel | 227 · 22 % | 597 · 70 % | Como la persona (119 · 23 %) |
+| Estilo, reales (≤ 300 caracteres y ≤ 50 % con pregunta) | 182 · 75 % | 597 · 96 % | **El largo sí; la pregunta no** |
+| Estilo, panel | 227 · 19 % | 597 · 69 % | Como la persona (119 · 23 %) |
 | Latencia, p90 (≤ 7,5 s) | 4,04 s | 5,76 s | Sí |
 | Llamadas por turno | 1 | 3,76 | — |
 
+El «con pregunta» se contó sin los enlaces (`marcador` a798e7f5: el enlace lleva «?language=es»; aviso del Claude de
+Álvaro, #3775). Luna sola, panel: 332 caracteres · 25 % con pregunta.
+
 **Lectura.** V1 empata con el bot en graves (panel, ciegos y reales) con una llamada, respuestas 2,5 veces más cortas y menos
 latencia, y sin el circuito de piezas. No se adopta tal cual: pasa de más, calcula importes (descuentos y totales) y pregunta
-en el 76 % de las primeras respuestas. Las tres cosas son deterministas: es la puerta de V2 (Claude de Álvaro). Siguiente:
+en el 75 % de las primeras respuestas. Las tres cosas son deterministas: es la puerta de V2 (Claude de Álvaro). Siguiente:
 V2, medida igual. El control de Luna sola, con el reloj del 5, queda pendiente de juzgar (luna5-*.jsonl).
