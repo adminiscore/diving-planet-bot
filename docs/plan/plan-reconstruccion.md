@@ -578,7 +578,7 @@ Una fase no empieza hasta que la anterior cruza su puerta. Cada puerta la abrís
   - ensayados: una vuelta atrás, una restauración de copia y una caída del proveedor del modelo;
   - resuelto, con responsable y fecha: los datos de clientes (§9) y el camino a producción (número de WhatsApp y quién atiende
     por Chatwoot);
-  - sube Gadea, o quien ella diga.
+  - sube Gadea, o quien él diga.
 - **No se hace:** conectar clientes reales.
 
 ### F5 · Ciclos de mejora
