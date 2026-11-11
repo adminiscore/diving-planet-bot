@@ -1045,6 +1045,138 @@ Que estudie este apartado, con un agente suyo si quiere, y diga si da el visto b
 
 Si no lo da, lo hablan Gadea y Álvaro, y los Claude no hacen otra versión.
 
+## 20. Estudio Álvaro (11-nov): un modelo con herramientas
+
+**Qué es.** Lo que preguntó Álvaro el 11-nov al estudiar el plan y §19, lo que se contrastó y la conclusión. **No es otra versión del
+plan.** Es un ajuste más, el n.º 7, para que Gadea lo estudie. Si da el visto bueno, se apunta una vez en §16 junto con los seis de §19.
+- Lo contrastado sale del informe de `docs/investigacion/` y de las medidas de §19. No hay medidas nuevas.
+- El visto bueno de Álvaro a los seis ajustes de §19 todavía no consta: lo da él.
+
+### 20.1 Lo que preguntó Álvaro, y la respuesta corta
+
+Álvaro comparó el plan con el esquema habitual de un bot (un modelo que decide y usa herramientas) y con el mapa de piezas de moda
+(LangChain, LangGraph, RAG con base de vectores y MCP).
+
+| Pregunta | Respuesta corta |
+|---|---|
+| «Dijimos que no habría parches, solo un sistema con herramientas. ¿Qué es ese "código" del plan?» | Una herramienta también es código. Lo que se quita son los parches: el código que toca la respuesta (20.2) |
+| «¿No sería mejor tener las piezas de siempre?» | El bot de hoy ya las tiene casi todas, y es el Frankenstein (20.3) |
+| «¿No fallará por ser tan simple?» | Fallará, como todos. Más fases no dieron menos fallos. El riesgo de verdad son muchas reglas a la vez (20.4) |
+| «¿Las empresas lo hacen con código o con herramientas?» | Con herramientas, sobre todo. El plan se aparta en un punto (20.5) |
+
+### 20.2 Parche o herramienta
+
+| Código que… | ¿Es un parche? | ¿Está en el plan? |
+|---|---|---|
+| Calcula un precio, una fecha o el idioma | No. Es lo que hace una herramienta | Sí |
+| Comprueba que un importe existe y pide rehacer | No, porque no escribe | Sí: la puerta, con sus límites (regla 3) |
+| Cambia, corta o añade texto a la respuesta | Sí | Prohibido (regla 3). Hoy hay unos 80 sitios así (19.2) |
+| Decide qué contestar en lugar del modelo | Sí | Prohibido (regla 1) |
+
+### 20.3 Las piezas del mapa
+
+| Pieza | Bot de hoy | Este plan | ¿Hace falta? |
+|---|---|---|---|
+| Chat, modelo y prompt | Sí | Sí | Sí |
+| LangGraph y LangChain (librerías para encadenar pasos y caminos) | LangGraph, sí; LangChain, apenas | No | No: el recorrido es una línea recta de cuatro pasos. Se confirma en el diseño de F3 |
+| Base de vectores y RAG (un buscador que trae trozos del conocimiento) | Sí | No (D2) | Hoy no: la base cabe entera. Sí, como módulo aparte, para un negocio que no quepa |
+| MCP (un enchufe estándar para conectar herramientas de otros sistemas) | No | No | Solo cuando un negocio tenga sistemas que conectar |
+
+Tener esas piezas no hizo bueno al bot de hoy. Lo que comparten las empresas buenas no son las piezas, sino las cuatro capas de §7.1.
+
+### 20.4 ¿Fallará por ser tan simple?
+
+**Por qué había tantas fases** (19.1): los modelos de entonces no podían con todo a la vez, cada fallo se arreglaba con una pieza más y
+la vara no distinguía si la pieza servía.
+
+| Fuente | Qué dice |
+|---|---|
+| Anthropic | «La solución más simple posible, y solo aumentar la complejidad cuando haga falta». Con muchos pasos, los errores «se acumulan» |
+| OpenAI | «Maximiza primero las capacidades de un solo agente», y añádele herramientas poco a poco |
+| ManyIFEval | Cumplir todas las instrucciones a la vez cae de ~0,95 con una a 0,21-0,48 con diez |
+| τ-bench | Un modelo con herramientas tampoco acierta siempre: gpt-4o resolvió el 61 % de las tareas de tienda, y menos del 25 % si tenía que acertar ocho veces seguidas |
+| Sierra | De 10 a 15 modelos por turno, pero solo uno o dos «piensan». El resto vigila y no escribe |
+| Nuestra medida | El bot entero, con unas 4 llamadas: 7,5 graves de 40. Luna sola, con 1: 7,5. Empate |
+
+- **Dos lecturas de nuestra medida:** las llamadas de más no compraron calidad, y lo simple empató, no ganó.
+- **El riesgo de lo simple no son las pocas fases: son muchas reglas a la vez para un solo modelo.** Salen 73 como texto y unas 11
+  juntas al reservar (19.4).
+- **Las defensas ya están en el plan:** las cuentas fuera del modelo, la puerta, una ficha por regla repetida 5 veces, la excepción
+  pactada del ajuste 2, personas delante en F6 y F7, y la señal de parada de F3.
+- **Si no basta,** se añaden piezas de una en una y con su medida. Las que vigilan valen. Las que deciden o corrigen el texto, no.
+
+### 20.5 Cómo lo hacen las empresas
+
+| Manera de usar el código | Quién, según el informe | En este plan |
+|---|---|---|
+| Herramientas que el modelo llama | Ada, Intercom Fin, Zendesk, Sierra, Parloa | Prevista (D4), pero no de entrada |
+| Código dentro de los pasos: condiciones y cuentas que el modelo no puede saltarse | Fin, Agentforce, Decagon | La excepción pactada del ajuste 2 |
+| Vigilantes que comprueban y bloquean | Decagon, Fin, Parloa, Sierra | La puerta |
+
+- **El plan coincide en dos y se aparta en la primera:** da los datos de antemano, en tablas (D3), en vez de dejar que el modelo los pida.
+- **Tiene su motivo.** Esas empresas atienden negocios con sistemas vivos (pedidos, cuentas, devoluciones) y no hay más remedio que
+  pedir el dato. Diving Planet tiene una lista fija. Dar datos de antemano tampoco es raro: OpenAI lo recomienda para las políticas.
+- **Pero no está medido.** Nunca se ha probado un modelo que decida con herramientas, y el 6-nov se descartó sin medirlo (19.2).
+- **Y el atajo tiene un punto débil ya medido:** en los 22 graves de cuentas de V1, Luna tenía el dato delante y lo aplicó mal (19.5).
+- **19.3 ya lo deja abierto:** «las herramientas quedan para lo que dependa del mensaje». El precio de este grupo y su vuelo dependen
+  del mensaje.
+- Casi todo lo de las empresas lo cuentan ellas mismas. Solo lo de Sierra viene de un resumen independiente.
+
+### 20.6 El ajuste n.º 7
+
+**Los cálculos se construyen como herramientas desde el primer día, y se mide una vez cómo se le entregan a Luna.** No cambia la
+constitución: Luna sigue siendo la única que decide y escribe (regla 1) y el código sigue calculando (regla 2).
+
+1. **Cada hecho del código es una función con nombre, entradas y salida declaradas, y con sus pruebas.** Eso es una herramienta, se
+   la llame o no. Así el motor sirve igual para un negocio con datos en vivo.
+2. **Lo que no depende del mensaje se sigue dando de antemano:** el reloj, el primer día reservable, el catálogo, la tarifa base y
+   las horas. No hay nada que pedir.
+3. **Lo que depende del mensaje tiene dos formas de entrega, con el mismo código por debajo.** Son tres cálculos: el precio por persona
+   de este grupo con su moneda, si su vuelo alcanza y el enlace que toca.
+
+   | | A. De antemano | B. A petición |
+   |---|---|---|
+   | Cómo | El código pone la tabla entera y la puerta comprueba después (lo de §7.2) | Luna llama a la herramienta con los datos del cliente y recibe el resultado exacto |
+   | Llamadas al modelo | 1 | 2 en los mensajes con cálculo |
+   | Su riesgo | Tener el dato delante y aplicarlo mal (19.5) | No llamarla, o llamarla con un dato mal leído |
+
+4. **Una sola medida, en F3 y antes del examen:** las fichas de puerta de esos cálculos, repetidas 5 veces y comprobadas por código,
+   sin juez. Se apuntan también el p90 y las llamadas por turno.
+5. **El criterio se fija antes de medir,** en la puerta de F2 y en la lista de §11:
+   - gana la forma que falle menos fichas, por más de la diferencia mínima que fijen los dueños;
+   - si empatan, A, porque es una sola llamada;
+   - B solo vale si cumple el p90 de 7,5 s;
+   - **la que pierde se borra.** No quedan dos caminos en el motor.
+6. **Guardas, para que una herramienta no sea otro decisor ni un parche:**
+   - solo devuelve hechos: un número, una fecha, un enlace o un sí o no. Nunca texto para el cliente ni conducta. «Va con un asesor»
+     no es de estas: eso es la excepción del ajuste 2;
+   - Luna decide llamarla y es la única que escribe;
+   - sus argumentos salen de «entendido», quedan en la traza y las fichas los comprueban;
+   - pocas: una por cálculo y sin solaparse;
+   - la puerta sigue. Con B puede ser más estricta: cada importe del texto tiene que ser uno que la herramienta devolvió en esa
+     charla. Hoy la puerta no ve el precio de otro plan (§2).
+7. **No entran:** LangGraph, el buscador con base de vectores, MCP, un router ni un segundo modelo. El motor deja el hueco para el
+   buscador y para las herramientas de sistemas en vivo (D2 y D4).
+
+### 20.7 Qué cambiaría en el texto del plan
+
+| Sitio | Hoy dice | Diría |
+|---|---|---|
+| D1 | Una llamada al modelo con salida estructurada | Un solo modelo. Una llamada, o dos cuando pide un cálculo, si gana B |
+| D3 | Los datos exactos llegan como tablas que genera el código | Los cálculos son herramientas. Cómo se entregan lo decide la medida de F3 |
+| D4 | Herramientas «a petición» solo cuando un negocio las necesite | El motor sabe llamar herramientas desde el primer día. Las de sistemas en vivo, cuando un negocio las tenga |
+| §7.2, pasos 4 a 6 | El código prepara los hechos, una llamada y la puerta | Igual, más la llamada a la herramienta si gana B |
+| F3 | El motor mínimo y un solo examen | Lo mismo, con la medida de A y B antes del examen |
+| §11 | La lista de umbrales | Un umbral más: la diferencia mínima entre A y B |
+| §15 | Alrededor de 0,1 céntimos por respuesta | Con B, una llamada más en los mensajes con cálculo. Sin medir |
+
+**No cambian** la constitución, las fases, la vara ni los seis ajustes de §19.
+
+### 20.8 Lo que se pide a Gadea
+
+Que estudie este apartado y diga si da el visto bueno al ajuste n.º 7. Si lo da, se apunta **una vez** en §16, junto con los seis de
+§19 cuando Álvaro los apruebe. Si no lo da, lo hablan Gadea y Álvaro, y los Claude no hacen otra versión.
+
 ## Glosario
 
 | Término | Significado |
