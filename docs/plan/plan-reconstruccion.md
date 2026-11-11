@@ -822,6 +822,215 @@ son de producción; y el umbral de las reglas críticas se fija con el bot actua
 
 ---
 
+## 19. Estudio Gadea (11-nov)
+
+**Qué es.** Lo que estudiaron Gadea y su Claude el 11-nov sobre este plan, con sus conclusiones. **No es otra versión del plan.** Son
+seis ajustes y las respuestas de Gadea a §16.2, para que Álvaro los estudie y, si da el visto bueno, se empiece por F0.
+- Cada cifra está comprobada en el código o en los juicios.
+- Los estudios los hicieron agentes independientes y el Claude de Gadea los comprobó.
+- No lleva datos de clientes. Los clientes del panel se citan solo por sus ids `visto-*`.
+
+### 19.1 El problema, confirmado
+
+Tiene dos capas.
+1. **En el bot: muchas piezas piensan sobre lo mismo y ninguna es dueña.**
+   - Cuatro lectores leen el mismo mensaje: una regex, Jev, Haiku y el lector de grupo.
+   - Luna redacta y además decide, con una pregunta que se fija antes de leer el mensaje.
+   - El código le cambia el texto en el 68 % de los turnos.
+   - Se tropiezan, y de ahí salen la mayoría de los graves.
+   - Encima, a Luna se le dejan cuentas que falla.
+2. **En cómo trabajamos: cada fallo se arreglaba poniendo otra pieza alrededor del modelo.** El bucle pasó del código a los prompts y
+   después al plan. Lo empujaban tres cosas:
+   - modelos baratos que fallaban o se rompían al pedirles más;
+   - la latencia;
+   - una vara que no distinguía, porque con 40 clientes y un juez que se contradice un arreglo parecía bueno o malo por azar.
+
+### 19.2 Cómo funciona hoy el bot de PRE (0.61, `feature/pre_gadea` b7cfa4e4)
+
+Lo recorrió un agente en el código (`src/orchestration/graph.py`, `src/agents/supervisor.py`, el núcleo y el compositor).
+- **El recorrido de un mensaje:**
+  1. El código fija la pregunta del escritor antes de leer (`graph.py:164`).
+  2. Jev y el extractor leen a la vez. Según Jev, salen además el lector de grupo y una 2.ª lectura de la nacionalidad (CALN-10b).
+     Haiku lee la nacionalidad casi al 50 % en casos como «soy de Cali», y por eso se lee dos veces: con una lectura, el 2,5 % de las
+     nacionalidades salían mal; con dos, ninguna, pero las preguntas pasaron del 5,6 % al 11,8 %.
+  3. El router y el código eligen la ruta, y los nodos vuelven a mirar las mismas puertas, hasta tres veces.
+  4. Luna va «en paralelo», pero espera al extractor, a sus dos lecturas y a las notas. Luego vienen las guardas regex y el revisor.
+  5. Ya en serie y antes de enviar: los avisos, el compositor, el guardado de lo dicho (que espera al extractor hasta 4 s) y el
+     resumen.
+- **Quién decide cada cosa:**
+
+  | Decisión | Sitios que la deciden o la cambian |
+  |---|---|
+  | Plan | 9 |
+  | Importe y moneda | 8 |
+  | Enlace | 7 |
+  | La pregunta | 7 |
+  | Pase | Jev, la regex, el «sí» a la oferta, el cierre del colombiano y el fallo técnico |
+  | Idioma | 5 |
+
+  Una regla puede vivir en dos sitios a la vez. Por ejemplo, la agencia estaba en la decisión de Gadea y en la pregunta `needs_staff`
+  de Jev.
+- **Llamadas por turno: 3,99,** más 1,84 búsquedas.
+
+  | Pieza | Llamadas por turno |
+  |---|---|
+  | Extractor | 1,35 |
+  | Jev | 1,00 |
+  | Luna | 0,85 |
+  | Lector de grupo | 0,30 |
+  | Notas | 0,28 |
+  | Reescritura | 0,16 |
+  | Revisor y respaldos | 0,06 |
+
+  Cada una entró como arreglo de un fallo concreto, no por diseño de conjunto. La reescritura solo existe para el buscador, y las notas
+  porque las piezas no ven la charla entera. **Con una sola llamada que lee todo, ninguna de las dos hace falta. V1 midió 1,0 llamadas
+  por turno.**
+- **Los sitios que escriben o pegan texto en la respuesta:** unos 29 la escriben, unos 38 le añaden algo (más 15 saludos) y unos 14 le
+  quitan algo. La cifra «26 y 27» del compositor está desfasada. Cada tipo nació de un fallo:
+  - preguntas pegadas, 10;
+  - correctores, 14;
+  - textos de pase, 10;
+  - tarjeta, 9;
+  - respaldos, 7;
+  - datos metidos en el texto de Luna, 6.
+- **Por qué no hay herramientas:**
+  - Las hubo del 17-jun al 28-jul: un orquestador con 9 herramientas sobre gpt-4o (HISTORY 0.16.6). Eran acciones del carrito de
+    botones, no datos exactos para el modelo.
+  - Se borraron como código muerto al quitar el árbol (0.21.0), no por una medida.
+  - El 6-nov, «modelo con herramientas» se descartó sin medirlo.
+  - Nunca se ha probado un modelo que decida con herramientas.
+- **El patrón** que explica todo esto es la acumulación de arreglos sobre una desconfianza aprendida hacia el modelo. El mismo
+  diagnóstico se escribió el 21-jul («rendimientos decrecientes»), el 29-jul («cada bug se arregla añadiendo otro interceptor») y el
+  10-nov.
+
+### 19.3 Tres arquitecturas comparadas
+
+Gadea comparó este plan con un esquema de referencia: un router que solo clasifica y reescribe; un agente que decide y usa
+herramientas (conocimiento, disponibilidad, reserva, pago, reglas y pase); la búsqueda con embeddings y un reranker; y las reglas en el
+código, dentro de las herramientas.
+
+| | Esquema de referencia | Este plan | PRE hoy |
+|---|---|---|---|
+| Quién decide | El agente, con un router que solo clasifica | Una llamada a Luna | Varias piezas |
+| Datos exactos | Herramientas | Tablas preparadas por el código y la puerta | El código los mete en el texto que lee Luna y después corrige lo que escribe |
+| Reglas | En el código, dentro de las herramientas | Texto para Luna | Repartidas entre el código, los prompts y Jev |
+| Conocimiento | Búsqueda | Entero en el contexto, con caché | Búsqueda más contexto fijo |
+| Llamadas | Router y 1-3 del agente | 1 | ~4 |
+
+**Conclusiones:**
+- **Sin router.** Un router aporta cuando el conocimiento no cabe, cuando cada tipo de mensaje lleva herramientas distintas o cuando
+  hay que ahorrar con un modelo caro. Aquí no se da ninguna de las tres: Luna es el modelo barato y la base está en caché (V1: 96-99 %
+  de caché y p90 de 4,0 s). Un router solo vale si clasifica y elige qué darle al modelo. Si decide el resultado, como hace hoy Jev con
+  el pase, vuelven a ser dos pensadores.
+- **El conocimiento, entero en el contexto.** Está medido en V1, y ningún grave nacía en la búsqueda.
+- **Herramientas o tablas son dos formas de lo mismo: que el código ponga el dato.** Para Diving Planet, casi todo es fijo, así que
+  van tablas. Las herramientas quedan para lo que dependa del mensaje.
+- **Lo crítico de PRE no es que falten herramientas, sino que el código corrija el texto después, que las reglas estén repartidas y
+  que Luna haga cuentas.**
+
+### 19.4 Dónde van las reglas (estudio de las decisiones)
+
+Un agente separó en reglas las 31 decisiones de `decisiones.json` y las de la memoria del 10 y el 11-nov. **Salen 77, no 33:**
+
+| Tipo | Reglas |
+|---|---|
+| Hechos que calcula el código | 4 |
+| Reglas con una condición clara sobre los datos del cliente | 35 |
+| Conducta, que necesita juicio | 30 |
+| Mixtas | 8 |
+
+- **Con este plan, Luna aplicaría 73 como texto.** La mayoría solo se activan con su tema, pero **en el turno de reservar se juntan
+  unas 11 a la vez**: moneda, origen, hotel, colombiano, grupo, el orden de P5, el enlace, breve, una pregunta, sin totales y no
+  adivinar. Es la zona donde ManyIFEval cae al 21-48 %.
+- **Con una herramienta «cómo reservar»,** que aplicara en código las 20 de la reserva, quedarían unas 5.
+- **En contra de la herramienta:**
+  - solo 16 de esas 35 reglas tienen sus datos en el «entendido» de V1. Faltan, entre otros, la nacionalidad por persona, el reparto,
+    el equipo propio, si es para otro, otro horario y la fecha en ISO, y leer mal un dato era la causa de 4 de cada 16 graves
+    (CALN-43);
+  - se parece mucho a `como_reserva` y a la `decision()` de V2, descartadas porque deciden;
+  - añade una llamada en esos turnos.
+- **Cosas que arreglar en el prompt de V1:**
+  - lleva el texto viejo de `cambio-de-fecha`;
+  - la instrucción de `temas-3nov` manda a las agencias al asesor;
+  - faltan todas las decisiones del 10-nov;
+  - `sin-tercera-pregunta` no recoge la excepción del 4R-1b.
+
+### 19.5 Los fallos medidos de V1
+
+Otro agente clasificó los graves de V1 en el panel-vara. Son 20 clientes vistos, 3 tiradas y 2 juicios cada una. Se comparó con B.
+
+| Causa de los graves de V1 (27 en 120 juicios, 7 clientes) | Graves |
+|---|---|
+| **Un dato exacto mal calculado** | **22 (81 %)** |
+| · El precio con el descuento de grupo (visto-6929: encadena descuentos, 567.000 en vez de 560.000; visto-6938) | 10 |
+| · La hora de volar o la fecha (visto-6942: dice que un vuelo a las 9:00 del día siguiente no llega, y llega; 6914; 6927) | 12 |
+| Una regla con condición clara | 1 (+2 mixtos) |
+| Conducta o conversación | 0 sola |
+| Ruido del juez | 2 |
+
+- **En los 22 casos, el dato correcto ya estaba en el prompt** (el «20 % en total», la regla `vuelo-hora`). Luna lo tenía delante y
+  lo aplicó mal: **tenerlo escrito no basta.** Son unos 5 casos independientes, no 22.
+- **Las reglas de pase, como texto, las cumple:**
+  - de 71 pases, 52 son por una regla de Gadea y solo 2 son indebidos;
+  - otros 17 salen de la línea genérica de V1 («si algo no está… pasas con una persona»);
+  - hace pases que B no hace, como el del equipo propio, que a B le costaba 4 graves en visto-6901.
+- **El idioma no se cumple como texto.** V1 falla `global:idioma` en 38 juicios de 8 clientes vistos, y en 4 siempre: contesta en
+  español a quien escribe en inglés. B, en 0, porque fija el idioma en código al empezar.
+- **El mismo arreglo ayuda a B:** 15 de sus 17 fallos de datos son horas.
+
+### 19.6 Seis ajustes a este plan
+
+Salen de 19.4 y 19.5 y los aprueba Gadea. **No cambian la arquitectura ni la constitución:**
+1. **Lo exacto, siempre en el código, y con el idioma incluido.**
+   - La tabla de precios por persona con descuento (ya en §7.2).
+   - La comprobación del vuelo (ya en §7.2).
+   - **El idioma pasa a ser un hecho:** lo fija el código a partir de lo que escribe el cliente, como hoy el bot, y la puerta comprueba
+     que Luna conteste en ese idioma. Cambia D7 y la decisión n.º 10 de §16.2.
+2. **Las reglas, como texto y limpias, con la herramienta de reserva preparada.**
+   - En F1 se arregla lo de 19.4, y la línea genérica de «si no está, pasas» se alinea con `fuera-de-la-base` y la P-a.
+   - **Criterio fijado antes de medir:** si en el examen las fichas de reserva fallan por una regla más allá del ruido, esas reglas
+     pasan al código, dentro de una herramienta «cómo reservar». Es la salida 1 de §5 y la D4. La herramienta no se construye por
+     adelantado.
+3. **Sin router, y los saludos también con Luna.**
+4. **Si un importe sigue mal después de rehacerlo, se pasa con un asesor,** y se cuenta aparte. En V2m, el doble fallo de la puerta
+   salió en unos 2 de cada 100 turnos (9 de 384 en el panel y 5 de 225 en los reales), contando importes y enlaces. Es la decisión
+   n.º 6 de §16.2.
+5. **Un registro de pases, para analizar y no como meta.** De cada pase se guarda:
+   - el turno y la etapa;
+   - el motivo, de la tabla de reglas;
+   - quién lo decidió;
+   - después, la etiqueta de una persona: correcto, evitable o error.
+
+   Va en la traza (§7.2, paso 8), en los contadores (§10) y en F4. Valen las dos condiciones del Claude de Álvaro (#3810): los motivos
+   salen de la tabla de reglas, y el motivo lo apunta quien decide, en el momento. No se arregla pase a pase.
+6. **Andrés y los reales.**
+   - A Andrés le bastan unas 25-30 conversaciones recientes: 200 turnos son unas 30 charlas.
+   - Los 75 reales que ya tenemos sirven para calibrar al juez, para las proporciones y el estilo, para el sparring y como comparación
+     al lado. Nunca para decidir, y siempre en local.
+
+### 19.7 Lo que ha decidido Gadea de §16.2
+
+| # | Decisión |
+|---|---|
+| 1 | Repo nuevo: **sí**, aprovechando todo lo útil (docs, pruebas, servidor, APIs y claves) |
+| 3 | Calibrar al juez: **sí, con etiquetas de Gadea y Álvaro** (y de Gonzalo si está). Las personas, no los Claude |
+| 5 | Andrés: Gadea y Álvaro deciden por WhatsApp cuándo hablarle. Hace falta para F6 (las conversaciones) y para F7 (la API de WhatsApp y su equipo en Chatwoot). Bastan unas 25-30 conversaciones |
+| 6 | Importe mal tras rehacer: **pase con un asesor**, contado aparte (ajuste 4) |
+| 7 | Tras un pase, **el bot se calla**. A Andrés le llega la nota resumen por Chatwoot |
+| 8 | **Alarma en el código solo para emergencias;** las incidencias, como regla |
+| 10 | El idioma: **lo fija el código**, no el agente (ajuste 1) |
+| 12 | **Sí:** dice desde el primer mensaje que es un asistente virtual |
+| 2, 4, 9, 11, 13 y 14 | Pendientes, para decidir con Álvaro |
+
+### 19.8 Lo que se pide a Álvaro
+
+Que estudie este apartado, con un agente suyo si quiere, y diga si da el visto bueno a los seis ajustes. Si lo da:
+- se apuntan **una vez** en §16;
+- se deciden con Gadea las pendientes de §16.2;
+- y se empieza por F0.
+
+Si no lo da, lo hablan Gadea y Álvaro, y los Claude no hacen otra versión.
+
 ## Glosario
 
 | Término | Significado |
