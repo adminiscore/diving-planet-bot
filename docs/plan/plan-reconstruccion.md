@@ -10,7 +10,7 @@ No es código ni otra versión del Plan V1. Recoge las decisiones de Gadea del 1
 **Este documento ha tenido una revisión independiente y una corrección, y ahí se queda** (§18). Lo que cambie a partir de ahora lo
 decidís vosotros.
 
-**Estado al 11-nov:** Gadea y Álvaro han aprobado siete ajustes (§19 y §20). Están apuntados en §16.4 y pasados al texto. Si en algún punto queda una duda, manda §16.4.
+**Estado al 11-nov:** Gadea y Álvaro han aprobado siete ajustes (§19 y §20) y han cerrado las catorce decisiones de §16.2. Todo está apuntado en §16.4 y pasado al texto. Si en algún punto queda una duda, manda §16.4. El motor y su repo se llaman **Nexus**. Se arranca por F0.
 
 Cómo leerlo:
 - **Parte A (10 minutos):** qué vamos a construir, por qué de cero y qué tenéis que decidir.
@@ -467,7 +467,7 @@ habría llevado por otro camino.
 | Medida | Meta | Estado |
 |---|---|---|
 | Clientes con fallo grave en el examen | ≤ 10 % | Fijada por Gadea. La confirma con la rúbrica cerrada en F2 |
-| Importes mal | 0, contados contra la ficha y antes de la puerta | Propuesta del Plan V1, pendiente de Gadea (§16.2) |
+| Importes mal | 0, contados contra la ficha y antes de la puerta | Decidido el 11-nov (§16.4) |
 | Enlace e idioma mal | 0, contados contra la ficha y antes de la puerta | Como en el Plan V1 |
 | p90 del turno | ≤ 7,5 s | Fijada |
 | Largo mediano | ≤ 300 caracteres | Fijada |
@@ -480,8 +480,8 @@ Se cuentan antes de la puerta porque después el cero sale solo. Lo que llega al
 
 | Umbral | Propuesta de partida | Quién lo fija | Cuándo |
 |---|---|---|---|
-| Acierto mínimo del juez | 8 de 10 fallos pillados; como mucho 2 de 10 buenas dadas por malas | Los dueños | F0, antes de etiquetar |
-| Respuestas que la puerta rehace | ≤ 10 % de los turnos | Los dueños | F0 |
+| Acierto mínimo del juez | 8 de 10 fallos pillados; como mucho 2 de 10 buenas dadas por malas | Los dueños | Fijado el 11-nov (§16.4) |
+| Respuestas que la puerta rehace | ≤ 10 % de los turnos | Los dueños | Fijado el 11-nov (§16.4) |
 | Cumplimiento de las reglas críticas en sus fichas | Por decidir | Los dueños | Puerta de F2, con el bot actual medido y antes de medir el motor |
 | Ruido de cada cifra de la tabla de metas | Se mide, no se decide | — | F2, con las tiradas del bot actual |
 | Muestra de F6: «la habría enviado» | Por decidir, sobre 100 respuestas (margen de ±8 a ±10 puntos) | Los dueños | Puerta de F2 |
@@ -765,7 +765,7 @@ del equipo de Andrés.
 
 ### 16.2 Para decidir antes de F0
 
-**Estado al 11-nov:** decididas las n.º 1, 3, 5, 6, 7, 8, 10 y 12 (§16.4). Quedan las n.º 2, 4, 9, 11, 13 y 14. La columna de la tabla es la recomendación que se hizo; lo decidido está en §16.4.
+**Estado al 11-nov:** decididas las catorce (§16.4). La columna de la tabla es la recomendación que se hizo; lo decidido está en §16.4.
 
 | # | Decisión | Nuestra recomendación |
 |---|---|---|
@@ -819,7 +819,20 @@ Gadea y Álvaro aprobaron el 11-nov los siete ajustes de §19 y §20. **Esta lis
 | 10 | El idioma lo fija el código (ajuste 1) |
 | 12 | Sí: dice desde el primer mensaje que es un asistente virtual |
 
-**Quedan por decidir entre Gadea y Álvaro, antes de cerrar F0:** las n.º 2 (la constitución), 4 (los umbrales), 9 (tarjetas y cédulas), 11 (importes contra la ficha), 13 (quién sube y quién abre las puertas) y 14 (los nombres).
+**Las seis que quedaban.** Las aprobó Gadea (Coral #3819) y Álvaro dio paso el 11-nov, con el nombre:
+
+| N.º | Decisión |
+|---|---|
+| 2 | La constitución (§4 a §6): sí, con su techo de reglas. El techo queda en las que salgan limpias de F1, unas 77 |
+| 4 | Umbrales de F0, los de §11: el juez tiene que pillar 8 de cada 10 fallos y dar por malas como mucho 2 de cada 10 buenas; la puerta rehace como mucho el 10 % de los turnos. Los demás umbrales se fijan en F2 |
+| 9 | Tarjetas y cédulas: no se guardan ni se repiten. El cómo, en el diseño de F4 |
+| 11 | Los importes se cuentan contra la ficha y antes de la puerta: sí |
+| 13 | Sube Gadea a PRE y a producción. Las puertas y el visto bueno final para Andrés, los dos |
+| 14 | El motor y el repo nuevo se llaman **Nexus**. Lo eligió Álvaro |
+
+**No queda ninguna decisión de §16.2 abierta.** Lo de §16.3 se averigua en F0.
+
+**Reparto de F0** (Coral #3820 y #3821): el Claude de Gadea etiqueta en git el bot de hoy (la 0.61.0 que sirve PRE) y lo deja congelado; el Claude de Álvaro monta el esqueleto del repo Nexus y se lo pasa a revisar; hablar con Andrés y los trámites de WhatsApp y de producción son de Gadea y Álvaro.
 
 ## 17. Qué pasa con el repo viejo
 
