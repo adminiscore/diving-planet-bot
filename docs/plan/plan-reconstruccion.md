@@ -986,11 +986,25 @@ Salen de 19.4 y 19.5 y los aprueba Gadea. **No cambian la arquitectura ni la con
    - La comprobación del vuelo (ya en §7.2).
    - **El idioma pasa a ser un hecho:** lo fija el código a partir de lo que escribe el cliente, como hoy el bot, y la puerta comprueba
      que Luna conteste en ese idioma. Cambia D7 y la decisión n.º 10 de §16.2.
+     - El detector es **determinista**, como la heurística que ya existe (`catalog.py:83`), **sin respaldo con LLM**, que sería otro
+       lector.
+     - Se fija en el primer mensaje que lo deja claro. Los mensajes cortos («ok», «hola», un número) no lo cambian: se queda el que
+       había.
+     - A mitad de la charla, solo cambia con un mensaje entero en otro idioma, según la decisión `idioma`: los nombres propios y las
+       palabras sueltas no cuentan, y otro idioma que no sea español ni inglés pasa a inglés.
+     - Lo que sea dudoso se decide en el diseño de F3, con su banco de casos.
 2. **Las reglas, como texto y limpias, con la herramienta de reserva preparada.**
    - En F1 se arregla lo de 19.4, y la línea genérica de «si no está, pasas» se alinea con `fuera-de-la-base` y la P-a.
-   - **Criterio fijado antes de medir:** si en el examen las fichas de reserva fallan por una regla más allá del ruido, esas reglas
-     pasan al código, dentro de una herramienta «cómo reservar». Es la salida 1 de §5 y la D4. La herramienta no se construye por
-     adelantado.
+   - **Criterio fijado antes de medir:** si las **fichas de puerta de la reserva** (§10.2) fallan por una regla más allá del umbral
+     de §11 (fijado en la puerta de F2), esas reglas pasan al código, dentro de una herramienta «cómo reservar». Se mide por regla en
+     las fichas, nunca leyendo el examen. La herramienta no se construye por adelantado.
+   - **No es la salida 1 de §5 ni la D4 tal como están escritas,** porque la herramienta decide con lo que Luna leyó del cliente, como
+     `como_reserva` y la `decision()` de V2 (19.4). Por eso queda nombrada ahora como **excepción pactada a la regla 1, firmada por
+     Gadea y Álvaro**, con estas guardas:
+     - solo devuelve hechos: el precio, la moneda, el enlace o «va con un asesor por X», con el id de su decisión;
+     - Luna sigue siendo la única que escribe;
+     - sus datos de entrada tienen que estar en «entendido» (hoy, 16 de las 35 reglas con condición clara los tienen);
+     - ningún motivo sale sin una decisión escrita.
 3. **Sin router, y los saludos también con Luna.**
 4. **Si un importe sigue mal después de rehacerlo, se pasa con un asesor,** y se cuenta aparte. En V2m, el doble fallo de la puerta
    salió en unos 2 de cada 100 turnos (9 de 384 en el panel y 5 de 225 en los reales), contando importes y enlaces. Es la decisión
