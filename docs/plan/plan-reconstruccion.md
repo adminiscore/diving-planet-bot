@@ -10,6 +10,8 @@ No es código ni otra versión del Plan V1. Recoge las decisiones de Gadea del 1
 **Este documento ha tenido una revisión independiente y una corrección, y ahí se queda** (§18). Lo que cambie a partir de ahora lo
 decidís vosotros.
 
+**Estado al 11-nov:** Gadea y Álvaro han aprobado siete ajustes (§19 y §20). Están apuntados en §16.4 y pasados al texto. Si en algún punto queda una duda, manda §16.4.
+
 Cómo leerlo:
 - **Parte A (10 minutos):** qué vamos a construir, por qué de cero y qué tenéis que decidir.
 - **Parte B:** la constitución, las reglas que no se cambian sin los dos dueños.
@@ -68,7 +70,7 @@ respuestas unas tres veces más cortas, un 30 % más rápido y una cuarta parte 
 - de 3 a 4 horas, una vez, para calibrar al juez (§10.4). Es lo único que cambia algo que ya habíais dicho («la calidad la comprueban
   los Claude»);
 - unos 30 minutos por semana para aprobar correcciones;
-- hablar pronto con Andrés: el plan necesita de él conversaciones nuevas y, más adelante, a su equipo (§16.2).
+- acordar entre los dos cuándo hablar con Andrés: el plan necesita de él unas 25-30 conversaciones nuevas y, más adelante, a su equipo (§16.4).
 
 **Lo que no promete.** Fechas cerradas ni un bot perfecto. La investigación es clara: ningún bot de atención llega al 100 %. Por eso
 el plan no depende de la perfección para dar valor: desde F7 el bot ya ayuda como borrador, con una persona aprobando.
@@ -92,8 +94,8 @@ el plan no depende de la perfección para dar valor: desde F7 el bot ya ayuda co
 | Cualidad | Qué significa aquí |
 |---|---|
 | Limpio | Un motor pequeño; el negocio en datos; cada cosa en un solo sitio |
-| Robusto | Un importe o un enlace que no esté en los datos se detecta y se rehace. Lo que esa comprobación no ve, como el precio de otro plan, lo miden las fichas. Si el modelo no contesta, pasa con una persona |
-| Sencillo | Una pieza decide. Una llamada por mensaje. Sin capas que se corrigen unas a otras |
+| Robusto | Un importe o un enlace que no esté en los datos se detecta y se rehace; si el importe sigue mal, pasa con una persona. Lo que esa comprobación no ve, como el precio de otro plan, lo miden las fichas. Si el modelo no contesta, pasa con una persona |
+| Sencillo | Una pieza decide. Una llamada por mensaje, o dos si pide un cálculo (§16.4). Sin capas que se corrigen unas a otras |
 | Reutilizable | Otro negocio es otro paquete de datos |
 | Operable | Versiones, vuelta atrás, copias de seguridad, alertas y costes a la vista |
 
@@ -109,8 +111,7 @@ el plan no depende de la perfección para dar valor: desde F7 el bot ya ayuda co
 | El código pisaba las respuestas | Los líderes tienen vigilantes que bloquean o escalan, casi nunca editan |
 | Varias piezas decidían | En casi todos los líderes, quien escribe es quien decide; el código calcula y ejecuta. (En Fin, el pase lo decide otro modelo.) |
 
-**Lo que V1 no resolvía**, y este plan ataca: pasaba con una persona de más (71 de 120 charlas frente a 45), hacía cuentas con los
-precios (13 importes fuera del catálogo de 272) y preguntaba en el 75 % de sus primeras respuestas. Además leía la misma base que el
+**Lo que V1 no resolvía**, y este plan ataca: hacía mal las cuentas (el 81 % de sus graves eran el descuento de grupo y la hora de volar, §19.5; 13 importes fuera del catálogo de 272), fallaba el idioma y preguntaba en el 75 % de sus primeras respuestas. De sus 71 pases en 120 charlas (45 el bot actual), 52 eran por una regla de Gadea y 17 salían de una frase genérica que hay que arreglar. Además leía la misma base que el
 juez, lo que la favorece.
 
 **Qué se queda del Plan V1 v4.1** (del Claude de Gadea, con las decisiones de Gadea del 10-nov):
@@ -189,6 +190,8 @@ Esta tabla es el antídoto contra el Frankenstein. Cuando el bot falla, la corre
 3. aceptar la cifra tal cual (si es una meta, eso es cambiar la meta, y lo decidís por escrito);
 4. cambiar el modelo de toda la llamada, que se mide como una integración completa.
 
+**Una excepción pactada (11-nov, §19.6):** si las fichas de puerta de la reserva fallan por una regla más allá del umbral de §11, esas reglas pasan al código, dentro de una herramienta «cómo reservar». Es una excepción a la regla 1, firmada por Gadea y Álvaro, con sus guardas: solo devuelve hechos, Luna sigue siendo la única que escribe, sus datos tienen que estar en lo entendido y ningún motivo sale sin una decisión escrita. No se construye por adelantado.
+
 ## 6. Lo que los Claudes no hacemos solos
 
 El 10-nov el bucle pasó tres veces por nosotros: en el código, en el prompt y en el propio plan (cinco versiones en cuatro horas).
@@ -238,14 +241,11 @@ Es la forma que comparten Sierra, Decagon, Intercom Fin, Ada, Parloa, Zendesk y 
 2. **Ráfagas:** opción (c), decidida por Gadea. Se contesta en cuanto llega; si mientras se genera llega otro mensaje, esa respuesta
    se tira sin enviarla y se genera otra con todo.
 3. **Se carga la conversación:** el historial y lo que ya se entendió del cliente.
-4. **El código prepara los hechos**, que salen solo del reloj y de los datos: la hora, el primer día que se puede reservar, la tabla
-   de precios por persona con sus descuentos y la hora desde la que se puede volar tras cada plan.
-5. **Una llamada al modelo**, con el prompt base, el paquete del negocio, los hechos, lo entendido y el historial. Devuelve tres cosas:
-   lo que ha entendido del cliente, si hay que pasar con una persona y el texto.
-6. **La puerta comprueba hechos:** que cada importe esté en la tabla, que cada enlace sea de un plan del catálogo y en su idioma, que el
-   idioma sea el del cliente y que el vuelo alcance. Si algo no casa, se rehace una vez.
-7. **Se actúa:** se guarda lo entendido; si hay pase, se ejecuta con su nota resumen; se envía el texto.
-8. **Se guarda la traza** del turno: versión, tiempos, coste y comprobaciones. De ahí salen los contadores y las pruebas futuras.
+4. **El código prepara los hechos.** Fija el idioma del cliente con un detector determinista (§19.6) y da de antemano lo que sale solo del reloj y de los datos: la hora, el primer día que se puede reservar, el catálogo y la tarifa. Los cálculos que dependen del mensaje (el precio por persona de ese grupo con su moneda, si su vuelo alcanza y el enlace que toca) son herramientas: se entregan de antemano en una tabla o a petición de Luna, según la medida de F3 (§20.6).
+5. **Una llamada al modelo**, con el prompt base, el paquete del negocio, los hechos, lo entendido y el historial. Devuelve tres cosas: lo que ha entendido del cliente, si hay que pasar con una persona y el texto. Si gana la entrega a petición, Luna puede pedir antes un cálculo, y entonces son dos llamadas.
+6. **La puerta comprueba hechos:** que cada importe esté en la tabla, que cada enlace sea de un plan del catálogo y en su idioma, que el idioma sea el que fijó el código y que el vuelo alcance. Si algo no casa, se rehace una vez. Si un importe sigue mal tras rehacer, no se envía: pasa con un asesor y se cuenta aparte. En lo demás, sale el segundo texto y se cuenta como fallo.
+7. **Se actúa:** se guarda lo entendido; si hay pase, se ejecuta con su nota resumen; se envía el texto. Tras un pase, el bot calla hasta que el asesor devuelva la charla.
+8. **Se guarda la traza** del turno: versión, tiempos, coste y comprobaciones. De ahí salen los contadores y las pruebas futuras. Cada pase se apunta en el registro de pases (§19.6).
 
 Los pasos 2 a 8 son del motor y no dependen de Chatwoot. Por eso el examen puede probarlos sin canal.
 
@@ -253,28 +253,28 @@ Los pasos 2 a 8 son del motor y no dependen de Chatwoot. Por eso el examen puede
 
 | # | Decisión | Motivo |
 |---|---|---|
-| D1 | Una llamada al modelo con salida estructurada | Es V1, que ya está medido: mismos graves que el bot entero, 1 llamada frente a 3,76 y p90 de 4,0 s frente a 5,8 s |
+| D1 | Un solo modelo, con salida estructurada. Una llamada por mensaje, o dos cuando pide un cálculo, si gana la entrega a petición (§20.6) | Es V1, que ya está medido: mismos graves que el bot entero, 1 llamada frente a 3,76 y p90 de 4,0 s frente a 5,8 s |
 | D2 | El conocimiento va entero en el contexto, con caché. Sin buscador | Cabe (~67.000 tokens) y la caché acertó el 96-99,6 %. Se quitan la base vectorial, los embeddings y el reindexado en cada despliegue. Un negocio que no quepa usará un buscador como módulo aparte |
-| D3 | Los datos exactos llegan como tablas que genera el código | El modelo lee y no calcula. La puerta puede comprobarlo |
-| D4 | Herramientas «a petición» (consultar un sistema en vivo) solo cuando un negocio las necesite | Diving Planet no tiene datos en vivo: siempre hay disponibilidad. Se diseña el hueco, no se construye a ciegas |
+| D3 | Los cálculos son herramientas: funciones con nombre, entradas y salida declaradas. Lo que no depende del mensaje se da de antemano. Para lo que depende del mensaje, la medida de F3 decide si se entrega de antemano o a petición (§20.6) | El modelo no calcula. V1 tenía el dato delante y lo aplicó mal en el 81 % de sus graves (§19.5). La puerta puede comprobarlo |
+| D4 | El motor sabe llamar herramientas desde el primer día. Solo devuelven hechos, nunca conducta ni texto para el cliente. Las de sistemas en vivo, cuando un negocio las tenga | Es como lo hacen las empresas (§20.5) y lo que hace el motor reutilizable. Diving Planet no tiene datos en vivo: ese hueco se diseña, no se construye a ciegas |
 | D5 | El modelo queda fijado en cada versión. Sin modelo de respaldo | Como en el Plan V1 v4.1: un respaldo sería un segundo escritor. Si el modelo no contesta, aviso sincero y pase a una persona. Cambiar de modelo reinicia la evidencia |
-| D6 | La puerta solo comprueba hechos y rehace una vez | Es la regla de diseño acordada el 10-nov, con la decisión de Gadea sobre el segundo fallo. Cuando la puerta juzgó conducta (V2), rehízo alrededor del 65 % de las respuestas a mensajes reales (medida del 10-nov, Coral #3772) |
-| D7 | El idioma lo fija el agente en lo que entiende. Sin detector aparte | Propuesta del Plan V1 v4.1, pendiente de Gadea (§16.2) |
+| D6 | La puerta solo comprueba hechos y rehace una vez. Si un importe sigue mal, pasa con un asesor | Es la regla de diseño acordada el 10-nov, con la decisión de Gadea sobre el segundo fallo. Cuando la puerta juzgó conducta (V2), rehízo alrededor del 65 % de las respuestas a mensajes reales (medida del 10-nov, Coral #3772) |
+| D7 | El idioma lo fija el código con un detector determinista, sin respaldo con LLM. La puerta comprueba que Luna conteste en ese idioma | Decidido el 11-nov (§19.6). V1 falló el idioma en 38 juicios; el bot actual, que lo fija por código, en ninguno |
 | D8 | Una sola base de datos (Postgres) para conversaciones, estado y trazas | Menos piezas. Hoy el estado vive en Redis con 81 campos y las tablas de análisis nunca se escriben. Se confirma en el diseño de F4 |
 | D9 | Cada despliegue es una foto: código, prompt base, paquete y modelo | Permite volver atrás y saber qué versión contestó cada mensaje |
 | D10 | El motor no conoce el negocio. Una comprobación automática lo vigila | Es lo que lo hace reutilizable |
+| D11 | Sin router ni segundo modelo: los saludos también los contesta Luna. Sin LangGraph ni MCP | §19.3 y §20.3. El recorrido es una línea recta de cuatro pasos. Lo de LangGraph se confirma en el diseño de F3 |
 
 ### 7.4 Lo que el motor hace igual para cualquier negocio
 
 - Conversar con una llamada y salida estructurada.
 - Cargar un paquete de negocio y validarlo.
-- Calcular los hechos genéricos: reloj y zona horaria, primer día reservable con hora de corte y días cerrados, tabla de precios con
-  descuentos.
+- Calcular los hechos genéricos: reloj y zona horaria, primer día reservable con hora de corte y días cerrados, precios con descuentos e idioma del cliente. Cada uno es una herramienta, y el motor sabe llamarlas.
 - La puerta de importes, enlaces e idioma.
 - El pase a una persona con nota resumen.
 - La mecánica de la conversación: duplicados, cola, ráfagas.
 - El canal: firma y límites de WhatsApp.
-- Las trazas, los contadores y las versiones.
+- Las trazas, los contadores, el registro de pases y las versiones.
 
 Lo propio de un negocio (por ejemplo, la espera antes de volar tras bucear) va en su paquete, como un cálculo pequeño con su prueba.
 
@@ -434,7 +434,7 @@ investigación dice que, sin medir cuánto coincide con una persona, un juez no 
 - **Si el juez no llega,** no decide los graves. Elegís entre dos caminos: cambiar de juez y repetir el examen del juez, o que los
   graves de cada integración los cuente una persona sobre 100 clientes del examen (con un margen de ±6 a ±8 puntos, dicho de antemano).
 - **Se repite** si cambia la rúbrica o el modelo del juez.
-- **Quién etiqueta** es una decisión vuestra (§16.2).
+- **Quién etiqueta:** Gadea y Álvaro, y Gonzalo si está (decidido el 11-nov). Las personas, no los Claude. Se pueden etiquetar respuestas a los 75 mensajes reales ya vistos: para calibrar basta con que sean reales.
 
 ### 10.5 Sparring y lectura de conversaciones
 
@@ -450,9 +450,9 @@ Sirven para **descubrir**, nunca para decir que algo mejoró.
 
 | Qué hay | Cuánto | Uso |
 |---|---|---|
-| Episodios reales anonimizados, con las respuestas del equipo | 75 episodios de 39 chats | Desarrollo. Ya se han leído y medido, así que no cuentan para ninguna puerta |
+| Episodios reales anonimizados, con las respuestas del equipo | 75 episodios de 39 chats | Desarrollo: calibrar al juez, las proporciones y el estilo, la semilla del sparring y una comparación al lado. Ya se han leído y medido, así que no cuentan para ninguna puerta |
 | «Examen oculto» | 13 chats, que son 21 de esos mismos 75 episodios | Igual que los anteriores: ya no es una reserva limpia |
-| Conversaciones nuevas de Andrés | Por pedir | **La única reserva limpia.** No se leen hasta la puerta de F6 |
+| Conversaciones nuevas de Andrés | Por pedir: bastan unas 25-30 charlas recientes | **La única reserva limpia.** No se leen hasta la puerta de F6 |
 
 **Sin conversaciones nuevas no hay sombra histórica.** Por eso pedirlas es una decisión de F0 (§16.2), no un detalle.
 
@@ -486,6 +486,7 @@ Se cuentan antes de la puerta porque después el cero sale solo. Lo que llega al
 | Ruido de cada cifra de la tabla de metas | Se mide, no se decide | — | F2, con las tiradas del bot actual |
 | Muestra de F6: «la habría enviado» | Por decidir, sobre 100 respuestas (margen de ±8 a ±10 puntos) | Los dueños | Puerta de F2 |
 | Subir y bajar de peldaño en F7 | Ver F7 | Los dueños | Puerta de F6, antes de ver un solo borrador |
+| Diferencia mínima entre entregar los cálculos de antemano o a petición (§20.6) | Por decidir | Los dueños | Puerta de F2, antes de la medida de F3 |
 
 - **Reglas críticas** son las de la regla 10 y las de precio.
 - **Solo vosotros cambiáis una meta o un umbral, y por escrito.**
@@ -500,11 +501,11 @@ Una fase no empieza hasta que la anterior cruza su puerta. Cada puerta la abrís
 
 - **Objetivo:** empezar con las reglas claras y el terreno preparado.
 - **Qué se hace:**
-  - leéis este plan y decidís §16.2;
+  - leéis este plan y decidís lo que queda de §16.2;
   - se crea el repo nuevo con la constitución, la plantilla de decisiones de diseño, las pruebas automáticas y la rama principal
     protegida (todo cambio entra con revisión);
   - se etiqueta el bot actual en git (hoy no hay ninguna etiqueta) y queda congelado: solo se tocan datos y urgencias;
-  - se habla con Andrés: qué se le va a pedir y cuándo (conversaciones nuevas, la API de WhatsApp y su equipo en Chatwoot);
+  - Gadea y Álvaro acuerdan cuándo y cómo hablar con Andrés, y qué se le pide: unas 25-30 conversaciones nuevas, la API de WhatsApp y su equipo en Chatwoot;
   - se arrancan los trámites largos, con su responsable: API de WhatsApp Business y entorno de producción.
 - **Puerta:** constitución firmada, decisiones de §16.2 resueltas o aparcadas con dueño y fecha, repo creado y bot actual etiquetado.
 - **No se hace:** ninguna línea del bot.
@@ -513,7 +514,7 @@ Una fase no empieza hasta que la anterior cruza su puerta. Cada puerta la abrís
 
 - **Objetivo:** que todo lo que el bot tiene que saber esté en datos, una vez y bien.
 - **Qué se hace:**
-  - **la tabla de reglas:** una fila por decisión (las 31, «breve y concisa» y las del 10-nov). Cada fila la escribe un agente que
+  - **la tabla de reglas:** una fila por decisión (las 31, «breve y concisa» y las del 10-nov). El estudio de §19.4 cuenta 77 reglas, 73 de ellas como texto. Se arregla lo que ese estudio encontró en el texto de V1, y la frase genérica de «si no está, pasas» se alinea con la decisión de lo que queda fuera de la base. Cada fila la escribe un agente que
     solo ve la decisión, y la revisa otro. Se resuelven los choques (`cambio-de-fecha`, `por-otros`, `temas-3nov`). Las decisiones
     que son un hecho o una comprobación no cuentan como regla;
   - **las tablas:** precios como única fuente, precios por persona con descuento, horas, enlaces;
@@ -546,8 +547,9 @@ Una fase no empieza hasta que la anterior cruza su puerta. Cada puerta la abrís
 - **Qué se hace:**
   - el prompt base, corto y sin negocio. **Se escribe una vez, se revisa una vez y se congela con su huella antes del examen;**
   - la llamada con salida estructurada y caché;
-  - los hechos: reloj, primer día reservable, tabla de precios, vuelo;
+  - los hechos, construidos como herramientas: reloj, primer día reservable, idioma, precios, vuelo y enlace;
   - la puerta: importes, enlaces, idioma, vuelo;
+  - **la medida de entrega** (§20.6): con las fichas de puerta de cálculo, de antemano o a petición. Se hace una vez, antes del examen y con el criterio fijado en F2. La forma que pierde se borra;
   - la mecánica de la conversación: duplicados, cola y ráfagas con la opción (c);
   - las trazas y los contadores;
   - un **negocio de juguete** (tres servicios inventados de otra actividad) para probar que el motor no sabe de buceo.
@@ -566,10 +568,11 @@ Una fase no empieza hasta que la anterior cruza su puerta. Cada puerta la abrís
 - **Objetivo:** el motor atendiendo por Chatwoot en PRE, operado como un servicio serio.
 - **Qué se hace:**
   - el canal: firma y límites de WhatsApp;
-  - el pase a una persona: nota resumen, cambio de estado en Chatwoot y qué hace el bot después (§16.2);
+  - el pase a una persona: nota resumen y cambio de estado en Chatwoot. Después el bot calla hasta que el asesor devuelva la charla;
   - el fallo técnico: aviso sincero y pase;
+  - el registro de pases (§19.6): el turno y la etapa, el motivo de la tabla de reglas, quién lo decidió y, después, la etiqueta de una persona;
   - la base de datos, las versiones, la vuelta atrás, las copias, los secretos, las alertas y el panel (§9);
-  - el aviso de que es un asistente virtual.
+  - el aviso, desde el primer mensaje, de que es un asistente virtual.
 - **Puerta:**
   - una ronda de prueba completa por Chatwoot en PRE, con las fichas de manipulación;
   - ensayados: una vuelta atrás, una restauración de copia y una caída del proveedor del modelo;
@@ -706,7 +709,7 @@ Es una propuesta; los papeles los decidís vosotros (§16.2).
 |---|---|
 | **Segundo sistema:** meterle al nuevo todo lo aprendido | Solo entra lo que permite la constitución. El marcador enseña líneas y reglas en cada integración |
 | **Repetir el bucle en sala limpia** | Parte B, las señales de §13.3 y un entregable, una revisión, una corrección |
-| **Demasiadas reglas a la vez:** se parte de unas 40 decisiones, y el modelo cumple peor cuantas más lee | El techo de reglas (regla 7), fundir las que se puedan en F1 y medir el cumplimiento regla a regla. Si aun así es el problema medido, existe un remedio que usan los líderes: cargar solo las reglas de la situación del cliente. Choca con la regla 1, así que sería una excepción a la constitución que decidiríais los dos entonces |
+| **Demasiadas reglas a la vez:** salen 77 reglas, 73 como texto, y unas 11 juntas al reservar (§19.4). El modelo cumple peor cuantas más lee | El techo de reglas (regla 7), fundir las que se puedan en F1 y medir el cumplimiento regla a regla. Si las de la reserva fallan en sus fichas, pasan a la herramienta «cómo reservar», que es la excepción pactada (§16.4). Cargar solo las reglas de la situación del cliente sería otra excepción, que decidiríais los dos entonces |
 | **El conocimiento como puerta trasera de parches** | El conocimiento describe y no manda (regla 4), con validador y revisión |
 | **Afinar contra la vara** | Examen congelado que solo da cifras. Fichas de puerta congeladas. Reserva de reales que no se abre hasta F6 |
 | **Falta de vuestro tiempo** | Lo que se os pide está acotado (§1). Si no hay tiempo, la fase espera; no se decide por vosotros |
@@ -725,7 +728,7 @@ Son órdenes de magnitud, con lo medido hasta hoy.
 
 | Concepto | Cifra | Nota |
 |---|---|---|
-| Una respuesta del motor | Alrededor de 0,1 céntimos de dólar | V1: unos 0,09 $ por 40 clientes |
+| Una respuesta del motor | Alrededor de 0,1 céntimos de dólar | V1: unos 0,09 $ por 40 clientes, con la caché caliente. Con clientes reales la caché acertará menos, y si los cálculos se piden a petición hay una llamada más. Se mide en F3 y F4 |
 | Una tirada del examen (200 clientes) con el motor | ~0,45 $ | Por OpenAI |
 | Una tirada del examen con el bot actual | ~0,8 $ | Por OpenRouter. Solo en F2 y F3 |
 | Un examen juzgado (3 tiradas, 2 juicios) | Unas 2 ventanas de Claude | Sin coste de API. Cada regla nueva obliga a volver a juzgar la línea de partida |
@@ -762,6 +765,8 @@ del equipo de Andrés.
 
 ### 16.2 Para decidir antes de F0
 
+**Estado al 11-nov:** decididas las n.º 1, 3, 5, 6, 7, 8, 10 y 12 (§16.4). Quedan las n.º 2, 4, 9, 11, 13 y 14. La columna de la tabla es la recomendación que se hizo; lo decidido está en §16.4.
+
 | # | Decisión | Nuestra recomendación |
 |---|---|---|
 | 1 | ¿Repo nuevo, como propone este plan? | Sí |
@@ -786,6 +791,35 @@ del equipo de Andrés.
 - Qué obliga la ley colombiana de datos personales, qué aviso hay que dar al cliente y si el de asistente virtual es exigible allí.
 - Las condiciones del proveedor del modelo sobre los datos de los clientes.
 - Si el equipo de Andrés atenderá por Chatwoot en producción.
+
+### 16.4 Aprobado por Gadea y Álvaro el 11-nov
+
+Gadea y Álvaro aprobaron el 11-nov los siete ajustes de §19 y §20. **Esta lista es la que manda:** si otro punto del plan dice algo distinto, vale esta.
+
+| N.º | Ajuste | Lo propuso | Dónde se explica |
+|---|---|---|---|
+| 1 | Lo exacto lo calcula el código. El idioma lo fija el código con un detector determinista, sin respaldo con LLM, y la puerta comprueba que Luna conteste en ese idioma | Gadea | §19.6 |
+| 2 | Las reglas van como texto y limpias. Si las fichas de puerta de la reserva fallan por una regla más allá del umbral de §11, esas reglas pasan a una herramienta «cómo reservar». Es una excepción pactada a la regla 1, firmada por los dos y con sus guardas. No se construye por adelantado | Gadea | §19.6 |
+| 3 | Sin router. Los saludos también los contesta Luna | Gadea | §19.3 |
+| 4 | Si un importe sigue mal tras rehacerlo, pasa con un asesor y se cuenta aparte | Gadea | §19.6 |
+| 5 | Un registro de pases, para analizar y no como meta. Los motivos salen de la tabla de reglas y los apunta quien decide, en el momento | Gadea | §19.6 |
+| 6 | A Andrés se le piden unas 25-30 conversaciones recientes. Los 75 reales ya vistos sirven para calibrar, para el estilo, para el sparring y como comparación; nunca para decidir | Gadea | §19.6 |
+| 7 | Los cálculos se construyen como herramientas desde el primer día. Una sola medida en F3 decide si Luna los recibe de antemano o los pide. **Matiz de Gadea:** la herramienta del enlace solo devuelve el enlace de un plan, un origen y un idioma; no decide si se da | Álvaro | §20.6 |
+
+**Decisiones de §16.2 ya tomadas.** Las tomó Gadea (§19.7) y Álvaro dio paso a apuntarlas el 11-nov:
+
+| N.º | Decisión |
+|---|---|
+| 1 | Repo nuevo: sí, aprovechando todo lo útil (docs, pruebas, servidor, APIs y claves) |
+| 3 | Calibrar al juez: sí, con etiquetas de Gadea y Álvaro, y de Gonzalo si está |
+| 5 | Andrés: Gadea y Álvaro acuerdan cuándo y cómo hablarle |
+| 6 | Importe mal tras rehacer: pase con un asesor (ajuste 4) |
+| 7 | Tras un pase, el bot se calla. A Andrés le llega la nota resumen por Chatwoot |
+| 8 | Alarma en el código solo para emergencias; las incidencias, como regla |
+| 10 | El idioma lo fija el código (ajuste 1) |
+| 12 | Sí: dice desde el primer mensaje que es un asistente virtual |
+
+**Quedan por decidir entre Gadea y Álvaro, antes de cerrar F0:** las n.º 2 (la constitución), 4 (los umbrales), 9 (tarjetas y cédulas), 11 (importes contra la ficha), 13 (quién sube y quién abre las puertas) y 14 (los nombres).
 
 ## 17. Qué pasa con el repo viejo
 
@@ -1050,7 +1084,7 @@ Si no lo da, lo hablan Gadea y Álvaro, y los Claude no hacen otra versión.
 **Qué es.** Lo que preguntó Álvaro el 11-nov al estudiar el plan y §19, lo que se contrastó y la conclusión. **No es otra versión del
 plan.** Es un ajuste más, el n.º 7, para que Gadea lo estudie. Si da el visto bueno, se apunta una vez en §16 junto con los seis de §19.
 - Lo contrastado sale del informe de `docs/investigacion/` y de las medidas de §19. No hay medidas nuevas.
-- El visto bueno de Álvaro a los seis ajustes de §19 todavía no consta: lo da él.
+- Álvaro aprobó los seis ajustes de §19 el 11-nov, y Gadea aprobó el n.º 7 con un matiz. Todo está apuntado en §16.4.
 
 ### 20.1 Lo que preguntó Álvaro, y la respuesta corta
 
@@ -1172,10 +1206,14 @@ constitución: Luna sigue siendo la única que decide y escribe (regla 1) y el c
 
 **No cambian** la constitución, las fases, la vara ni los seis ajustes de §19.
 
+**Hecho el 11-nov:** estos cambios ya están pasados al texto. La tabla queda como registro de lo que decía antes.
+
 ### 20.8 Lo que se pide a Gadea
 
 Que estudie este apartado y diga si da el visto bueno al ajuste n.º 7. Si lo da, se apunta **una vez** en §16, junto con los seis de
 §19 cuando Álvaro los apruebe. Si no lo da, lo hablan Gadea y Álvaro, y los Claude no hacen otra versión.
+
+**Hecho el 11-nov:** Gadea lo aprobó, con el matiz del enlace (§16.4).
 
 ## Glosario
 
@@ -1184,6 +1222,8 @@ Que estudie este apartado y diga si da el visto bueno al ajuste n.º 7. Si lo da
 | Motor | El programa que conversa. Es igual para cualquier negocio |
 | Paquete del negocio | Los datos de un negocio: lo que sabe, sus precios, sus reglas |
 | Hecho | Un dato que calcula el código: un precio, una fecha, un enlace |
+| Herramienta | Un trozo de código que da un dato exacto. El modelo lo recibe ya hecho o se lo pide |
+| Registro de pases | La lista de cada pase con un asesor: cuándo, por qué y quién lo decidió |
 | Regla | Una decisión de un dueño, escrita para que el asistente la siga |
 | Puerta | La comprobación de hechos que pasa cada respuesta antes de enviarse. También, la condición para salir de una fase |
 | Ficha | Una conversación de prueba con su respuesta correcta ya calculada |
